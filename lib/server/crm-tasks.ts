@@ -18,9 +18,12 @@ import {
   type Viewer,
 } from "@/lib/domain/tasks/derive";
 import { isInstitutionRule, type RuleConfig } from "@/lib/domain/tasks/rules";
+import { deriveColdListTasks } from "@/lib/domain/tasks/cold";
+import { crmContactSets } from "@/lib/domain/cold-lists/utils";
 import type { CompleteTaskValues } from "@/lib/domain/tasks/schemas";
 import type { AssignmentType, CrmTaskDto, CrmTaskKind, TaskOutcome, TaskStatus, TeamMember } from "@/lib/domain/tasks/types";
 import { recordAudit } from "./audit";
+import { listTaskProspects } from "./crm-prospects";
 import { getRules } from "./crm-rules";
 import { fetchAll } from "./edoras";
 import { internalInstitutionIds } from "./internal-institutions";
@@ -34,6 +37,8 @@ import { internalInstitutionIds } from "./internal-institutions";
  *   sunucuda yeniden türetilir: istemcinin gönderdiği anahtar bugün gerçekten açık bir görev olmalı.
  * - Görünürlük: kural görevleri ve atanmamış görevler ekip havuzu; atanmış görev yalnız atanan + ADMIN.
  * - Tutar taşınmaz (bakiye görevi yalnız "bakiye var" der; tutar ekranda adaydan, yalnız ADMIN'e).
+ * - Soğuk liste görevleri (kural coldList) soğuk liste kişilerinden türetilir (lib/domain/tasks/cold.ts); saklanmaz,
+ *   tamamlanmaz (kişinin arama sonucu girilir), menü rozetine sayılmaz. Yalnız liste ucu (listTasks) okur.
  * - İşlem kaydına not metni yazılmaz; yalnız tür, anahtar, sonuç ve statü geçişi.
  */
 
@@ -67,6 +72,8 @@ interface LeadRow {
   updated_at: string;
   institution_id: string | null;
   sale_amount: number | string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
 }
 
 function toStored(r: TaskRow): StoredTask {
@@ -106,6 +113,8 @@ interface TaskContext {
   stored: StoredTask[];
   names: Map<string, string>;
   leadOfInstitution: Map<string, string>;
+  /** CRM adaylarının ve kurum yetkililerinin telefon / e-postası (soğuk liste kişisi CRM'deyse görev olmaz). */
+  crmContacts: { phones: Set<string>; emails: Set<string> };
 }
 
 /** Türetmenin bütün girdisi (yalnız CRM projesi). Tablolar küçük; sayfalama fetchAll ile. */
@@ -116,12 +125,24 @@ async function loadContext(): Promise<TaskContext> {
     fetchAll<LeadRow>((a, b) =>
       db
         .from("crm_leads")
-        .select("id, organization_name, status, next_follow_up_at, offer_sent_at, updated_at, institution_id, sale_amount")
+        .select(
+          "id, organization_name, status, next_follow_up_at, offer_sent_at, updated_at, institution_id, sale_amount, contact_phone, contact_email"
+        )
         .order("id")
         .range(a, b)
     ),
-    fetchAll<{ institution_id: string; status: "DEMO" | "UCRETLI"; demo_ends_at: string | null }>((a, b) =>
-      db.from("crm_institutions").select("institution_id, status, demo_ends_at").order("institution_id").range(a, b)
+    fetchAll<{
+      institution_id: string;
+      status: "DEMO" | "UCRETLI";
+      demo_ends_at: string | null;
+      contact_phone: string | null;
+      contact_email: string | null;
+    }>((a, b) =>
+      db
+        .from("crm_institutions")
+        .select("institution_id, status, demo_ends_at, contact_phone, contact_email")
+        .order("institution_id")
+        .range(a, b)
     ),
     fetchAll<{ institution_id: string; ends_on: string }>((a, b) =>
       db.from("crm_licenses").select("institution_id, ends_on").order("id").range(a, b)
@@ -173,13 +194,41 @@ async function loadContext(): Promise<TaskContext> {
     stored,
     names,
     leadOfInstitution,
+    crmContacts: crmContactSets([
+      ...leads.map((l) => ({ phone: l.contact_phone, email: l.contact_email })),
+      ...institutions.map((i) => ({ phone: i.contact_phone, email: i.contact_email })),
+    ]),
   };
 }
 
-async function visibleTasks(staff: StaffContext, window: { from?: string | null; to: string; status?: TaskStatus | null }, today: string) {
-  const ctx = await loadContext();
+/**
+ * Soğuk liste kişileri; soğuk liste migration'ı (20260929180000) henüz uygulanmamışsa (CONFIG_MISSING) Görevlerim'in
+ * geri kalanı çalışsın diye boş döner — Soğuk Listeler ekranı aynı hatayı açıkça gösterir.
+ */
+async function coldProspects() {
+  try {
+    return await listTaskProspects();
+  } catch (err) {
+    if (err instanceof HttpError && err.code === "CONFIG_MISSING") return [];
+    throw err;
+  }
+}
+
+/**
+ * Çağıranın gördüğü görevler. `cold`: soğuk liste görevleri de türetilir (yalnız Görevlerim listesi; rozet saymaz —
+ * DeepSport'taki gibi, yüzlerce aranmamış kişi rozeti anlamsızlaştırır).
+ */
+async function visibleTasks(
+  staff: StaffContext,
+  window: { from?: string | null; to: string; status?: TaskStatus | null },
+  today: string,
+  { cold }: { cold: boolean }
+) {
+  const [ctx, prospects] = await Promise.all([loadContext(), cold ? coldProspects() : Promise.resolve([])]);
   const merged = mergeTasks(deriveTasks(ctx.input, ctx.rules, today), ctx.stored, ctx);
-  return filterTasks(merged, { viewer: viewerOf(staff), today, ...window });
+  const coldTasks = cold ? deriveColdListTasks(prospects, ctx.crmContacts, ctx.rules, today) : [];
+  const all = coldTasks.length ? [...merged, ...coldTasks].sort((a, b) => a.dueDate.localeCompare(b.dueDate)) : merged;
+  return filterTasks(all, { viewer: viewerOf(staff), today, ...window });
 }
 
 // --- Okuma ---------------------------------------------------------------------------------------
@@ -193,13 +242,18 @@ export async function listTasks(
   query: { from: string | null; to: string | null; status: TaskStatus | null }
 ): Promise<CrmTaskDto[]> {
   const today = todayIso();
-  return visibleTasks(staff, { from: query.from, to: query.to ?? addDays(today, UPCOMING_WINDOW_DAYS), status: query.status }, today);
+  return visibleTasks(
+    staff,
+    { from: query.from, to: query.to ?? addDays(today, UPCOMING_WINDOW_DAYS), status: query.status },
+    today,
+    { cold: true }
+  );
 }
 
 /** Menü rozeti: çağıranın gördüğü gecikmiş + bugün açık görev sayısı. */
 export async function dueTaskCount(staff: StaffContext): Promise<number> {
   const today = todayIso();
-  return countDueOpenTasks(await visibleTasks(staff, { to: today, status: "OPEN" }, today), today);
+  return countDueOpenTasks(await visibleTasks(staff, { to: today, status: "OPEN" }, today, { cold: false }), today);
 }
 
 /** Görev atanabilecek kişiler: ADMIN için aktif ekip; CRM_AGENT yalnız kendisi (ya da havuz). */
@@ -303,6 +357,8 @@ async function completionTarget(body: CompleteTaskValues, staff: StaffContext, t
     return { taskId: row.id, key: null, kind: row.kind, leadId: row.lead_id, institutionId: null, dueDate: row.due_date };
   }
   const d = body.derived;
+  // Soğuk liste görevi tamamlanmaz: kişinin arama sonucu girilir (PATCH /api/crm/prospects/{id}).
+  if (d.kind === "coldList") throw new HttpError(400, "VALIDATION");
   const subject = isInstitutionRule(d.kind) ? d.institutionId : d.leadId;
   if (!subject || taskKey(d.kind, subject, d.dueDate) !== d.key) throw new HttpError(400, "VALIDATION");
   const ctx = await loadContext();

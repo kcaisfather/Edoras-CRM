@@ -41,6 +41,9 @@ export const API_ERROR_CODES = [
   "TASK_ASSIGNEE_INVALID",
   "TASK_PAST_DUE",
   "TASK_NO_LEAD",
+  "PAYLOAD_TOO_LARGE",
+  "PROSPECT_ALREADY_MOVED",
+  "PROSPECT_DUPLICATE",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

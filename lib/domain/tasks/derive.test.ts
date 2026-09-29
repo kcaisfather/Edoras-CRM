@@ -350,6 +350,7 @@ describe("attachTaskSubjects + taskMatches", () => {
     completedByName: null,
     createdBy: null,
     createdByName: null,
+    prospect: null,
     ...over,
   });
   const institution = { id: I1, name: "Işık Koleji", crm: { contactName: "Ali Veli", contactPhone: "+905321112233" } } as unknown as InstitutionListItem;

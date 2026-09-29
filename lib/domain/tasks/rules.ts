@@ -7,7 +7,8 @@
  *   demoShort + demoLong → demoEnding (demo bitişine N gün kala)
  *   expiredActive        → expired (demo ya da lisans bitti, dönüşmedi / yenilenmedi; kullanım sinyali yok)
  *   quotaHigh            → kaldırıldı (kontenjan yok)
- * Anket ve soğuk liste kuralları ayarlanabilir ama modülleri taşınana kadar görev üretmez.
+ * Anket kuralı ayarlanabilir ama modülü taşınana kadar görev üretmez. Soğuk liste kuralı (coldList) soğuk listeler
+ * modülüyle görev üretir (lib/domain/tasks/cold.ts).
  */
 
 import type { CrmStatus } from "@/lib/domain/crm/types";
@@ -46,9 +47,8 @@ export const RULES_WITHOUT_DAYS: TaskKind[] = ["scheduled"];
  * Veri kaynağı henüz taşınmamış kurallar — ayarlanabilir ama görev üretmez (DeepSport RULES_NEEDING_BACKEND).
  * Değer: bekledikleri modül (metin anahtarı).
  */
-export const RULES_NEEDING_MODULE: Partial<Record<TaskKind, "surveys" | "coldLists">> = {
+export const RULES_NEEDING_MODULE: Partial<Record<TaskKind, "surveys">> = {
   surveyNoResponse: "surveys",
-  coldList: "coldLists",
 };
 
 /**
@@ -74,6 +74,7 @@ export const DEFAULT_RULES: RuleConfig[] = [
   // Tarihsiz "Aranacak" / "Takipte": son güncellemeden N gün sonra ara.
   { id: "undatedFollowUp", enabled: true, days: 0 },
   { id: "surveyNoResponse", enabled: true, days: 5 },
+  // Soğuk liste: aranmamış kişi bugün, ulaşılamayan kişi son denemeden N gün sonra.
   { id: "coldList", enabled: true, days: 2 },
 ];
 

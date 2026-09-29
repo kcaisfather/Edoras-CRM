@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, MessageSquarePlus, Pencil, Undo2 } from "lucide-react";
+import { Check, ClipboardCheck, MessageSquarePlus, Pencil, Snowflake, Undo2 } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -9,8 +9,11 @@ import { cn } from "@/lib/utils";
 import { usePermissions } from "@/features/auth";
 import { CrmContactMenu, StatusBadge, ToneBadge, contactTargetFor } from "@/features/crm";
 import { InstitutionStatusBadge, formatPhone } from "@/features/institutions";
+import { ProspectContactActions } from "@/features/cold-lists";
 import { formatCrmDate, formatCurrency, getLeadTitle, getRemainingAmount } from "@/lib/domain/crm/utils";
 import type { CrmTask } from "@/lib/domain/tasks/view";
+import type { TaskProspectDto } from "@/lib/domain/tasks/types";
+import { coldListHref } from "./ColdOutcomeDialog";
 import { useTaskKindLabel } from "./labels";
 
 /** Kurala özgü bağlam satırı. Bakiye tutarı yalnız finans yetkisiyle (CRM_AGENT "Açık bakiye var" görür). */
@@ -29,6 +32,11 @@ function useTaskRef(task: CrmTask): string | null {
     }
     case "expired":
       return date ? t(task.institution?.crm?.status === "DEMO" ? "ref.expiredDemo" : "ref.expiredLicense", { date }) : null;
+    case "coldList": {
+      // Soğuk liste: liste adı; ulaşılamayan kişide son deneme günü.
+      const list = task.prospect?.listName ?? t("cold.unknownList");
+      return date ? t("ref.coldListRetry", { date, list }) : t("ref.coldList", { list });
+    }
     default:
       return date ? t(`ref.${task.kind}`, { date }) : null;
   }
@@ -43,9 +51,24 @@ function useTaskLabels(task: CrmTask) {
   return { kind: kindLabel(task), due, ref, tone: (d < 0 ? "red" : d === 0 ? "orange" : "gray") as "red" | "orange" | "gray" };
 }
 
-/** Müşteri: aday (Adaylar'da detayı açar) ya da adayı olmayan kurum (kurum sayfası). */
+const prospectName = (p: TaskProspectDto) => [p.firstName, p.lastName].filter(Boolean).join(" ");
+
+/** Soğuk liste kişisi (CRM'de değil): kurum / ad, telefon. */
+function ProspectCustomer({ p }: { p: TaskProspectDto }) {
+  const name = prospectName(p);
+  return (
+    <div className="flex flex-col">
+      <span className="font-medium">{p.organization || name || p.phoneRaw || p.email || "—"}</span>
+      {p.organization && name && <span className="text-xs text-muted-foreground">{name}</span>}
+      {(p.phone || p.phoneRaw) && <span className="text-xs text-muted-foreground">{p.phone ? formatPhone(p.phone) : p.phoneRaw}</span>}
+    </div>
+  );
+}
+
+/** Müşteri: aday (Adaylar'da detayı açar), adayı olmayan kurum (kurum sayfası) ya da soğuk liste kişisi. */
 function Customer({ task }: { task: CrmTask }) {
   const t = useTranslations("crm.tasks");
+  if (task.prospect) return <ProspectCustomer p={task.prospect} />;
   if (task.lead) {
     const { title, subtitle } = getLeadTitle(task.lead);
     return (
@@ -72,8 +95,17 @@ function Customer({ task }: { task: CrmTask }) {
   );
 }
 
-/** Durum: adayın CRM statüsü; adayı olmayan kurum görevinde kurumun durumu (demo / lisans). */
+/** Durum: adayın CRM statüsü; adayı olmayan kurum görevinde kurumun durumu (demo / lisans); soğuk listede arama sonucu. */
 function TaskStatus({ task, today }: { task: CrmTask; today: string }) {
+  const tOutcome = useTranslations("growth.coldLists.outcomes");
+  if (task.prospect) {
+    return (
+      <ToneBadge tone={task.prospect.outcome === "UNREACHABLE" ? "yellow" : "gray"} className="gap-1">
+        <Snowflake className="h-3 w-3" aria-hidden />
+        {tOutcome(task.prospect.outcome)}
+      </ToneBadge>
+    );
+  }
   if (task.lead) return <StatusBadge status={task.lead.status} />;
   return task.institution ? <InstitutionStatusBadge item={task.institution} today={today} /> : null;
 }
@@ -107,7 +139,29 @@ export interface TaskRowProps {
   onEdit?: () => void;
 }
 
-function Actions({ task, canUndo, undoing, onComplete, onUndo, onNote, onEdit }: TaskRowProps) {
+/** Soğuk liste kişisi: sonuç kişinin kaydına yazılır (CRM notu / düzenleme yok); CRM'e alma soğuk liste ekranında. */
+function ProspectActions({ p, onComplete }: { p: TaskProspectDto; onComplete: () => void }) {
+  const t = useTranslations("crm.tasks");
+  return (
+    <div className="flex flex-nowrap items-center gap-1">
+      <Button size="sm" onClick={onComplete}>
+        <ClipboardCheck />
+        {t("cold.record")}
+      </Button>
+      <ProspectContactActions phone={p.phone} />
+      <Link href={coldListHref(p.listId)} className="px-1 text-xs text-primary underline-offset-2 hover:underline">
+        {t("cold.openList")}
+      </Link>
+    </div>
+  );
+}
+
+function Actions(props: TaskRowProps) {
+  if (props.task.prospect) return <ProspectActions p={props.task.prospect} onComplete={props.onComplete} />;
+  return <CrmActions {...props} />;
+}
+
+function CrmActions({ task, canUndo, undoing, onComplete, onUndo, onNote, onEdit }: TaskRowProps) {
   const t = useTranslations("crm.tasks");
   const tList = useTranslations("crm.list");
   const { canSeeFinancials } = usePermissions();

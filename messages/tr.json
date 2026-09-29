@@ -55,7 +55,10 @@
         "TASK_NOT_COMPLETER": "Görevi yalnız tamamlayan kişi ya da yönetici geri alabilir.",
         "TASK_ASSIGNEE_INVALID": "Görev yalnız aktif ekip üyesine atanabilir.",
         "TASK_PAST_DUE": "Görev bugün ya da sonrasına atanabilir.",
-        "TASK_NO_LEAD": "Bu görevin CRM adayı yok; statü ve arama tarihi değiştirilemez."
+        "TASK_NO_LEAD": "Bu görevin CRM adayı yok; statü ve arama tarihi değiştirilemez.",
+        "PAYLOAD_TOO_LARGE": "İstek çok büyük. Dosyayı daha küçük parçalar hâlinde gönderin.",
+        "PROSPECT_ALREADY_MOVED": "Kişi zaten CRM'e taşınmış.",
+        "PROSPECT_DUPLICATE": "Bu telefon ya da e-posta bu listede zaten var."
       }
     },
     "cancel": "İptal",
@@ -146,6 +149,8 @@
     "crmTasksDueBadge": "{count} görev bugün/gecikmiş",
     "crmRules": "Kurallar",
     "crmRulesDescription": "Otomatik takip ve arama görevi kuralları",
+    "crmColdLists": "Soğuk Listeler",
+    "crmColdListsDescription": "İçe aktarılan aday listeleri ve arama sonuçları",
     "sidebarCustomers": "Müşteriler",
     "sidebarCrm": "CRM",
     "sidebarAnalysis": "Analiz",

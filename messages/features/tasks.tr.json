@@ -31,6 +31,8 @@
       "surveyNoResponse": "Anket: {date}",
       "balance": "Kalan: {amount}",
       "balanceHidden": "Açık bakiye var",
+      "coldList": "Liste: {list}",
+      "coldListRetry": "Ulaşılamadı: {date} · {list}",
       "scheduled": ""
     },
     "due": {
@@ -61,6 +63,29 @@
     "crmLink": "Adaylar'a dön",
     "noLead": "CRM adayı yok",
     "institutionsLoadError": "Kurum listesi okunamadı; CRM adayı olmayan kurumların görevleri bu listede eksik.",
+    "source": {
+      "label": "Kaynak",
+      "all": "Tümü",
+      "crm": "CRM",
+      "coldList": "Soğuk liste"
+    },
+    "cold": {
+      "record": "Sonuç gir",
+      "openList": "Soğuk listede aç",
+      "unknownList": "Soğuk liste",
+      "title": "Arama sonucu",
+      "description": "Sonuç soğuk listedeki kişinin kaydına yazılır.",
+      "outcome": "Sonuç",
+      "hint": {
+        "TALKED": "Görev kapanır. İlgileniyorsa soğuk listede “Sıcağa taşı” ile CRM'e alın.",
+        "UNREACHABLE": "{days} gün sonra yeniden görev olur.",
+        "NOT_INTERESTED": "Görev kapanır; kişi yeniden listelenmez."
+      },
+      "submit": "Kaydet",
+      "success": "Sonuç kaydedildi",
+      "error": "Sonuç kaydedilemedi; tekrar deneyin.",
+      "capNote": "Soğuk listelerden aynı anda en çok {cap} aranmamış kişi görev olur (eski liste önce); sonuç girdikçe sıradakiler gelir. Soğuk liste görevleri menü rozetine sayılmaz."
+    },
     "search": "Kurum, kişi, telefon ara…",
     "counts": "{overdue} gecikmiş · {today} bugün · {upcoming} yaklaşan",
     "dialog": {
@@ -168,8 +193,7 @@
     },
     "activeLabel": "{rule} aktif",
     "needsModule": {
-      "surveys": "Anketler modülü taşınınca görev üretir.",
-      "coldLists": "Soğuk listeler modülü taşınınca görev üretir."
+      "surveys": "Anketler modülü taşınınca görev üretir."
     },
     "noDays": "—",
     "save": "Kaydet",

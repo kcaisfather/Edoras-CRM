@@ -19,7 +19,8 @@ export interface CrmTask extends CrmTaskDto {
 
 /**
  * Satırları aday / kurum nesneleriyle birleştirir. Ne adayı ne kurumu bulunabilen satır (liste henüz
- * yüklenmedi ya da kayıt az önce silindi) atlanır — DeepSport'taki gibi.
+ * yüklenmedi ya da kayıt az önce silindi) atlanır — DeepSport'taki gibi. Soğuk liste görevi kişisini sunucudan
+ * taşır (`prospect`); aday ve kurum aranmaz.
  */
 export function attachTaskSubjects(
   dtos: readonly CrmTaskDto[],
@@ -31,6 +32,10 @@ export function attachTaskSubjects(
   const instById = new Map((institutions ?? []).map((i) => [i.id, i]));
   const out: CrmTask[] = [];
   for (const d of dtos) {
+    if (d.prospect) {
+      out.push({ ...d, lead: null, institution: null, dueInDays: daysBetween(today, d.dueDate) });
+      continue;
+    }
     const lead = d.leadId ? (leadById.get(d.leadId) ?? null) : null;
     const instId = d.institutionId ?? lead?.institutionId ?? null;
     const institution = lead?.institution ?? (instId ? (instById.get(instId) ?? null) : null);
@@ -40,12 +45,16 @@ export function attachTaskSubjects(
   return out;
 }
 
-/** Arama kutusu: kurum, kişi, e-posta, telefon (aday) ya da kurum adı ve yetkilisi (kurum görevi). */
-export function taskMatches(task: Pick<CrmTask, "lead" | "institution">, q: string): boolean {
+/**
+ * Arama kutusu: kurum, kişi, e-posta, telefon (aday), kurum adı ve yetkilisi (kurum görevi) ya da soğuk liste
+ * kişisi ve listesi.
+ */
+export function taskMatches(task: Pick<CrmTask, "lead" | "institution" | "prospect">, q: string): boolean {
   const needle = q.trim().toLocaleLowerCase("tr");
   if (!needle) return true;
   const l = task.lead;
   const i = task.institution;
+  const p = task.prospect;
   const hay = [
     l?.organizationName,
     l?.contactFirstName,
@@ -56,6 +65,12 @@ export function taskMatches(task: Pick<CrmTask, "lead" | "institution">, q: stri
     i?.crm?.contactName,
     i?.crm?.contactPhone,
     i?.crm?.contactEmail,
+    p?.firstName,
+    p?.lastName,
+    p?.organization,
+    p?.phone ?? p?.phoneRaw,
+    p?.email,
+    p?.listName,
   ]
     .filter(Boolean)
     .join(" ")

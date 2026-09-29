@@ -2,13 +2,20 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Building2, ChartNoAxesColumnIncreasing, ClipboardList, LayoutDashboard, ListTodo, Workflow } from "lucide-react";
+import { Building2, ChartNoAxesColumnIncreasing, ClipboardList, LayoutDashboard, ListTodo, Snowflake, Workflow } from "lucide-react";
 import { useCurrentUser, usePermissions } from "@/features/auth";
 import { useInstitutionAlerts } from "@/features/institutions";
 import { useDueTaskCount } from "@/features/tasks";
 import { filterNavGroups } from "@/lib/permissions";
 
-export type NavTranslationKey = "dashboard" | "institutions" | "crmLeads" | "crmTasks" | "crmAnalytics" | "crmRules";
+export type NavTranslationKey =
+  | "dashboard"
+  | "institutions"
+  | "crmLeads"
+  | "crmTasks"
+  | "crmColdLists"
+  | "crmAnalytics"
+  | "crmRules";
 
 export interface NavItem {
   /** Sorgu dizesi içerebilir; aktiflik yalnız yol kısmına bakar. */
@@ -38,12 +45,13 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [{ href: "/dashboard", icon: LayoutDashboard, translationKey: "dashboard" }],
   },
   {
-    // CRM: adaylar ve Görevlerim (soğuk listeler ve anketler taşındıkça bu gruba eklenir).
+    // CRM: adaylar, Görevlerim ve soğuk listeler (DeepSport ile aynı sıra; anketler taşındıkça bu gruba eklenir).
     key: "crm",
     labelKey: "sidebarCrm",
     items: [
       { href: "/crm", icon: ClipboardList, translationKey: "crmLeads" },
       { href: "/crm/tasks", icon: ListTodo, translationKey: "crmTasks" },
+      { href: "/crm/cold-lists", icon: Snowflake, translationKey: "crmColdLists" },
     ],
   },
   {

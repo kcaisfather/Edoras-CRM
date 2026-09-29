@@ -174,8 +174,9 @@ function deriveInstitutionTasks(
 }
 
 /**
- * Açık kural görevleri (tamamlanmışlar dahil — ayıklama `mergeTasks`'ta). Anket ve soğuk liste kuralları
- * modülleri taşınana kadar görev üretmez. Sıra: vade, sonra anahtar.
+ * Açık kural görevleri (tamamlanmışlar dahil — ayıklama `mergeTasks`'ta). Anket kuralı modülü taşınana kadar görev
+ * üretmez. Soğuk liste görevleri (kural coldList) burada DEĞİL, kişilerden ayrıca türetilir (./cold.ts): saklanmaz,
+ * bu yüzden tamamlama doğrulamasına (sunucu completionTarget) hiç girmez. Sıra: vade, sonra anahtar.
  */
 export function deriveTasks(input: DeriveInput, rules: RuleConfig[], today: string): DerivedTask[] {
   const r = ruleMap(rules);
@@ -244,6 +245,7 @@ function fromStored(s: StoredTask, names: ReadonlyMap<string, string>, extra: Pa
     completedByName: nameOf(names, s.completedBy),
     createdBy: s.createdBy,
     createdByName: nameOf(names, s.createdBy),
+    prospect: null,
     ...extra,
   };
 }
@@ -289,6 +291,7 @@ export function mergeTasks(
       completedByName: null,
       createdBy: null,
       createdByName: null,
+      prospect: null,
     });
   }
   for (const s of stored) {

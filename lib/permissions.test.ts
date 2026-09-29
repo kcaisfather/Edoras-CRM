@@ -25,6 +25,8 @@ describe("permissions", () => {
   it("CRM_AGENT Görevlerim'e girer, kurallara giremez (yasaklı yol izinli önekten önce denetlenir)", () => {
     expect(canAccessPathFor("CRM_AGENT", "/crm/tasks")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/crm/tasks?b=overdue")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/cold-lists")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/cold-lists?list=x&outcome=UNREACHABLE")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules/")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules?x=1")).toBe(false);

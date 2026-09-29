@@ -9,4 +9,4 @@ export { InstitutionLeadCard } from "./components/InstitutionLeadCard";
 export { OpenReceivablesCard } from "./components/OpenReceivablesCard";
 export { useCreateCrmLead, useUpdateCrmLead } from "./mutations";
 export { crmKeys, useAllCrmLeads, useCrmRules, useLeadForInstitution } from "./queries";
-export type { CrmRowSlots, CrmTableActions } from "./types";
+export type { CrmRowSlots, CrmScreenSlots, CrmTableActions } from "./types";

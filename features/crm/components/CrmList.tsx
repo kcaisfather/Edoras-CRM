@@ -14,7 +14,7 @@ import { CRM_SORT_KEYS } from "@/lib/domain/crm/sort";
 import { crmApi } from "../api";
 import { useCrmList } from "../hooks";
 import { useInvalidateCrm } from "../mutations";
-import type { CrmRowSlots } from "../types";
+import type { CrmScreenSlots } from "../types";
 import { CrmAddModal } from "./CrmAddModal";
 import { CrmCollectionDialog } from "./CrmCollectionDialog";
 import { CrmDuplicates } from "./CrmDuplicates";
@@ -37,9 +37,10 @@ import { LinkInstitutionDialog } from "./LinkInstitutionDialog";
  * Adaylar (DeepSport CRM operasyon ekranı): tüm adaylar — satış olmuşlar da ("Müşteri" rozetiyle, bağlı kurum
  * sayfasına gider). Satış hunisi Satış Analizleri'nde (/crm/analytics). Tek tarih kontrolü: dönem seçici
  * (aday oluşturma tarihi) — özet kartlar, aşama şeridi ve liste aynı aralığı izler. Başka modüllerin satır
- * parçaları (Görev ata) `slots` ile gelir (app/crm/_components/CrmScreen.tsx) — crm → tasks bağımlılığı yok.
+ * parçaları (Görev ata) ve üst satırdaki "İçe aktar" `slots` ile gelir (app/crm/_components/CrmScreen.tsx) —
+ * crm → tasks / cold-lists bağımlılığı yok.
  */
-export function CrmList(slots: CrmRowSlots = {}) {
+export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
   const t = useTranslations("crm.list");
   const mounted = useMounted();
   const list = useCrmList(slots);
@@ -72,10 +73,14 @@ export function CrmList(slots: CrmRowSlots = {}) {
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
-      {/* Üst satır: dönem seçici (kartlar, şerit ve liste bunu izler) + dışa aktarma */}
+      {/* Üst satır: dönem seçici (kartlar, şerit ve liste bunu izler) + veri araçları (dışa / içe aktarma) */}
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <PeriodPicker defaultPeriod="all" allowAll resetParams={["page"]} />
-        {isListView && <CrmExportButton getLeads={() => list.filteredLeads} />}
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {isListView && <CrmExportButton getLeads={() => list.filteredLeads} />}
+          {/* EK-1: Excel/CSV içe aktarma (mükerrer önizleme, onay, sunucu kontrolü ve özet bileşenin içinde). */}
+          {renderImport?.()}
+        </div>
       </div>
 
       <CrmSummaryCards summary={list.summary} openReceivables={list.openReceivables} />

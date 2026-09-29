@@ -1,0 +1,244 @@
+{
+  "actions": {
+    "call": "Ara",
+    "whatsapp": "WhatsApp"
+  },
+  "coldLists": {
+    "title": "Soğuk Listeler",
+    "subtitle": "CRM'e henüz girmemiş, aranacak kişi listeleri: içe aktar, ara, sonucu işaretle, ilgilenenleri sıcağa taşı.",
+    "sharedNote": "Listeler ekiple paylaşılır. \"Aranmadı\" ve \"Ulaşılamadı\" kişiler Görevlerim'de \"Soğuk liste araması\" olarak görünür.",
+    "emptyTitle": "Henüz soğuk liste yok",
+    "emptyBody": "Fuar, rehberlik ya da kurum listelerinizi Excel/CSV olarak içe aktarın. Mükerrer telefonlar içe aktarırken gösterilir; CRM'de adayı ya da kurum kaydı olan kişiler eklenmez.",
+    "list": "Liste",
+    "created": "Oluşturma: {date}",
+    "createdBy": "Açan: {name}",
+    "deleteList": "Listeyi sil",
+    "outcomeFilter": "Arama sonucu",
+    "filters": {
+      "all": "Tümü",
+      "NOT_CALLED": "Aranmadı",
+      "UNREACHABLE": "Ulaşılamadı",
+      "NOT_INTERESTED": "İlgilenmiyor",
+      "TALKED": "Görüşüldü",
+      "moved": "CRM'e taşındı"
+    },
+    "outcomes": {
+      "NOT_CALLED": "Aranmadı",
+      "UNREACHABLE": "Ulaşılamadı",
+      "NOT_INTERESTED": "İlgilenmiyor",
+      "TALKED": "Görüşüldü"
+    },
+    "pending": "{count} arama sonucu henüz kaydedilmedi.",
+    "discard": "Vazgeç",
+    "save": "Kaydet",
+    "saveTitle": "Arama sonuçlarını kaydet",
+    "saveBody": "{count} kişinin arama sonucu kaydedilecek. Sonucun anı şimdi olarak yazılır; \"Ulaşılamadı\" kişiler kuraldaki gün sonra yeniden görev olur.",
+    "saved": "{count} sonuç kaydedildi.",
+    "savePartial": "{ok} kaydedildi, {failed} kaydedilemedi.",
+    "table": {
+      "person": "Kurum / kişi",
+      "contact": "İletişim",
+      "location": "Şehir / ilçe",
+      "outcome": "Arama sonucu",
+      "crm": "CRM",
+      "actions": "İşlemler"
+    },
+    "movedAt": "CRM'e taşındı {date}",
+    "movedLeadDeleted": "CRM'e taşınmıştı ({date}); aday silindi",
+    "inCrm": "CRM'de var",
+    "inInstitution": "Kurum kaydı var",
+    "moveToCrm": "Sıcağa taşı",
+    "deleteProspect": "Kişiyi listeden sil",
+    "showing": "{from}–{to} / {total}",
+    "prev": "Önceki",
+    "next": "Sonraki",
+    "queueNote": "\"Aranmadı\" ve \"Ulaşılamadı\" durumundaki, CRM'de kaydı olmayan kişiler Görevlerim'de \"Soğuk liste araması\" olarak görünür. Aynı anda en çok 50 aranmamış kişi görev olur; sonuç girdikçe sıradakiler gelir.",
+    "truncated": "Listenin ilk {loaded} / {total} kişisi yüklendi; süzgeçler ve sayılar eksik olabilir.",
+    "institutionsError": "Kurum listesi okunamadı; \"Kurum kaydı var\" eşleşmesi eksik olabilir.",
+    "deleteListTitle": "Listeyi sil",
+    "deleteListBody": "\"{name}\" listesi ve içindeki {count} kişi ekipteki herkes için silinecek. CRM'e taşınmış adaylar etkilenmez.",
+    "deleteListAdminOnly": "Listeyi yalnız yöneticiler silebilir.",
+    "deleteProspectTitle": "Kişiyi sil",
+    "deleteProspectBody": "{name} bu listeden silinecek.",
+    "confirmDelete": "Sil",
+    "cancel": "Vazgeç",
+    "deleted": "Silindi.",
+    "csv": {
+      "firstName": "Ad",
+      "lastName": "Soyad",
+      "organization": "Kurum",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "city": "Şehir",
+      "district": "İlçe",
+      "branch": "Program / tür",
+      "note": "Not",
+      "outcome": "Arama sonucu",
+      "outcomeAt": "Sonuç tarihi",
+      "movedAt": "CRM'e taşınma"
+    },
+    "move": {
+      "title": "Sıcağa taşı → CRM adayı",
+      "description": "Bu kişi için CRM'de yeni bir aday oluşturulacak (kaynak: soğuk liste). Tutar alanları boş açılır.",
+      "fields": {
+        "name": "Ad Soyad",
+        "organization": "Kurum",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "location": "Şehir / ilçe"
+      },
+      "status": "CRM statüsü",
+      "addNote": "Program / tür ve notu CRM notu olarak da ekle",
+      "duplicate": "Bu telefon/e-posta ile CRM'de {count} kayıt var:",
+      "ackDuplicate": "Farkındayım, yine de yeni aday oluştur",
+      "noIdentity": "CRM adayı için kurum adı ya da yetkilinin adı gerekli; bu kişide ikisi de yok.",
+      "invalidPhone": "Telefon geçerli bir numaraya çevrilemedi; aday telefonsuz açılır.",
+      "writeNote": "Onayladığınızda aday, not ve kişinin \"CRM'e taşındı\" işareti tek işlemde kaydedilir.",
+      "cancel": "Vazgeç",
+      "confirm": "Aday oluştur",
+      "success": "{name} CRM'e taşındı.",
+      "failed": "Aday oluşturulamadı: {error}"
+    }
+  },
+  "import": {
+    "title": "İçe aktar (Excel/CSV)",
+    "description": "Dosyayı seçin, sütunları eşleyin, önizleyin ve mükerrer kayıtları çözün. Kaydetmeden önce onay istenir.",
+    "button": "İçe aktar (Excel/CSV)",
+    "template": "Örnek şablon (.csv)",
+    "cancel": "Vazgeç",
+    "close": "Kapat",
+    "back": "Geri",
+    "next": "Devam",
+    "targetLabel": "Nereye aktarılsın?",
+    "targets": {
+      "coldList": "Soğuk liste",
+      "crm": "CRM adayı (Aranacak)"
+    },
+    "targetHints": {
+      "coldList": "Kişiler ekiple paylaşılan bir soğuk listeye eklenir; Görevlerim'de \"Soğuk liste araması\" olarak görünür. Sonradan tek tek \"Sıcağa taşı\" ile CRM'e alınabilir.",
+      "crm": "Her satır için CRM'de \"Aranacak\" statülü bir aday açılır (500'erli parçalar hâlinde, durdurulabilir). Tutar alanları boş kalır."
+    },
+    "dropHint": "Dosyayı buraya sürükleyin ya da seçin",
+    "formats": ".xlsx ve .csv (Excel'in \"CSV UTF-8\" ya da noktalı virgüllü CSV çıktısı). İlk sayfa okunur; en fazla 5.000 satır. Dosya sunucuya yüklenmez; yalnız eşlenen alanlar gönderilir.",
+    "reading": "Okunuyor…",
+    "chooseFile": "Dosya seç",
+    "errors": {
+      "xls": "Eski Excel biçimi (.xls) okunamıyor. Excel'de \"Farklı kaydet → Excel Çalışma Kitabı (.xlsx)\" ya da \"CSV UTF-8\" ile kaydedip tekrar deneyin.",
+      "unsupported": "Bu dosya türü desteklenmiyor. .xlsx ya da .csv seçin.",
+      "empty": "Dosyada başlık satırından sonra veri bulunamadı.",
+      "read": "Dosya okunamadı. Bozuk olabilir ya da şifreli olabilir.",
+      "tooMany": "Dosya 5.000 satırdan fazla. Lütfen parçalara bölün."
+    },
+    "mapIntro": "{file}: {rows} satır, {columns} sütun. Sütunları alanlarla eşleyin (otomatik tahmin edildi).",
+    "fields": {
+      "fullName": "Ad Soyad (tek sütun)",
+      "firstName": "Ad",
+      "lastName": "Soyad",
+      "organization": "Kurum",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "city": "Şehir",
+      "district": "İlçe",
+      "branch": "Program / tür",
+      "note": "Not"
+    },
+    "notMapped": "— Eşleme yok —",
+    "sample": "Örnek: {value}",
+    "fullNameHint": "\"Ad Soyad\" tek sütunsa son kelime soyad kabul edilir. Telefonlar +90 biçimine çevrilir; mükerrer kontrolü bu biçimle yapılır.",
+    "crmFieldsHint": "CRM'e aktarımda program / tür ve not alanları yazılmaz (adayda bu alanlar yok). Bunları korumak için önce soğuk listeye aktarıp \"Sıcağa taşı\" ile not olarak ekleyebilirsiniz. Kurum adı ya da yetkili adı olmayan, telefonu ya da e-postası geçersiz satırlar aday olarak açılmaz.",
+    "needIdentity": "En az bir tanımlayıcı alan eşleyin: ad, kurum, telefon ya da e-posta.",
+    "stats": {
+      "rows": "satır",
+      "empty": "boş satır atlandı",
+      "invalidPhone": "geçersiz telefon",
+      "invalidEmail": "geçersiz e-posta",
+      "groups": "çakışma grubu"
+    },
+    "previewTitle": "Önizleme (ilk {count} / {total})",
+    "cols": {
+      "row": "Satır",
+      "name": "Ad Soyad"
+    },
+    "invalid": "geçersiz",
+    "dupTitle": "Mükerrer kontrolü: {count} çakışma",
+    "applyAll": "Tüm çakışmalarda:",
+    "resolutions": {
+      "skip": "Atla",
+      "merge": "Birleştir"
+    },
+    "resolutionLabel": "Bu çakışma için",
+    "resolutionHints": {
+      "skip": {
+        "existing": "Dosyadaki bu satırlar eklenmez; mevcut kayıt olduğu gibi kalır.",
+        "file": "Yalnız ilk satır eklenir, tekrarlar atlanır."
+      },
+      "merge": {
+        "existing": "Yeni kayıt açılmaz: listedeki mevcut kişinin boş alanları dosyadan tamamlanır (CRM adayına ve kurum kaydına dokunulmaz).",
+        "file": "Satırlar tek kayda birleştirilir: her alanda ilk dolu değer, notlar birleşik."
+      }
+    },
+    "samePhone": "Aynı telefon: {value}",
+    "sameEmail": "Aynı e-posta: {value}",
+    "fileRow": "dosya satır {row}",
+    "existing": {
+      "crm": "CRM'de aday",
+      "crmWithStatus": "CRM'de aday · {status}",
+      "coldList": "Soğuk listede: {list}",
+      "institutionDemo": "Kurum yetkilisi · demo",
+      "institutionPaid": "Kurum yetkilisi · ücretli"
+    },
+    "existingLoading": "Mevcut kayıtlar yükleniyor…",
+    "crmCompareFailed": "CRM adayları yüklenemedi; önizlemede CRM ile mükerrer kontrolü yapılamadı (sunucu kaydederken yine kontrol eder).",
+    "institutionsCompareFailed": "Kurum listesi yüklenemedi; önizlemede kurum yetkilileriyle mükerrer kontrolü yapılamadı (sunucu kaydederken yine kontrol eder).",
+    "coldCompareFailed": "Seçilen listenin kişileri yüklenemedi; önizlemede listeyle mükerrer kontrolü yapılamadı (sunucu kaydederken yine kontrol eder).",
+    "dupScope": "Karşılaştırma: dosyanın kendi içi, CRM adayları, kurum yetkilileri ve (soğuk liste hedefinde) seçilen liste. Sunucu kaydederken aynı kontrolü yeniden yapar ve mükerrer satırı hiçbir durumda eklemez.",
+    "noDuplicates": "Mükerrer bulunmadı.",
+    "showAllGroups": "Tüm {count} çakışmayı göster",
+    "listLabel": "Hangi listeye?",
+    "newList": "+ Yeni liste",
+    "newListPlaceholder": "Liste adı (ör. Eylül fuarı)",
+    "newListName": "Yeni liste adı",
+    "defaultListName": "İçe aktarılan liste",
+    "plan": {
+      "create": "eklenecek",
+      "merge": "birleştirilecek",
+      "skip": "atlanacak"
+    },
+    "checking": "Sunucu kontrol ediyor…",
+    "serverCheck": "Sunucu kontrolü: {created} aday eklenecek, {skipped} satır atlanacak.",
+    "serverCheckFailed": "Sunucu ön kontrolü yapılamadı: {error}. Yine de kaydedebilirsiniz; sunucu kaydederken kontrol eder.",
+    "confirmCrm": "CRM'e {count} yeni aday yazılacak (statü: {status}). Kayıtlar 500'erli parçalar hâlinde gider; istediğiniz an durdurabilirsiniz. Bu işlem geri alınamaz, adaylar Adaylar ekranından tek tek silinebilir.",
+    "confirmCold": "Kişiler ekiple paylaşılan soğuk listeye kaydedilir; sunucu mükerrerleri yeniden ayıklar.",
+    "confirmNewList": "Yeni liste: \"{name}\".",
+    "confirmExistingList": "Liste: \"{name}\".",
+    "mergeNoteCrm": "Birleştirilen satırlar için yeni aday açılmaz; mevcut CRM kaydı olduğu gibi kalır.",
+    "mergeNoteCold": "Birleştirilen satırlar listedeki mevcut kişinin yalnız boş alanlarını tamamlar.",
+    "startCrm": "Onayla ve {count} aday oluştur",
+    "startCold": "Onayla ve kaydet",
+    "summary": "{created} eklendi, {merged} birleştirildi, {skipped} atlandı.",
+    "stoppedNote": "Durduruldu: {count} satır gönderilmedi.",
+    "failedTitle": "{count} kayıt kaydedilemedi:",
+    "failedRow": "Satır {row} ({name})",
+    "failedChunk": "Satır {from}–{to} ({count} satır)",
+    "serverSkippedTitle": "Sunucu {count} satırı eklemedi:",
+    "serverSkippedRow": "Satır {row}: {reason}",
+    "skipReasons": {
+      "EMPTY": "boş satır",
+      "TOO_LONG": "çok uzun alan",
+      "IDENTITY_REQUIRED": "kurum adı ya da yetkili adı yok",
+      "INVALID_PHONE": "geçersiz telefon",
+      "INVALID_EMAIL": "geçersiz e-posta",
+      "DUPLICATE_IN_FILE": "dosyada tekrar",
+      "DUPLICATE_IN_LIST": "listede zaten var",
+      "DUPLICATE_CRM": "CRM'de aday olarak var",
+      "DUPLICATE_INSTITUTION": "kurum yetkilisi olarak kayıtlı"
+    },
+    "openList": "Listeyi aç",
+    "run": {
+      "progress": "{done} / {total} kaydediliyor…",
+      "stopping": "Durduruluyor — gönderilen parça bitince duracak…",
+      "stop": "Durdur",
+      "keepOpen": "İşlem bitene kadar bu pencereyi kapatmayın."
+    }
+  }
+}

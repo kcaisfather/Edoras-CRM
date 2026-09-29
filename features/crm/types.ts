@@ -22,3 +22,11 @@ export interface CrmTableActions {
 
 /** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata; ileride anket memnuniyeti). */
 export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction">;
+
+/**
+ * Ekranı kuran bileşenin verdiği parçalar: satır parçaları + üst satırdaki "İçe aktar (Excel/CSV)" düğmesi
+ * (soğuk listeler modülünden; crm → cold-lists bağımlılığı olmasın diye app/crm/_components/CrmScreen.tsx verir).
+ */
+export interface CrmScreenSlots extends CrmRowSlots {
+  renderImport?: () => ReactNode;
+}

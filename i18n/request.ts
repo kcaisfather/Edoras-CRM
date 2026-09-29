@@ -25,6 +25,8 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
   return {
     shell: (await import("@/messages/features/shell.tr.json")).default,
     settingsx: (await import("@/messages/features/settingsx.tr.json")).default,
+    // Soğuk listeler ve içe aktarma DeepSport'taki ad alanlarında: growth.coldLists, growth.import.
+    growth: (await import("@/messages/features/growth.tr.json")).default,
     // Görevler ve kurallar DeepSport'taki ad alanlarında: crm.tasks, crm.rules, crm.nav.
     crm: deepMergeMessages(
       (await import("@/messages/features/crm.tr.json")).default,

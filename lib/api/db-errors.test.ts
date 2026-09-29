@@ -56,6 +56,18 @@ describe("mapDbError", () => {
     ).toMatchObject({ status: 404, code: "NOT_FOUND" });
   });
 
+  it("soğuk liste kuralları: taşınmış kişi, liste içi mükerrer, silinmiş liste, istek sınırı", () => {
+    expect(mapDbError({ code: "P0001", message: "CRM_PROSPECT_ALREADY_MOVED" })).toMatchObject({ status: 409, code: "PROSPECT_ALREADY_MOVED" });
+    expect(mapDbError({ code: "P0001", message: "CRM_PROSPECT_LIST_NOT_FOUND" })).toMatchObject({ status: 404, code: "NOT_FOUND" });
+    expect(mapDbError({ code: "P0001", message: "CRM_PROSPECT_BATCH_TOO_LARGE" })).toMatchObject({ status: 413, code: "PAYLOAD_TOO_LARGE" });
+    expect(
+      mapDbError({ code: "23505", message: 'duplicate key value violates unique constraint "crm_prospects_list_phone_key"' })
+    ).toMatchObject({ status: 409, code: "PROSPECT_DUPLICATE" });
+    expect(
+      mapDbError({ code: "23503", message: 'insert or update on table "crm_prospects" violates foreign key constraint "crm_prospects_list_id_fkey"' })
+    ).toMatchObject({ status: 404, code: "NOT_FOUND" });
+  });
+
   it("migration'lardaki her CRM_ hata kodu bir API koduna eşlenir", () => {
     const dir = fileURLToPath(new URL("../../supabase/migrations/", import.meta.url));
     const raised = new Set<string>();

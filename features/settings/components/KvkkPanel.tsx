@@ -16,6 +16,8 @@ const INVENTORY: { key: string; sensitivity: Sensitivity }[] = [
   { key: "demoCredentials", sensitivity: "high" },
   { key: "institutionContact", sensitivity: "medium" },
   { key: "leads", sensitivity: "medium" },
+  // Soğuk liste kişileri (crm_prospects): CRM'e girmemiş, içe aktarılmış kişisel veri.
+  { key: "prospects", sensitivity: "medium" },
   { key: "payments", sensitivity: "medium" },
   { key: "institutionAdmins", sensitivity: "medium" },
   { key: "auditLog", sensitivity: "medium" },

@@ -76,6 +76,53 @@ export async function parseBody<S extends z.ZodType>(request: Request, schema: S
   const raw: unknown = await request.json().catch(() => {
     throw new HttpError(400, "VALIDATION");
   });
+  return validateBody(raw, schema);
+}
+
+/** Gövdeyi en çok `maxBytes` bayta kadar okur; aşarsa okumayı keser (413). */
+async function readTextLimited(request: Request, maxBytes: number): Promise<string> {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new HttpError(413, "PAYLOAD_TOO_LARGE");
+    }
+    chunks.push(value);
+  }
+  const buffer = new Uint8Array(size);
+  let offset = 0;
+  for (const c of chunks) {
+    buffer.set(c, offset);
+    offset += c.byteLength;
+  }
+  return new TextDecoder().decode(buffer);
+}
+
+/**
+ * Büyük gövdeli yazma isteği (toplu içe aktarma): önce boyut sınırı — bildirilen (Content-Length) ve okunan boyut —
+ * sonra şema. Sınırı aşan gövde ayrıştırılmadan 413 PAYLOAD_TOO_LARGE.
+ */
+export async function parseBoundedBody<S extends z.ZodType>(request: Request, schema: S, maxBytes: number): Promise<z.output<S>> {
+  assertSameOrigin(request);
+  const declared = Number(request.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > maxBytes) throw new HttpError(413, "PAYLOAD_TOO_LARGE");
+  const text = await readTextLimited(request, maxBytes);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new HttpError(400, "VALIDATION");
+  }
+  return validateBody(raw, schema);
+}
+
+function validateBody<S extends z.ZodType>(raw: unknown, schema: S): z.output<S> {
   const result = schema.safeParse(raw);
   if (!result.success) {
     const fields: Record<string, string> = {};

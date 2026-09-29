@@ -38,9 +38,16 @@ export type AuditAction =
   | "TASK_ASSIGNED"
   | "TASK_COMPLETED"
   | "TASK_REOPENED"
-  | "RULES_UPDATED";
+  | "RULES_UPDATED"
+  | "PROSPECT_LIST_CREATED"
+  | "PROSPECT_LIST_DELETED"
+  | "PROSPECTS_IMPORTED"
+  | "PROSPECT_UPDATED"
+  | "PROSPECT_DELETED"
+  | "PROSPECT_CONVERTED"
+  | "LEADS_IMPORTED";
 
-export type AuditEntityType = "institution" | "staff" | "lead" | "note" | "task" | "rules";
+export type AuditEntityType = "institution" | "staff" | "lead" | "note" | "task" | "rules" | "prospect_list" | "prospect";
 
 export interface AuditEntry {
   action: AuditAction;

@@ -45,6 +45,14 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_TASK_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
   CRM_TASK_INVALID: [400, "VALIDATION"],
   CRM_TASK_ACTOR_REQUIRED: [400, "VALIDATION"],
+  // 20260929180000_crm_prospects
+  CRM_PROSPECT_LIST_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_PROSPECT_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_PROSPECT_ALREADY_MOVED: [409, "PROSPECT_ALREADY_MOVED"],
+  CRM_PROSPECT_STATUS_INVALID: [400, "VALIDATION"],
+  CRM_PROSPECT_INVALID: [400, "VALIDATION"],
+  CRM_PROSPECT_BATCH_TOO_LARGE: [413, "PAYLOAD_TOO_LARGE"],
+  CRM_PROSPECT_ACTOR_REQUIRED: [400, "VALIDATION"],
 };
 
 /** CHECK / FK kısıt adı → kod. */
@@ -90,6 +98,19 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_rules_id_check: [400, "VALIDATION"],
   crm_rules_days_check: [400, "VALIDATION"],
   crm_rules_scheduled_check: [400, "VALIDATION"],
+  // 20260929180000_crm_prospects
+  crm_prospect_lists_name_check: [400, "VALIDATION"],
+  crm_prospect_lists_source_file_check: [400, "VALIDATION"],
+  crm_prospects_list_id_fkey: [404, "NOT_FOUND"],
+  crm_prospects_outcome_check: [400, "VALIDATION"],
+  crm_prospects_outcome_at_check: [400, "VALIDATION"],
+  crm_prospects_identity_check: [400, "VALIDATION"],
+  crm_prospects_phone_check: [400, "VALIDATION"],
+  crm_prospects_email_check: [400, "VALIDATION"],
+  crm_prospects_moved_check: [400, "VALIDATION"],
+  crm_prospects_length_check: [400, "VALIDATION"],
+  crm_prospects_list_phone_key: [409, "PROSPECT_DUPLICATE"],
+  crm_prospects_list_email_key: [409, "PROSPECT_DUPLICATE"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

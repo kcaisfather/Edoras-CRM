@@ -13,7 +13,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | | CRM projesi (`orishbqniebbgdanazrp`) | Edoras (`bmjkpxbrmwxuildwakly`) |
 | --- | --- | --- |
 | Ne | EdorasCRM'in kendi projesi | edoras-admin ve mobilin canlı veritabanı |
-| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
+| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
@@ -47,6 +47,11 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Elle atanan görev geçmiş güne atanamaz; atanan kişi aktif CRM personeli | `crm_tasks_guard` tetikleyicisi |
 | Tamamlama tek transaction: görev + sonuç notu + adayın statüsü / arama tarihi; geri al yalnız tamamlayan ya da ADMIN | `crm_complete_task`, `crm_reopen_task` |
 | Kural günü 0–365; "Planlanan arama" parametresiz | `crm_rules_days_check`, `crm_rules_scheduled_check` |
+| Soğuk liste kişisinin en az adı, kurumu, telefonu ya da e-postası olur; telefon E.164 (ham değerle), e-posta biçimli ve küçük harf | `crm_prospects_identity_check`, `crm_prospects_phone_check`, `crm_prospects_email_check` |
+| Aynı listede aynı telefon / e-posta bir kez; liste adı 1–120; alan uzunlukları aday sınırlarının altında | `crm_prospects_list_phone_key`, `crm_prospects_list_email_key`, `crm_prospect_lists_name_check`, `crm_prospects_length_check` |
+| Sonuç anı ancak ve ancak aranmış kişide; CRM bağı taşınma anı olmadan olmaz (tek yönlü: aday silinince bağ boşalır, taşınma anı kalır) | `crm_prospects_outcome_at_check`, `crm_prospects_moved_check` |
+| "Sıcağa taşı" tek transaction: aday (COLD_LIST) + not + taşındı işareti; adayı duran kişi ikinci kez taşınamaz | `crm_convert_prospect` (`CRM_PROSPECT_ALREADY_MOVED`) |
+| Toplu eklemede istek başına en çok 2000 satır; eşzamanlı eklemede liste içi mükerrer atlanır | `crm_add_prospects` |
 
 TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tckn/vkn`) ve TypeScript'te
 (`lib/domain/institutions/rules.ts`) birebir aynıdır. Test bunu 3.000 örnekle karşılaştırır.
@@ -58,7 +63,8 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    - CRM projesi: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - Edoras: `EDORAS_SUPABASE_URL`, `EDORAS_SUPABASE_SERVICE_ROLE_KEY` (edoras-admin'in `.env.local`'ındaki değerler)
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
-   `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları).
+   `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
+   `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -101,8 +107,22 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 - Görünürlük: kural görevleri ve atanmamış görevler ekip havuzu; atanmış görev yalnız atanan + ADMIN. ADMIN herkese,
   CRM_AGENT yalnız kendine ya da havuza atar. Kuralları yalnız ADMIN değiştirir (`/crm/rules`, Ayarlar → Kurallar).
 - Kural seti (Edoras: demo ve lisans 1 yıl): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine
-  60 gün kala, Süresi doldu (+0), Açık bakiye +7, Satış olmadı +90, Tarihsiz Aranacak/Takipte +0. Anket (5) ve soğuk
-  liste (2) kuralları modülleri gelince görev üretir. İç kurumlar görev üretmez.
+  60 gün kala, Süresi doldu (+0), Açık bakiye +7, Satış olmadı +90, Tarihsiz Aranacak/Takipte +0, Soğuk liste (aranmamış
+  kişi bugün, ulaşılamayan son denemeden +2). Anket (5) kuralı modülü gelince görev üretir. İç kurumlar görev üretmez.
+- Soğuk liste görevleri kişilerden türetilir (`lib/domain/tasks/cold.ts`), `crm_tasks`'a hiç yazılmaz: görevi kapatmak =
+  kişinin arama sonucunu girmek (`PATCH /api/crm/prospects/{id}`; Görüşüldü / İlgilenmiyor → düşer, Ulaşılamadı → N gün
+  sonra yeniden). CRM'de adayı ya da kurum kaydı olan, telefonu olmayan ve taşınmış kişiler görev olmaz. Aynı anda en çok
+  50 aranmamış kişi görev olur (eski liste, dosya sırası önce); menü rozeti soğuk liste görevlerini saymaz.
+
+### Soğuk listeler ve içe aktarma
+
+- Listeler ekipçe paylaşılır (DeepSport'ta tarayıcıdaydı). Her CRM kullanıcısı liste açar, içe aktarır, sonuç girer,
+  kişi siler ve "Sıcağa taşı" yapar; **listeyi yalnız ADMIN siler** (kişileriyle birlikte).
+- Excel (`read-excel-file`, yalnız ilk sayfa) ve CSV (UTF-8 / Windows-1254) tarayıcıda okunur; dosya sunucuya yüklenmez.
+  Sütun eşleme, önizleme ve mükerrer önizlemesi tarayıcıda; eşlenen ham alanlar 500'erli parçalar hâlinde gider.
+- Sunucu istemciye güvenmez: telefonu adaylarla aynı TR normalleştiricisinden, e-postayı veritabanı kuralıyla yeniden
+  hesaplar; mükerreri (aynı istek, aynı liste, CRM adayı, kurum yetkilisi) hiçbir koşulda eklemez ve `skipped`'te nedeniyle
+  döner. İstek başına en çok 2000 satır ve 2 MB. CRM adayı içe aktarmada onaydan önce `dryRun` ile sunucu raporu alınır.
 
 ## Klasörler
 
@@ -111,6 +131,7 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | `app/` | Sayfalar ve `/api` uçları |
 | `features/<ad>/` | Ekran bileşenleri, sorgular (`queries.ts`), yazımlar (`mutations.ts`); dışarıya `index.ts` |
 | `lib/domain/` | Saf iş kuralları (framework'süz, testli) |
+| `lib/import/` | İçe aktarma: dosya okuma, sütun eşleme, normalleştirme, mükerrer önizlemesi ve sunucu ayıklaması (saf, testli) |
 | `lib/server/` | Sunucu veri erişimi (`server-only`); Edoras erişimi yalnız `edoras.ts` |
 | `lib/api/` | İstemci ve sunucu API yardımcıları, hata kodları |
 | `components/` | Kabuk (menü, üst bar, komut paleti) ve UI kiti |
@@ -127,16 +148,16 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı Aktivite geçmişi ile gelecek) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
-| Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati, soğuk liste ve anket görevleri yok) |
+| Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati ve anket görevleri yok) |
+| Soğuk listeler + Excel/CSV içe aktarma (`/crm/cold-lists`, Adaylar → "İçe aktar"): liste seçici, sonuç süzgeci ve toplu sonuç kaydı, "Sıcağa taşı" (aday + not tek transaction), CSV, şablon; içe aktarma (sütun eşleme, önizleme, mükerrer çözümü, sunucu doğrulaması ve atlanan satırların nedenleri); Görevlerim'de "Soğuk liste araması" (kaynak süzgeci, sonuç gir); KVKK envanteri; `crm_prospect_lists`, `crm_prospects` | ✔ (Arama Kuyruğu / Süresi Dolacaklar / müşteri sekmelerindeki içe aktarma yok — ekranlar yok) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Soğuk listeler (+ Excel/CSV içe aktarma; `coldList` kuralı hazır, görev üretmeye başlar)
-2. Anketler (herkese açık `/s/[token]`; `surveyNoResponse` kuralı hazır)
-3. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
-4. Müşteri analizleri (yenileme, kullanım, segmentler)
-5. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-6. Raporlar (Resend)
-7. Aktivite geçmişi (`audit_logs`)
+1. Anketler (herkese açık `/s/[token]`; `surveyNoResponse` kuralı hazır)
+2. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
+3. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
+4. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
+5. Raporlar (Resend)
+6. Aktivite geçmişi (`audit_logs`)

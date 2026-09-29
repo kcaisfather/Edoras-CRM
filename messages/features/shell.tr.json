@@ -89,6 +89,13 @@
           "stored": "CRM veritabanı (crm_leads, crm_notes); CSV ile dışa aktarılabilir; tutarlar satış temsilcisine gönderilmez",
           "retention": "Tanımlı değil"
         },
+        "prospects": {
+          "category": "Soğuk liste kişileri",
+          "fields": "Ad soyad, kurum, telefon ve e-posta (dosyadaki ham hali + normalize), il/ilçe, program / tür, not; arama sonucu ve tarihi, CRM'e taşınma",
+          "screens": "Soğuk Listeler, Görevlerim (soğuk liste araması), İçe aktar (Excel/CSV)",
+          "stored": "CRM veritabanı (crm_prospect_lists, crm_prospects), ekipçe paylaşılır; içe aktarılan dosya sunucuya yüklenmez, yalnız eşlenen alanlar kaydedilir; CSV ile dışa aktarılabilir; işlem kaydına yalnız sayılar ve sonuç yazılır",
+          "retention": "Liste silinince kişileri de silinir (yalnız yönetici); \"Sıcağa taşı\" ile açılan CRM adayı adaylar kuralına tabidir"
+        },
         "payments": {
           "category": "Lisans ve ödeme kayıtları",
           "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi (kart bilgisi yok)",

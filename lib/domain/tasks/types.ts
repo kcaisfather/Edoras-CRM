@@ -2,6 +2,7 @@
  * Görev tipleri — API yanıtı (GET /api/crm/tasks) ve ekranlar bu şekilleri paylaşır.
  * Tablo: crm_tasks (supabase/migrations/20260929170000_crm_tasks.sql).
  */
+import type { ProspectOutcome } from "@/lib/domain/cold-lists/types";
 import type { TaskKind } from "./rules";
 
 /** Görev sonucu (SQL: crm_tasks_outcome_check). DeepSport'taki `[GOREV|kural|sonuç]` notunun sonuç alanı. */
@@ -19,7 +20,7 @@ export type TaskStatus = "OPEN" | "DONE";
 
 /**
  * GET /api/crm/tasks satırı. Açık kural görevleri sunucuda her istekte türetilir (saklanmaz); tamamlananlar ve
- * elle atananlar crm_tasks'tan gelir. Tutar taşımaz (bakiye görevinin tutarı ekranda adaydan, yalnız finans
+ * elle atananlar crm_tasks'tan gelir. Soğuk liste görevleri kişinin arama sonucundan türetilir, hiç saklanmaz. Tutar taşımaz (bakiye görevinin tutarı ekranda adaydan, yalnız finans
  * yetkisiyle okunur). Takvim günleri YYYY-MM-DD (Türkiye), zaman damgaları epoch ms.
  */
 export interface CrmTaskDto {
@@ -51,6 +52,26 @@ export interface CrmTaskDto {
   completedByName: string | null;
   createdBy: string | null;
   createdByName: string | null;
+  /**
+   * Yalnız soğuk liste görevinde (kind "coldList"): kişi CRM'de değil, soğuk listededir (lib/domain/tasks/cold.ts).
+   * Diğer görevlerde null.
+   */
+  prospect: TaskProspectDto | null;
+}
+
+/** Soğuk liste görevinin kişisi (görünüm ve iletişim menüsü için; CRM'e yazılmaz). */
+export interface TaskProspectDto {
+  id: string;
+  listId: string;
+  listName: string | null;
+  outcome: ProspectOutcome;
+  firstName: string;
+  lastName: string;
+  organization: string;
+  /** E.164; çevrilemediyse null (ham değer `phoneRaw`). */
+  phone: string | null;
+  phoneRaw: string;
+  email: string | null;
 }
 
 /** Görev atanabilecek kişi (GET /api/crm/tasks/assignees). */

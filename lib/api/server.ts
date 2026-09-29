@@ -57,7 +57,7 @@ export function route<Args extends unknown[]>(handler: (...args: Args) => Promis
  * Yazma isteği başka bir siteden gelemez (CSRF'e ek savunma; oturum çerezi zaten SameSite=Lax).
  * Tarayıcı Origin gönderiyorsa panelin kendi adresi olmalı.
  */
-function assertSameOrigin(request: Request) {
+export function assertSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return;
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");

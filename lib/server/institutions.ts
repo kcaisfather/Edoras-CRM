@@ -31,7 +31,9 @@ import type {
   Payment,
   PaymentMethod,
 } from "@/lib/domain/institutions/types";
+import { recordAudit } from "./audit";
 import { createCompensator } from "./compensation";
+import { internalInstitutionIds } from "./internal-institutions";
 import {
   createEdorasDemo,
   fetchAll,
@@ -83,9 +85,14 @@ function toCrmRecord(row: CrmRow): CrmRecord {
   };
 }
 
-function toListItem(inst: EdorasInstitution | null, crm: CrmRow | null, licenseEndsOn: string | null): InstitutionListItem {
+function toListItem(
+  inst: EdorasInstitution | null,
+  crm: CrmRow | null,
+  licenseEndsOn: string | null,
+  isInternal = false
+): InstitutionListItem {
   if (inst) {
-    return { ...inst, missingInEdoras: false, crm: crm ? toCrmRecord(crm) : null, licenseEndsOn };
+    return { ...inst, missingInEdoras: false, isInternal, crm: crm ? toCrmRecord(crm) : null, licenseEndsOn };
   }
   // Edoras'ta yok: yalnız CRM kaydından (kayıt anındaki ad).
   const row = crm as CrmRow;
@@ -95,6 +102,7 @@ function toListItem(inst: EdorasInstitution | null, crm: CrmRow | null, licenseE
     program: null,
     isActive: false,
     missingInEdoras: true,
+    isInternal,
     createdAt: null,
     crm: toCrmRecord(row),
     licenseEndsOn,
@@ -114,19 +122,24 @@ function latestEndByInstitution(rows: { institution_id: string; ends_on: string 
 
 export async function listInstitutions(): Promise<InstitutionListItem[]> {
   const crmDb = getSupabaseAdminClient();
-  const [institutions, crm, licenses] = await Promise.all([
+  const [institutions, crm, licenses, internal] = await Promise.all([
     listEdorasInstitutions(),
     fetchAll<CrmRow>((a, b) => crmDb.from("crm_institutions").select(CRM_COLUMNS).order("institution_id").range(a, b)),
     fetchAll<{ institution_id: string; ends_on: string }>((a, b) =>
       crmDb.from("crm_licenses").select("institution_id, ends_on").order("id").range(a, b)
     ),
+    internalInstitutionIds(),
   ]);
   const crmById = new Map(crm.map((r) => [r.institution_id, r]));
   const licenseEnd = latestEndByInstitution(licenses);
-  const items = institutions.map((inst) => toListItem(inst, crmById.get(inst.id) ?? null, licenseEnd.get(inst.id) ?? null));
+  const items = institutions.map((inst) =>
+    toListItem(inst, crmById.get(inst.id) ?? null, licenseEnd.get(inst.id) ?? null, internal.has(inst.id))
+  );
   const known = new Set(institutions.map((i) => i.id));
   for (const row of crm) {
-    if (!known.has(row.institution_id)) items.push(toListItem(null, row, licenseEnd.get(row.institution_id) ?? null));
+    if (!known.has(row.institution_id)) {
+      items.push(toListItem(null, row, licenseEnd.get(row.institution_id) ?? null, internal.has(row.institution_id)));
+    }
   }
   return items;
 }
@@ -146,7 +159,7 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
   const crmDb = getSupabaseAdminClient();
   const financial = staff.role === "ADMIN";
 
-  const [inst, crm, licenses, payments] = await Promise.all([
+  const [inst, crm, licenses, payments, internal] = await Promise.all([
     getEdorasInstitution(id),
     crmDb.from("crm_institutions").select(CRM_COLUMNS).eq("institution_id", id).maybeSingle(),
     crmDb
@@ -161,6 +174,7 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
           .eq("institution_id", id)
           .order("paid_on", { ascending: false })
       : Promise.resolve({ data: null, error: null }),
+    internalInstitutionIds(),
   ]);
   for (const r of [crm, licenses, payments]) if (r.error) throw dbError(r.error);
   const crmRow = (crm.data as CrmRow | null) ?? null;
@@ -190,7 +204,7 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
 
   const latestEnd = licenseList.reduce<string | null>((max, l) => (!max || l.endsOn > max ? l.endsOn : max), null);
   return {
-    ...toListItem(inst, crmRow, latestEnd),
+    ...toListItem(inst, crmRow, latestEnd, internal.has(id)),
     billing: financial && crmRow ? { address: crmRow.address, tcNo: crmRow.tc_no, taxNo: crmRow.tax_no } : null,
     licenses: licenseList,
     payments: paymentList,
@@ -264,6 +278,13 @@ export async function createDemoInstitution(input: NewDemoInput, staff: StaffCon
     if (error) throw dbError(error);
 
     const { data: crm } = await crmDb.from("crm_institutions").select("demo_ends_at").eq("institution_id", institutionId).maybeSingle();
+    await recordAudit(staff, {
+      action: "DEMO_CREATED",
+      entityType: "institution",
+      entityId: institutionId,
+      entityLabel: name,
+      details: { program: input.program, demoEndsAt: (crm?.demo_ends_at as string | undefined) ?? null },
+    });
     return {
       institutionId,
       loginEmail: contact.contactEmail,
@@ -285,6 +306,13 @@ export async function enrollInstitution(id: string, input: EnrollInput, staff: S
   if (!inst) throw new HttpError(404, "NOT_FOUND");
   const { error } = await getSupabaseAdminClient().rpc("crm_enroll_institution", enrollParams(id, inst.name, input, staff));
   if (error) throw dbError(error);
+  await recordAudit(staff, {
+    action: "INSTITUTION_ENROLLED",
+    entityType: "institution",
+    entityId: id,
+    entityLabel: inst.name,
+    details: { status: input.status },
+  });
 }
 
 /** Demo → ücretli: fatura bilgisi + 1 yıllık lisans (+ isteğe bağlı ilk ödeme), tek transaction. */
@@ -305,6 +333,12 @@ export async function convertToPaid(id: string, input: ConvertInput, staff: Staf
     p_created_by: staff.userId,
   });
   if (error) throw dbError(error);
+  await recordAudit(staff, {
+    action: "CONVERTED_TO_PAID",
+    entityType: "institution",
+    entityId: id,
+    details: { licenseStartsOn: license.startsOn, price: license.price, firstPayment: payment?.amount ?? null },
+  });
 }
 
 export async function renewLicense(id: string, price: number, staff: StaffContext): Promise<void> {
@@ -314,9 +348,10 @@ export async function renewLicense(id: string, price: number, staff: StaffContex
     p_created_by: staff.userId,
   });
   if (error) throw dbError(error);
+  await recordAudit(staff, { action: "LICENSE_RENEWED", entityType: "institution", entityId: id, details: { price } });
 }
 
-export async function updateContact(id: string, input: ContactInput): Promise<void> {
+export async function updateContact(id: string, input: ContactInput, staff: StaffContext): Promise<void> {
   const contact = toContact(input);
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_institutions")
@@ -329,9 +364,10 @@ export async function updateContact(id: string, input: ContactInput): Promise<vo
     .select("institution_id");
   if (error) throw dbError(error);
   if (!data?.length) throw new HttpError(404, "NOT_ENROLLED");
+  await recordAudit(staff, { action: "CONTACT_UPDATED", entityType: "institution", entityId: id });
 }
 
-export async function updateBilling(id: string, input: BillingInput): Promise<void> {
+export async function updateBilling(id: string, input: BillingInput, staff: StaffContext): Promise<void> {
   const billing = toBilling(input);
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_institutions")
@@ -340,6 +376,13 @@ export async function updateBilling(id: string, input: BillingInput): Promise<vo
     .select("institution_id");
   if (error) throw dbError(error);
   if (!data?.length) throw new HttpError(404, "NOT_ENROLLED");
+  // Değerler (adres, TC/VKN) kayda yazılmaz; yalnız hangi kimlik türünün girildiği.
+  await recordAudit(staff, {
+    action: "BILLING_UPDATED",
+    entityType: "institution",
+    entityId: id,
+    details: { idType: billing.taxNo ? "VKN" : "TC" },
+  });
 }
 
 /** Ödeme kaydı. Fatura bilgisi yoksa veritabanı reddeder (CRM_BILLING_REQUIRED). */
@@ -363,4 +406,10 @@ export async function recordPayment(id: string, input: PaymentInput, staff: Staf
     }
     throw dbError(error);
   }
+  await recordAudit(staff, {
+    action: "PAYMENT_RECORDED",
+    entityType: "institution",
+    entityId: id,
+    details: { amount: payment.amount, method: payment.method, paidOn: payment.paidOn },
+  });
 }

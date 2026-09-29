@@ -1,0 +1,148 @@
+{
+  "settings": {
+    "tabsLabel": "Ayar bölümleri",
+    "tabs": {
+      "general": "Genel",
+      "team": "Ekip",
+      "reports": "Raporlar",
+      "dataQuality": "Veri kalitesi",
+      "diagnostics": "Hata kaydı",
+      "kvkk": "KVKK"
+    },
+    "internal": {
+      "title": "İç ve sunum kurumları",
+      "description": "İşaretlenen kurumlar (ör. sunum ve test kurumları) ana sayfadaki sayılardan ve analizlerden çıkarılır. Listede \"İç\" etiketiyle görünmeye devam eder. Liste ekipçe paylaşılır.",
+      "empty": "Edoras'ta kurum yok.",
+      "note": "Not",
+      "notePlaceholder": "Ör. sunum kurumu",
+      "internal": "İç kurum",
+      "marked": "{name} iç kurum olarak işaretlendi.",
+      "unmarked": "{name} müşteri olarak sayılacak.",
+      "error": "Kaydedilemedi.",
+      "adminOnly": "Yalnız yöneticiler değiştirebilir."
+    },
+    "diagnostics": {
+      "title": "İstemci hata kaydı",
+      "description": "Bu sekmede yakalanan son {count} hata. Kişisel veriler (e-posta, telefon, token) maskelenir.",
+      "empty": "Bu oturumda hata yakalanmadı.",
+      "clear": "Kaydı temizle",
+      "copy": "Kopyala",
+      "copied": "Panoya kopyalandı",
+      "sources": {
+        "boundary": "Sayfa hatası",
+        "global-boundary": "Genel hata",
+        "window": "Script hatası",
+        "unhandledrejection": "Yakalanmamış istek/promise"
+      },
+      "requestsTitle": "Sayfa başına sunucu istekleri (bu oturum)",
+      "requestsEmpty": "Henüz istek ölçülmedi.",
+      "page": "Sayfa",
+      "count": "İstek",
+      "avg": "Ort. süre",
+      "max": "En uzun",
+      "failed": "Hatalı",
+      "note": "Kayıt yalnızca bu tarayıcı sekmesinde tutulur, sekme kapanınca silinir. Ekipçe görülen kalıcı izleme için Sentry benzeri bir servis gerekir."
+    },
+    "kvkk": {
+      "title": "KVKK / Gizlilik",
+      "inventoryTitle": "Veri envanteri",
+      "cols": {
+        "category": "Veri kategorisi",
+        "fields": "Panelde görünen alanlar",
+        "screens": "Ekranlar",
+        "stored": "Saklandığı yer",
+        "sensitivity": "Hassasiyet",
+        "retention": "Saklama süresi"
+      },
+      "sensitivity": {
+        "high": "Yüksek",
+        "medium": "Orta",
+        "low": "Düşük"
+      },
+      "rows": {
+        "billing": {
+          "category": "Fatura bilgisi",
+          "fields": "Açık adres, TC Kimlik No, Vergi No",
+          "screens": "Kurum ayrıntısı (yalnız yönetici)",
+          "stored": "CRM veritabanı; satış temsilcisine sunucudan hiç gönderilmez",
+          "retention": "Mali mevzuat süreleri (hukuk onayı gerekir)"
+        },
+        "demoCredentials": {
+          "category": "Demo giriş bilgisi",
+          "fields": "Kurum yöneticisinin e-postası ve geçici şifresi",
+          "screens": "Yeni demo penceresi",
+          "stored": "Şifre hiçbir yerde saklanmaz; bir kez gösterilir",
+          "retention": "—"
+        },
+        "institutionContact": {
+          "category": "Kurum yetkilisi iletişim",
+          "fields": "Ad soyad, telefon, e-posta",
+          "screens": "Kurumlar, kurum ayrıntısı",
+          "stored": "CRM veritabanı; CSV ile dışa aktarılabilir",
+          "retention": "Tanımlı değil"
+        },
+        "payments": {
+          "category": "Lisans ve ödeme kayıtları",
+          "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi (kart bilgisi yok)",
+          "screens": "Kurum ayrıntısı (yalnız yönetici)",
+          "stored": "CRM veritabanı",
+          "retention": "Mali mevzuat süreleri (hukuk onayı gerekir)"
+        },
+        "institutionAdmins": {
+          "category": "Kurum yöneticileri (Edoras)",
+          "fields": "Ad, e-posta",
+          "screens": "Kurum ayrıntısı",
+          "stored": "CRM'de saklanmaz; Edoras'tan canlı okunur",
+          "retention": "Edoras politikası"
+        },
+        "edorasUsage": {
+          "category": "Edoras kullanım sayıları",
+          "fields": "Öğrenci, öğretmen ve sınıf sayısı (öğrenci kişisel verisi CRM'e gelmez)",
+          "screens": "Kurum ayrıntısı",
+          "stored": "Saklanmaz; Edoras'tan canlı okunur",
+          "retention": "—"
+        },
+        "auditLog": {
+          "category": "İşlem kaydı",
+          "fields": "Personel, işlem, zaman, kurum",
+          "screens": "Aktivite geçmişi",
+          "stored": "CRM veritabanı; değiştirilemez ve silinemez",
+          "retention": "Tanımlı değil"
+        },
+        "staff": {
+          "category": "CRM personeli",
+          "fields": "Ad, e-posta, rol, son giriş",
+          "screens": "Ayarlar → Ekip",
+          "stored": "CRM veritabanı ve CRM Auth",
+          "retention": "Personel çıkarılana kadar"
+        },
+        "browserStorage": {
+          "category": "Bu tarayıcıda saklananlar",
+          "fields": "Oturum çerezi, tema, kenar çubuğu durumu (localStorage); maskeli hata kaydı ve istek sayıları (sessionStorage)",
+          "screens": "Panelin kendisi",
+          "stored": "Çerez / localStorage / sessionStorage",
+          "retention": "Oturum çıkışta, sessionStorage sekme kapanınca silinir"
+        }
+      },
+      "checklistTitle": "Uyum kontrol listesi",
+      "status": {
+        "done": "Panelde var",
+        "partial": "Kısmi",
+        "backend": "Geliştirme gerekli",
+        "legal": "Hukuk / süreç"
+      },
+      "checklist": {
+        "errorMasking": "İstemci hata kaydında e-posta, telefon ve token maskeleniyor.",
+        "noLocalPii": "Panel kurum ve kişi verisini tarayıcıya yazmıyor.",
+        "agentMasking": "Satış temsilcisine TC/VKN, adres ve tutarlar sunucudan gönderilmiyor.",
+        "rlsClosed": "CRM tabloları anon ve authenticated rollerine kapalı; yalnız sunucu erişiyor.",
+        "auditLog": "CRM'deki yazma işlemleri değiştirilemez bir işlem kaydına yazılıyor.",
+        "exportLog": "CSV dışa aktarımları henüz işlem kaydına yazılmıyor.",
+        "dsar": "Veri sahibi talepleri (erişim, silme, düzeltme) ve 30 günlük yanıt sayacı — talep tablosu gerekir.",
+        "retention": "Saklama süreleri, imha adayları listesi ve onaylı silme.",
+        "verbis": "VERBİS kaydı, aydınlatma metni ve veri işleme envanterinin hukukçuyla güncellenmesi."
+      },
+      "note": "Bu sayfa bilgilendirme amaçlıdır; hukuki görüş yerine geçmez."
+    }
+  }
+}

@@ -24,6 +24,11 @@ kopyalanıp Supabase'e taşındı; yeni modüller oradan taşınır. Ayrıntı: 
 7. **Yalnız Türkçe.** Metinler `messages/tr.json`'da. DeepSport'tan taşınan kodda `@/i18n/routing` →
    `@/lib/navigation` yapılır.
 8. **Node 20:** supabase-js sunucuda WebSocket ister → sunucu istemcilerine `SERVER_REALTIME` (`ws`) verilir.
+9. **Her yazma işlemi işlem kaydına yazılır** (`recordAudit` → `crm_audit_logs`, yalnız eklenir). `details`'e kişisel
+   veri (TC, VKN, adres, telefon, e-posta, şifre) yazılmaz.
+10. **Modül mesajları** `messages/features/<ad>.tr.json`'da; yeni dosya `i18n/request.ts` → `loadFeatureMessages`'e eklenir.
+11. **`useSearchParams` kullanan sayfa** (`useUrlParam` dahil) route dosyasında `<Suspense>` ile sarılır; yoksa derleme kırılır.
+12. **Migration testi** `supabase/tests/harness.ts` ile: tüm migration'lar sırayla uygulanır. Yeni migration → yeni test dosyası.
 
 ## Kararlar (kurucu, 2026-09-29)
 

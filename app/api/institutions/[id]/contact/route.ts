@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export const PATCH = route(async (request: Request, { params }: Ctx) => {
-  await requireStaff();
+  const staff = await requireStaff();
   const id = requireUuid((await params).id);
-  await updateContact(id, await parseBody(request, contactSchema));
+  await updateContact(id, await parseBody(request, contactSchema), staff);
   return ok({ ok: true });
 });

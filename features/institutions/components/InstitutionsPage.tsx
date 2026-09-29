@@ -163,6 +163,11 @@ export function InstitutionsPage() {
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-2">
                         {r.item.name}
+                        {r.item.isInternal ? (
+                          <span className="rounded border border-category-1/30 bg-category-1/10 px-1.5 text-[10px] font-semibold text-category-1">
+                            {t("internalBadge")}
+                          </span>
+                        ) : null}
                         {r.item.program ? (
                           <span className="rounded border border-border px-1.5 text-[10px] font-semibold text-muted-foreground">
                             {programLabel(r.item.program)}

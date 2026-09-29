@@ -96,7 +96,15 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | `components/` | Kabuk (menü, üst bar, komut paleti) ve UI kiti |
 | `messages/tr.json` | Tüm metinler |
 | `supabase/` | CRM projesinin migration'ı ve testi |
-| `scripts/` | `add-staff.mjs` |
+| `scripts/` | `add-staff.mjs` (ilk yönetici; sonrası Ayarlar → Ekip) |
+
+## Taşınan modüller
+
+| Modül | Durum |
+| --- | --- |
+| Kurumlar, demo, lisans, ödeme | ✔ |
+| Ayarlar: Genel, Ekip (hesap aç, rol, erişim, şifre sıfırla), Veri kalitesi (iç kurumlar), Hata kaydı, KVKK | ✔ |
+| İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı Aktivite geçmişi ile gelecek) |
 
 ## DeepSportAdmin'den sıradaki modüller
 

@@ -31,8 +31,11 @@ export function Dashboard() {
   const query = useInstitutions();
   const today = todayIso();
 
+  // İç / sunum kurumları sayılmaz (Ayarlar → Veri kalitesi).
+  const internalCount = (query.data ?? []).filter((i) => i.isInternal).length;
   const rows = useMemo<Row[]>(
-    () => (query.data ?? []).map((item) => ({ item, info: institutionStatus(item, today) })),
+    () =>
+      (query.data ?? []).filter((item) => !item.isInternal).map((item) => ({ item, info: institutionStatus(item, today) })),
     [query.data, today]
   );
   const count = (predicate: (r: Row) => boolean) => rows.filter(predicate).length;
@@ -60,7 +63,10 @@ export function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight">
           {user?.fullName ? t("greeting", { name: user.fullName.split(" ")[0] }) : t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("description")}
+          {internalCount > 0 ? ` · ${t("internalExcluded", { count: internalCount })}` : ""}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">

@@ -1,26 +1,11 @@
 /**
- * Migration testi — gerçek Postgres (PGlite, bellek içi) üzerinde; hiçbir Supabase projesine dokunmaz.
- * Migration CRM'in kendi projesine gider; Supabase'in sağladığı auth.users ve roller aşağıda taklit
- * edilir. Edoras veritabanı bu testin konusu değil (demo açmanın Edoras adımları lib/server/edoras.ts).
+ * CRM çekirdeği migration testi (20260929120000_crm_core) — gerçek Postgres (PGlite), düzenek harness.ts.
+ * Edoras veritabanı bu testin konusu değil (demo açmanın Edoras adımları lib/server/edoras.ts).
  */
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { addYears, isValidTckn, isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
-
-const MIGRATION = readFileSync(
-  fileURLToPath(new URL("../migrations/20260929120000_crm_core.sql", import.meta.url)),
-  "utf8"
-);
-
-const SUPABASE_STUB = `
-  create role anon nologin;
-  create role authenticated nologin;
-  create role service_role nologin bypassrls;
-  create schema auth;
-  create table auth.users (id uuid primary key default gen_random_uuid(), email text);
-`;
+import { createTestDb, helpers } from "./harness";
 
 const VALID_TCKN = "10000000146";
 const ADDRESS = "Atatürk Cad. No: 12, Bakırköy / İstanbul";
@@ -32,22 +17,8 @@ function withVknCheckDigit(nine: string): string {
 }
 
 let db: PGlite;
-
-async function one<T>(sql: string, params: unknown[] = []): Promise<T> {
-  const res = await db.query<T>(sql, params);
-  return res.rows[0];
-}
-
-/** Hata mesajını (ya da CHECK kısıtının adını) döndürür; hata yoksa null. */
-async function failure(sql: string, params: unknown[] = []): Promise<string | null> {
-  try {
-    await db.query(sql, params);
-    return null;
-  } catch (err) {
-    const e = err as { message?: string; constraint?: string };
-    return e.constraint ?? e.message ?? String(err);
-  }
-}
+const one = <T,>(sql: string, params: unknown[] = []) => helpers(db).one<T>(sql, params);
+const failure = (sql: string, params: unknown[] = []) => helpers(db).failure(sql, params);
 
 const ENROLL =
   "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::numeric, null)";
@@ -64,9 +35,7 @@ async function enrollDemo(name: string, start = todayIso()): Promise<string> {
 }
 
 beforeAll(async () => {
-  db = new PGlite();
-  await db.exec(SUPABASE_STUB);
-  await db.exec(MIGRATION);
+  db = await createTestDb();
 }, 60_000);
 
 afterAll(async () => {

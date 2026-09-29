@@ -33,6 +33,7 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_LICENSE_MISMATCH: [400, "VALIDATION"],
   CRM_BILLING_REQUIRED: [422, "BILLING_REQUIRED"],
   CRM_STATUS_INVALID: [400, "VALIDATION"],
+  CRM_LAST_ADMIN: [409, "LAST_ADMIN"],
 };
 
 /** CHECK / FK kısıt adı → kod. */

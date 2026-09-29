@@ -1,0 +1,87 @@
+{
+  "team": {
+    "title": "Ekip",
+    "invite": "CRM kullanıcısı ekle",
+    "you": "(sen)",
+    "empty": "CRM kullanıcısı yok.",
+    "loadError": "Ekip listesi yüklenemedi.",
+    "retry": "Tekrar dene",
+    "cancel": "Vazgeç",
+    "roles": {
+      "ADMIN": "Tam yetkili (yönetici)",
+      "CRM_AGENT": "Satış temsilcisi"
+    },
+    "roleHelp": {
+      "ADMIN": "Tüm paneli görür: kurumlar, lisanslar, ödemeler, fatura bilgisi, ekip ve tüm tutarlar.",
+      "CRM_AGENT": "Kurumları görür, demo açar, yetkili bilgisini düzenler. Tutarlar, TC/VKN ve adres gizlenir (sunucudan hiç gönderilmez); ücretliye geçiremez, ödeme kaydedemez."
+    },
+    "status": {
+      "ACTIVE": "Aktif",
+      "DISABLED": "Kapalı"
+    },
+    "cols": {
+      "name": "Ad",
+      "email": "E-posta",
+      "role": "Rol",
+      "status": "Durum",
+      "lastLogin": "Son giriş",
+      "actions": "İşlemler"
+    },
+    "securityNote": "Rol gizlemesi arayüzde de uygulanır ama asıl koruma sunucudadır: temsilciye tutar alanları hiç gönderilmez, yönetici uçları 403 verir. Kapatılan kullanıcı bir sonraki istekte panelden atılır.",
+    "blocks": {
+      "self": "Kendi rolünü ya da durumunu değiştiremezsin.",
+      "lastAdmin": "Son aktif yöneticiyi satış temsilcisi yapamaz ya da kapatamazsın.",
+      "same": "Rol zaten bu."
+    },
+    "confirmRole": {
+      "title": "Rol değiştirilsin mi?",
+      "body": "{name}: {from} → {to}. Değişiklik bir sonraki istekte uygulanır.",
+      "confirm": "Rolü değiştir"
+    },
+    "roleChanged": "{name} için rol güncellendi.",
+    "roleChangeError": "Rol değiştirilemedi.",
+    "disable": "Erişimi kapat",
+    "enable": "Erişimi aç",
+    "disabled": "{name} için erişim kapatıldı; panele giremez.",
+    "enabled": "{name} için erişim yeniden açıldı.",
+    "statusError": "Durum değiştirilemedi.",
+    "confirmDisable": {
+      "title": "Kullanıcının erişimi kapatılsın mı?",
+      "body": "{name} panele giremeyecek. Kayıtları ve işlem geçmişi korunur; istediğin zaman yeniden açabilirsin.",
+      "confirm": "Erişimi kapat"
+    },
+    "confirmEnable": {
+      "title": "Erişim yeniden açılsın mı?",
+      "body": "{name} panele yeniden girebilecek."
+    },
+    "resetPassword": "Şifre sıfırla",
+    "confirmReset": {
+      "title": "Şifre sıfırlansın mı?",
+      "body": "{name} için yeni bir geçici şifre üretilir; eski şifre geçersiz olur.",
+      "confirm": "Sıfırla"
+    },
+    "resetError": "Şifre sıfırlanamadı.",
+    "inviteTitle": "CRM kullanıcısı ekle",
+    "inviteDescription": "Kişinin CRM hesabı açılır ve geçici şifre bir kez gösterilir. İlk girişte Hesabım'dan değiştirmesini isteyin.",
+    "inviteEffect": "\"Hesabı aç\"a basınca CRM'de gerçek bir hesap oluşturulur. Edoras'a dokunulmaz.",
+    "fields": {
+      "email": "E-posta",
+      "firstName": "Ad",
+      "lastName": "Soyad",
+      "role": "Rol"
+    },
+    "inviteErrors": {
+      "emailInvalid": "Geçerli bir e-posta yaz.",
+      "emailExists": "Bu e-posta zaten ekipte.",
+      "nameRequired": "Ad zorunlu."
+    },
+    "sendInvite": "Hesabı aç",
+    "inviteError": "Hesap açılamadı.",
+    "credentialsTitle": "Giriş bilgisi",
+    "credentialsBody": "{email} için geçici şifre. Yalnız şimdi gösterilir, hiçbir yerde saklanmaz.",
+    "credentialsExisting": "{email} bu projede zaten bir hesaba sahipti; mevcut şifresiyle girer.",
+    "copyPassword": "Şifreyi kopyala",
+    "copied": "Kopyalandı",
+    "done": "Tamam"
+  }
+}

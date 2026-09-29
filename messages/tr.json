@@ -39,7 +39,10 @@
         "LICENSE_INVALID": "Lisans süresi 1 yıl olmalı.",
         "LICENSE_OVERLAP": "Bu tarihlerde kurumun başka bir lisansı var.",
         "DEMO_INVALID": "Demo tarihleri geçersiz (demo 1 dönem = 1 yıl sürer).",
-        "HAS_FINANCIAL_RECORDS": "Kurumun lisans ya da ödeme kaydı var; silinemez."
+        "HAS_FINANCIAL_RECORDS": "Kurumun lisans ya da ödeme kaydı var; silinemez.",
+        "STAFF_EXISTS": "Bu e-posta zaten ekipte.",
+        "SELF_CHANGE": "Kendi rolünü, durumunu ya da şifreni buradan değiştiremezsin.",
+        "LAST_ADMIN": "En az bir aktif yönetici kalmalı."
       }
     },
     "cancel": "İptal",
@@ -122,7 +125,7 @@
     "institutions": "Kurumlar",
     "institutionsAlertBadge": "{count} kurum aksiyon bekliyor",
     "sidebarCustomers": "Müşteriler",
-    "settings": "Hesabım",
+    "settings": "Ayarlar",
     "myProfile": "Hesabım",
     "logout": "Çıkış",
     "sidebarExpand": "Kenar çubuğunu genişlet",
@@ -165,6 +168,7 @@
     "title": "Ana Sayfa",
     "greeting": "Merhaba {name}",
     "description": "Kurumların durumu ve aksiyon bekleyenler",
+    "internalExcluded": "{count} iç kurum hariç",
     "kpi": {
       "all": "Toplam kurum",
       "paid": "Ücretli",
@@ -179,8 +183,10 @@
     }
   },
   "settings": {
-    "title": "Hesabım",
-    "description": "CRM hesabınız ve şifreniz",
+    "title": "Ayarlar",
+    "description": "Hesap, ekip, veri kalitesi ve gizlilik",
+    "appearance": "Görünüm ve oturum",
+    "theme": "Tema",
     "account": "Hesap",
     "name": "Ad Soyad",
     "email": "E-posta",
@@ -231,6 +237,7 @@
       "title": "Kurumlar",
       "description": "Edoras'taki tüm kurumlar: demo, ücretli ve CRM kaydı olmayanlar. Aksiyon bekleyenler üstte.",
       "newDemo": "Yeni demo",
+      "internalBadge": "İç",
       "filtersLabel": "Durum süzgeci",
       "billingOk": "Tam",
       "billingMissing": "Eksik",

@@ -25,6 +25,9 @@ export const API_ERROR_CODES = [
   "LICENSE_OVERLAP",
   "DEMO_INVALID",
   "HAS_FINANCIAL_RECORDS",
+  "STAFF_EXISTS",
+  "SELF_CHANGE",
+  "LAST_ADMIN",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

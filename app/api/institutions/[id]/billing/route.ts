@@ -8,8 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Fatura bilgisi (adres + TC/VKN) — yalnız ADMIN (kişisel veri, CRM_AGENT görmez). */
 export const PATCH = route(async (request: Request, { params }: Ctx) => {
-  await requireStaff({ role: "ADMIN" });
+  const staff = await requireStaff({ role: "ADMIN" });
   const id = requireUuid((await params).id);
-  await updateBilling(id, await parseBody(request, billingSchema));
+  await updateBilling(id, await parseBody(request, billingSchema), staff);
   return ok({ ok: true });
 });

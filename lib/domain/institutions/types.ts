@@ -27,6 +27,8 @@ export interface InstitutionListItem {
   isActive: boolean;
   /** CRM kaydı var ama kurum Edoras'ta bulunamadı (silinmiş). Ad, CRM'deki kayıt anı adıdır. */
   missingInEdoras: boolean;
+  /** İç / sunum kurumu (Ayarlar → Veri kalitesi): metriklerden hariç, listede "İç" etiketiyle. */
+  isInternal: boolean;
   createdAt: string | null;
   /** CRM kaydı yoksa null ("Kayıtsız": CRM öncesinden kalan kurum). */
   crm: CrmRecord | null;

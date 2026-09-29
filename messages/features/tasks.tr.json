@@ -28,7 +28,7 @@
       "expiredLicense": "Lisans bitti: {date}",
       "lostRecontact": "Satış olmadı: {date}",
       "undatedFollowUp": "Son güncelleme: {date}",
-      "surveyNoResponse": "Anket: {date}",
+      "surveyNoResponse": "Anket gönderildi: {date} · yanıt yok",
       "balance": "Kalan: {amount}",
       "balanceHidden": "Açık bakiye var",
       "coldList": "Liste: {list}",
@@ -192,9 +192,7 @@
       "days": "gün"
     },
     "activeLabel": "{rule} aktif",
-    "needsModule": {
-      "surveys": "Anketler modülü taşınınca görev üretir."
-    },
+    "needsModule": {},
     "noDays": "—",
     "save": "Kaydet",
     "saved": "Kurallar kaydedildi",

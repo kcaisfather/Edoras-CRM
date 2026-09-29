@@ -9,6 +9,13 @@ export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 /** Kurum yöneticilerinin girdiği Edoras paneli (demo giriş bilgisinde gösterilir). */
 export const EDORAS_PANEL_URL = process.env.NEXT_PUBLIC_EDORAS_PANEL_URL || "https://panel.edorasapp.ai";
 
+/**
+ * Panelin herkese açık adresi (ör. https://crm.edorasapp.ai) — anket linkleri ({APP_URL}/s/{token}) bununla kurulur.
+ * Boşsa sunucuda isteğin adresi, tarayıcıda `window.location.origin` kullanılır; üretimde tanımlayın (e-postadaki
+ * link vekil sunucunun iç adresini göstermesin).
+ */
+export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/+$/, "");
+
 /** Eksik ortam değişkeni — API uçları bunu 503 CONFIG_MISSING olarak döner. */
 export class MissingEnvError extends Error {
   constructor(public readonly variable: string) {

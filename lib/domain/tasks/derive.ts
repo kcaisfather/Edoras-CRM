@@ -59,6 +59,12 @@ export interface DeriveInput {
   internal: ReadonlySet<string>;
   /** Açık elle atanmış görevi olan adaylar ("Tarihsiz takip" onlarda üretilmez). */
   openAssignedLeadIds: ReadonlySet<string>;
+  /**
+   * Anket (kural surveyNoResponse): aday → yanıt bekleyen en son gönderilmiş / açılmış davetin gönderim günü (Türkiye,
+   * YYYY-MM-DD). Adayı olmayan davet kurumun bağlı adayına düşer; ikisi de yoksa burada yoktur
+   * (lib/domain/surveys/logic.ts → awaitingSurveyByLead).
+   */
+  surveys: ReadonlyMap<string, string>;
 }
 
 export interface DerivedTask {
@@ -113,6 +119,13 @@ function deriveLeadTasks(input: DeriveInput, r: Record<TaskKind, RuleConfig>, pu
     // 3) Satış olmadı → N gün sonra yeniden temas (planlanmış tarih yoksa).
     if (r.lostRecontact.enabled && status === "OLUMSUZ" && !lead.nextFollowUpAt) {
       at("lostRecontact", addDays(lead.updatedOn, r.lostRecontact.days), lead.updatedOn);
+    }
+
+    // 9) Anket gönderildi, yanıt yok → gönderimden N gün sonra "Anket araması" (her statüde; DeepSport ile aynı).
+    // Yanıt gelince ya da link süresi dolunca görev düşer; yeni davet gönderilince vade ileri kayar.
+    const surveySentOn = input.surveys.get(lead.id);
+    if (r.surveyNoResponse.enabled && surveySentOn) {
+      at("surveyNoResponse", addDays(surveySentOn, r.surveyNoResponse.days), surveySentOn);
     }
 
     // Aşağıdakiler eski Arama Kuyruğu nedenleri; "Satış olmadı" kayıtları hariç.
@@ -174,9 +187,10 @@ function deriveInstitutionTasks(
 }
 
 /**
- * Açık kural görevleri (tamamlanmışlar dahil — ayıklama `mergeTasks`'ta). Anket kuralı modülü taşınana kadar görev
- * üretmez. Soğuk liste görevleri (kural coldList) burada DEĞİL, kişilerden ayrıca türetilir (./cold.ts): saklanmaz,
- * bu yüzden tamamlama doğrulamasına (sunucu completionTarget) hiç girmez. Sıra: vade, sonra anahtar.
+ * Açık kural görevleri (tamamlanmışlar dahil — ayıklama `mergeTasks`'ta). Anket araması (surveyNoResponse) adaya
+ * bağlıdır: tamamlanınca crm_tasks'a aday görevi olarak yazılır. Soğuk liste görevleri (kural coldList) burada DEĞİL,
+ * kişilerden ayrıca türetilir (./cold.ts): saklanmaz, bu yüzden tamamlama doğrulamasına (sunucu completionTarget) hiç
+ * girmez. Sıra: vade, sonra anahtar.
  */
 export function deriveTasks(input: DeriveInput, rules: RuleConfig[], today: string): DerivedTask[] {
   const r = ruleMap(rules);

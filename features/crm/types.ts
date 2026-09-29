@@ -13,15 +13,18 @@ export interface CrmTableActions {
   /** "Tahsilat ekle" — satışı olan aday için (yalnız finans yetkisiyle verilir). */
   onAddCollection?: (lead: CrmLead) => void;
   /**
-   * Başka modüllerin satır parçaları (bağımlılık tersine çevrilir: crm → tasks / surveys yok). Görev ve
-   * anket modülleri taşınınca ekranı kuran bileşen verir; verilmezse çizilmez.
+   * Başka modüllerin satır parçaları (bağımlılık tersine çevrilir: crm → tasks / surveys yok). Ekranı kuran bileşen
+   * verir (app/crm/_components/CrmScreen.tsx); verilmezse çizilmez.
    */
   renderAssignTask?: (lead: CrmLead, opts?: { showLabel?: boolean }) => ReactNode;
+  /** Memnuniyet rozeti (anketler modülü; yalnız müşterinin anket yanıtından). */
   renderSatisfaction?: (lead: CrmLead) => ReactNode;
+  /** "Anket gönder" (anketler modülünün penceresi; DeepSport onSendSurvey). */
+  onSendSurvey?: (lead: CrmLead) => void;
 }
 
-/** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata; ileride anket memnuniyeti). */
-export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction">;
+/** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, memnuniyet rozeti, Anket gönder). */
+export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction" | "onSendSurvey">;
 
 /**
  * Ekranı kuran bileşenin verdiği parçalar: satır parçaları + üst satırdaki "İçe aktar (Excel/CSV)" düğmesi

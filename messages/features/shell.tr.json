@@ -96,6 +96,20 @@
           "stored": "CRM veritabanı (crm_prospect_lists, crm_prospects), ekipçe paylaşılır; içe aktarılan dosya sunucuya yüklenmez, yalnız eşlenen alanlar kaydedilir; CSV ile dışa aktarılabilir; işlem kaydına yalnız sayılar ve sonuç yazılır",
           "retention": "Liste silinince kişileri de silinir (yalnız yönetici); \"Sıcağa taşı\" ile açılan CRM adayı adaylar kuralına tabidir"
         },
+        "surveyInvitations": {
+          "category": "Anket davetleri",
+          "fields": "Alıcının adı soyadı, kurumu, e-postası, telefonu (davet anında aday / kurum kaydından), kanal, durum ve tarihleri (gönderim, açılma, yanıt), kişiye özel link, gönderen personel. Amaç: memnuniyet anketini iletmek ve yanıt vermeyeni hatırlatmak",
+          "screens": "Anketler (gönderimler, CSV), Adaylar (Anket gönder), Görevlerim (anket araması)",
+          "stored": "CRM veritabanı (crm_survey_invitations); link tahmin edilemez (256 bit) ve süreli; e-posta Resend üzerinden gider (adres ve metin sağlayıcıya iletilir); işlem kaydına e-posta / telefon yazılmaz",
+          "retention": "Link varsayılan 30 gün sonra çalışmaz; kayıt tarihçe olarak kalır (aday silinse de ad / kurum adıyla). Silme süresi tanımlı değil (hukuk onayı gerekir)"
+        },
+        "surveyResponses": {
+          "category": "Anket yanıtları",
+          "fields": "Tavsiye puanı (0–10), memnuniyet (1–5), serbest yorum (en çok 2000 karakter; müşteri kişisel veri yazabilir), yanıt tarihi. Amaç: hizmet kalitesini ölçmek; puanı yalnız müşteri verir",
+          "screens": "Anketler (yanıtlar, özet, CSV), memnuniyet rozeti (Adaylar, aday detayı, kurum ayrıntısı)",
+          "stored": "CRM veritabanı (crm_survey_responses), davet başına bir yanıt; herkese açık sayfa yalnız anket başlığını, sorularını ve alıcının ilk adını gösterir; yanıt işlem kaydına yazılmaz",
+          "retention": "Davet silinirse yanıtı da silinir; aday silinse de yanıt kalır (bağ boşalır). Silme süresi tanımlı değil (hukuk onayı gerekir)"
+        },
         "payments": {
           "category": "Lisans ve ödeme kayıtları",
           "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi (kart bilgisi yok)",
@@ -152,6 +166,7 @@
         "agentMasking": "Satış temsilcisine TC/VKN, adres ve tutarlar sunucudan gönderilmiyor.",
         "rlsClosed": "CRM tabloları anon ve authenticated rollerine kapalı; yalnız sunucu erişiyor.",
         "auditLog": "CRM'deki yazma işlemleri değiştirilemez bir işlem kaydına yazılıyor.",
+        "publicSurvey": "Herkese açık anket sayfası oturumsuz çalışır, yalnız anket sorularını ve alıcının ilk adını gösterir; link 256 bit rastgele ve süreli, uçlar oran sınırlı, arama motorlarına kapalı.",
         "exportLog": "CSV dışa aktarımları henüz işlem kaydına yazılmıyor.",
         "dsar": "Veri sahibi talepleri (erişim, silme, düzeltme) ve 30 günlük yanıt sayacı — talep tablosu gerekir.",
         "retention": "Saklama süreleri, imha adayları listesi ve onaylı silme.",

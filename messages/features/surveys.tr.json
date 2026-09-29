@@ -1,0 +1,243 @@
+{
+  "common": {
+    "cancel": "Vazgeç",
+    "copied": "Kopyalandı",
+    "copyFailed": "Kopyalanamadı — tarayıcı izin vermedi",
+    "csv": "CSV",
+    "truncated": "İlk {loaded} kayıt gösteriliyor (toplam {total}).",
+    "empty": "Kayıt yok",
+    "actions": "İşlemler",
+    "openLead": "Adaylar'da aç",
+    "openInstitution": "Kurum sayfası"
+  },
+  "page": {
+    "title": "Anketler",
+    "subtitle": "Kurum memnuniyeti: tavsiye puanı (NPS 0–10), memnuniyet (1–5) ve yorum. Puanı yalnızca müşteri verir.",
+    "preview": "Önizle",
+    "send": "Anket gönder",
+    "tabsLabel": "Anket bölümleri",
+    "previewTitle": "Müşterinin göreceği anket",
+    "previewNote": "Önizleme — buradan yanıt gönderilemez.",
+    "noSurvey": "Tanımlı anket bulunamadı (anket migration'ı uygulanmamış olabilir)."
+  },
+  "tabs": {
+    "summary": "Özet",
+    "invitations": "Gönderimler",
+    "responses": "Yanıtlar",
+    "survey": "Anket"
+  },
+  "definition": {
+    "title": "Varsayılan anket",
+    "subtitle": "Tek anket, tüm kurumlar için. Link {days} gün geçerli; aynı kişiye 7 gün içinde yanıtsız davet varsa yenisi açılmaz.",
+    "types": {
+      "NPS": "Tavsiye puanı (0–10)",
+      "CSAT": "Memnuniyet (1–5)",
+      "COMMENT": "Serbest yorum"
+    },
+    "required": "zorunlu",
+    "optional": "isteğe bağlı"
+  },
+  "summary": {
+    "invitations": "Gönderilen",
+    "responses": "Yanıt",
+    "last": "Son yanıt: {date}",
+    "rate": "Yanıt oranı",
+    "nps": "NPS",
+    "npsHint": "Destekçi % − eleştirmen %",
+    "csat": "Memnuniyet ort.",
+    "distribution": "NPS dağılımı",
+    "noResponses": "Henüz yanıt yok.",
+    "promoters": "Destekçi (9–10): {count}",
+    "passives": "Pasif (7–8): {count}",
+    "detractors": "Eleştirmen (0–6): {count}",
+    "awaiting": "{count} kişi {days}+ gündür yanıt vermedi — anket araması önerilir (Görevlerim'de de listelenir).",
+    "showAwaiting": "Listeyi aç"
+  },
+  "invitations": {
+    "resent": "E-posta yeniden gönderildi",
+    "resendFailed": "E-posta gönderilemedi",
+    "filterLabel": "Gönderim filtresi",
+    "filters": {
+      "all": "Tümü",
+      "notSent": "Gönderilmedi",
+      "awaiting": "Yanıt yok ({days}+ gün)",
+      "responded": "Yanıtlandı",
+      "failed": "Başarısız / süresi doldu"
+    },
+    "table": {
+      "recipient": "Alıcı",
+      "organization": "Kurum",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "channel": "Kanal",
+      "status": "Durum",
+      "sent": "Gönderim",
+      "responded": "Yanıt",
+      "sentBy": "Gönderen"
+    },
+    "channels": {
+      "EMAIL": "E-posta",
+      "WHATSAPP": "WhatsApp",
+      "SMS": "SMS",
+      "LINK": "Link"
+    },
+    "statuses": {
+      "CREATED": "Link hazır",
+      "SENT": "Gönderildi",
+      "OPENED": "Açıldı",
+      "RESPONDED": "Yanıtlandı",
+      "EXPIRED": "Süresi doldu",
+      "FAILED": "Başarısız"
+    },
+    "copyMessage": "Mesajı ve linki kopyala",
+    "whatsappReminder": "WhatsApp ile tekrar gönder",
+    "markSent": "Gönderdim",
+    "markSentHint": "Mesajı gönderdiyseniz işaretleyin; anket araması bu andan sayılır.",
+    "markedSent": "Gönderildi olarak işaretlendi",
+    "markSentFailed": "İşaretlenemedi",
+    "resendEmail": "E-postayı yeniden gönder",
+    "resendTitle": "E-posta yeniden gönderilsin mi?",
+    "resendBody": "Anket e-postası {email} adresine tekrar gönderilecek.",
+    "resendConfirm": "Yeniden gönder",
+    "mailOff": "E-posta gönderimi ayarlı değil; yeniden gönderilemez."
+  },
+  "responses": {
+    "filterLabel": "Yanıt filtresi",
+    "filters": {
+      "all": "Tümü",
+      "promoter": "Destekçi",
+      "passive": "Pasif",
+      "detractor": "Eleştirmen"
+    },
+    "table": {
+      "customer": "Müşteri",
+      "organization": "Kurum",
+      "comment": "Yorum",
+      "date": "Tarih"
+    }
+  },
+  "form": {
+    "npsQuestion": "Edoras'ı başka bir kuruma ya da bir meslektaşınıza tavsiye etme olasılığınız nedir?",
+    "npsAria": "Puan {n}",
+    "npsLow": "0 — Hiç tavsiye etmem",
+    "npsHigh": "10 — Kesinlikle tavsiye ederim",
+    "csatQuestion": "Kurumunuz olarak Edoras'tan genel olarak ne kadar memnunsunuz?",
+    "csatLabels": {
+      "1": "Hiç memnun değilim",
+      "2": "Memnun değilim",
+      "3": "Kararsızım",
+      "4": "Memnunum",
+      "5": "Çok memnunum"
+    },
+    "commentQuestion": "Eklemek istediğiniz bir şey var mı?",
+    "optional": "(isteğe bağlı)",
+    "commentPlaceholder": "Neyi sevdiniz, neyi geliştirmeliyiz?",
+    "previewSubmit": "Gönder (önizleme)",
+    "submit": "Gönder",
+    "errors": {
+      "npsRequired": "Lütfen 0–10 arasında bir puan seçin.",
+      "csatRequired": "Lütfen memnuniyet düzeyinizi seçin.",
+      "commentRequired": "Lütfen görüşünüzü yazın."
+    }
+  },
+  "public": {
+    "brand": "Edoras",
+    "privacy": "Yanıtınız yalnızca hizmetimizi iyileştirmek için kullanılır.",
+    "metaTitle": "Edoras memnuniyet anketi",
+    "loading": "Yükleniyor",
+    "expiredTitle": "Bu anketin süresi doldu",
+    "expiredBody": "Link artık geçerli değil. Görüşünüzü paylaşmak isterseniz bizimle doğrudan iletişime geçebilirsiniz.",
+    "invalidTitle": "Anket bulunamadı",
+    "invalidBody": "Link hatalı ya da eksik kopyalanmış olabilir. Size gönderilen mesajdaki linki tekrar açmayı deneyin.",
+    "errorBody": "Anket şu anda açılamadı. Lütfen biraz sonra tekrar deneyin.",
+    "rateLimitedBody": "Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.",
+    "thanksTitle": "Teşekkür ederiz!",
+    "thanksBody": "Yanıtınız bize ulaştı. Görüşleriniz Edoras'ı kurumunuz için geliştirmemize doğrudan yardımcı oluyor.",
+    "answeredTitle": "Bu anketi zaten yanıtladınız",
+    "answeredBody": "Katılımınız için teşekkür ederiz.",
+    "greetingNamed": "Merhaba {name},",
+    "greeting": "Merhaba,",
+    "intro": "Kurumunuzun Edoras deneyimini merak ediyoruz. Anket yaklaşık 1 dakika sürer.",
+    "submitError": "Yanıt gönderilemedi. Lütfen tekrar deneyin."
+  },
+  "send": {
+    "title": "Anket gönder",
+    "description": "Kişi seçin, kanalı belirleyin; onayladığınızda her kişi için ayrı link oluşturulur.",
+    "summary": "{ok} davet hazır · {failed} hata · {skipped} kişi atlandı",
+    "stoppedNote": "Gönderim durduruldu; kalan kişilere davet oluşturulmadı.",
+    "failedList": "Hata alınanlar: {names}",
+    "reused": "7 gün içinde gönderilmiş yanıtsız davet vardı; aynı link kullanıldı (e-posta tekrar gitmedi).",
+    "reusedTag": "Mevcut davet",
+    "afterHint": {
+      "WHATSAPP": "Her satırda WhatsApp'ı açıp mesajı kendiniz gönderin (otomatik gönderim yok), sonra \"Gönderdim\" deyin.",
+      "SMS": "Her satırda SMS uygulamasını açıp mesajı gönderin ya da metni kopyalayın, sonra \"Gönderdim\" deyin.",
+      "LINK": "Linkleri kopyalayıp istediğiniz kanaldan iletin, sonra \"Gönderdim\" deyin.",
+      "EMAIL": "E-postalar gönderildi. Mevcut davet dönen kişiler için linki kopyalayabilirsiniz."
+    },
+    "openWhatsapp": "WhatsApp",
+    "openSms": "SMS",
+    "copied": "Kopyalandı",
+    "copyFailed": "Kopyalanamadı",
+    "copyMessage": "Mesaj",
+    "copyLink": "Link",
+    "markSent": "Gönderdim",
+    "markedSent": "Gönderildi",
+    "channel": "Kanal",
+    "channels": {
+      "EMAIL": "E-posta",
+      "WHATSAPP": "WhatsApp",
+      "SMS": "SMS",
+      "LINK": "Yalnız link"
+    },
+    "channelHints": {
+      "EMAIL": "E-posta sunucudan gönderilir. E-postası olmayanlar atlanır.",
+      "WHATSAPP": "Link oluşturulur; mesajı WhatsApp'ta siz gönderirsiniz. Geçerli telefonu olmayanlar atlanır.",
+      "SMS": "Link oluşturulur; mesajı telefonunuzun SMS uygulamasından gönderirsiniz.",
+      "LINK": "Yalnızca kişiye özel link oluşturulur; istediğiniz kanaldan paylaşın."
+    },
+    "mailOff": "E-posta gönderimi ayarlı değil (sunucuda RESEND_API_KEY ve EMAIL_FROM). WhatsApp, SMS ya da link kullanın.",
+    "recipients": "Alıcılar (CRM adayları ve adayı olmayan kurumlar)",
+    "institutionTag": "Kurum",
+    "selectVisible": "Görünenleri seç ({count})",
+    "clear": "Temizle",
+    "searchPlaceholder": "Kurum, yetkili, e-posta veya telefon",
+    "noLeads": "Eşleşen kayıt yok",
+    "skip": {
+      "noEmail": "e-posta yok",
+      "noPhone": "telefon yok",
+      "noIdentity": "kayıt yok"
+    },
+    "listCapped": "İlk {shown} eşleşme gösteriliyor (toplam {total}); aramayı daraltın.",
+    "pickSomeone": "Henüz kimse seçilmedi.",
+    "preview": "{count} kişiye {channel} ile davet oluşturulacak · {skipped} kişi atlanacak.",
+    "tooMany": "Tek seferde en fazla {max} kişi.",
+    "progress": "{done} / {total}",
+    "stop": "Durdur",
+    "done": "Kapat",
+    "confirmEmail": "{count} kişiye e-posta gönder",
+    "confirmLinks": "{count} link oluştur",
+    "partial": "{ok} başarılı, {failed} hata",
+    "success": "{count} davet hazır",
+    "unexpectedError": "Gönderim tamamlanamadı. Davetler listesini kontrol edip tekrar deneyin.",
+    "searchLabel": "CRM kayıtlarında ara",
+    "noSurvey": "Tanımlı anket bulunamadı; gönderim yapılamaz."
+  },
+  "badge": {
+    "pending": "Anket yanıt bekliyor",
+    "none": "Anket yanıtı yok",
+    "title": "Son yanıt {date} · toplam {count} yanıt (müşterinin kendi puanı)",
+    "levels": {
+      "good": "Memnun",
+      "neutral": "Kararsız",
+      "bad": "Memnun değil"
+    },
+    "resendWhatsapp": "Anketi WhatsApp ile tekrar gönder"
+  },
+  "institutionCard": {
+    "title": "Memnuniyet anketi",
+    "last": "Son yanıt {date} · {count} yanıt",
+    "pendingSince": "Yanıt bekleyen davet: {date}",
+    "error": "Anket bilgisi yüklenemedi.",
+    "open": "Anketler"
+  }
+}

@@ -10,6 +10,7 @@ import { usePermissions } from "@/features/auth";
 import { CrmContactMenu, StatusBadge, ToneBadge, contactTargetFor } from "@/features/crm";
 import { InstitutionStatusBadge, formatPhone } from "@/features/institutions";
 import { ProspectContactActions } from "@/features/cold-lists";
+import { SurveyReminderButton } from "@/features/surveys";
 import { formatCrmDate, formatCurrency, getLeadTitle, getRemainingAmount } from "@/lib/domain/crm/utils";
 import type { CrmTask } from "@/lib/domain/tasks/view";
 import type { TaskProspectDto } from "@/lib/domain/tasks/types";
@@ -203,6 +204,15 @@ function CrmActions({ task, canUndo, undoing, onComplete, onUndo, onNote, onEdit
         </Button>
       )}
       <CrmContactMenu target={target} />
+      {/* Madde 7: anket araması — yanıtsız daveti WhatsApp ile tekrar gönder (bekleyen davet yoksa çizilmez). */}
+      {lead && task.status === "OPEN" && (task.kind === "surveyNoResponse" || task.type === "anket") && (
+        <SurveyReminderButton
+          leadId={lead.id}
+          institutionId={lead.institutionId}
+          phone={target.phone ?? inst?.crm?.contactPhone}
+          name={target.name}
+        />
+      )}
     </div>
   );
 }

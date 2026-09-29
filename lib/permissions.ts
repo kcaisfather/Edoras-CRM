@@ -2,9 +2,9 @@ import type { CurrentUser, PanelRole } from "@/lib/domain/auth/types";
 
 /**
  * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar, Görevlerim, Soğuk
- * listeler ve Satış Analizleri) açık — DeepSport'ta da CRM_AGENT soğuk listelere giriyordu; liste silme yalnız ADMIN
- * (DELETE /api/crm/prospect-lists/{id} 403). Tutarlar sunucuda boşaltılır, arayüzde FinancialOnly gizler.
- * Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
+ * listeler, Anketler ve Satış Analizleri) açık — DeepSport'ta da CRM_AGENT soğuk listelere ve anketlere giriyordu; liste
+ * silme yalnız ADMIN (DELETE /api/crm/prospect-lists/{id} 403). Tutarlar sunucuda boşaltılır, arayüzde FinancialOnly
+ * gizler. Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
  */
 export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/settings"] as const;
 
@@ -14,8 +14,15 @@ export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/setting
  */
 export const CRM_AGENT_DENIED_PATHS = ["/crm/rules"] as const;
 
-/** Oturum gerektirmeyen yollar (giriş sayfası). */
-export const PUBLIC_PATHS = ["/login"] as const;
+/**
+ * Müşteriye açık yollar (DeepSport PUBLIC_PATH_PREFIXES "/s/"): anket sayfası /s/[token] ve uçları /api/public/*.
+ * CRM oturumuyla ilgisi yoktur: proxy.ts oturum çerezine hiç dokunmaz (tazelemez, /login'e yollamaz), panel kabuğu
+ * çizilmez. Uçlar asla 401 dönmez; erişimi kişiye özel token belirler.
+ */
+export const CUSTOMER_PUBLIC_PATHS = ["/s", "/api/public"] as const;
+
+/** Oturum gerektirmeyen yollar: giriş sayfası + müşteriye açık anket yolları. */
+export const PUBLIC_PATHS = ["/login", ...CUSTOMER_PUBLIC_PATHS] as const;
 
 function matchesPrefix(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -24,6 +31,12 @@ function matchesPrefix(path: string, prefix: string): boolean {
 export function isPublicPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   return PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p));
+}
+
+/** Müşteriye açık yol mu (proxy.ts oturum işini atlar). */
+export function isCustomerPublicPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return CUSTOMER_PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p));
 }
 
 /** Rol bilinmiyorsa en dar yetki (fail-closed). */

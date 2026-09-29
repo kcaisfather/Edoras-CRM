@@ -58,7 +58,13 @@
         "TASK_NO_LEAD": "Bu görevin CRM adayı yok; statü ve arama tarihi değiştirilemez.",
         "PAYLOAD_TOO_LARGE": "İstek çok büyük. Dosyayı daha küçük parçalar hâlinde gönderin.",
         "PROSPECT_ALREADY_MOVED": "Kişi zaten CRM'e taşınmış.",
-        "PROSPECT_DUPLICATE": "Bu telefon ya da e-posta bu listede zaten var."
+        "PROSPECT_DUPLICATE": "Bu telefon ya da e-posta bu listede zaten var.",
+        "SURVEY_EXPIRED": "Anket linkinin süresi dolmuş.",
+        "SURVEY_ANSWERED": "Bu anket zaten yanıtlanmış.",
+        "SURVEY_NO_CONTACT": "Alıcının bu kanal için e-postası ya da telefonu yok.",
+        "MAIL_NOT_CONFIGURED": "E-posta gönderimi ayarlanmamış (RESEND_API_KEY ve EMAIL_FROM). WhatsApp, SMS ya da link kanalını kullanın.",
+        "MAIL_SEND_FAILED": "E-posta gönderilemedi. Davet listede \"Başarısız\" olarak duruyor; daha sonra yeniden gönderebilirsiniz.",
+        "RATE_LIMITED": "Çok fazla istek. Lütfen biraz sonra tekrar deneyin."
       }
     },
     "cancel": "İptal",
@@ -151,6 +157,8 @@
     "crmRulesDescription": "Otomatik takip ve arama görevi kuralları",
     "crmColdLists": "Soğuk Listeler",
     "crmColdListsDescription": "İçe aktarılan aday listeleri ve arama sonuçları",
+    "crmSurveys": "Anketler",
+    "crmSurveysDescription": "Memnuniyet anketi gönderimleri ve yanıtları",
     "sidebarCustomers": "Müşteriler",
     "sidebarCrm": "CRM",
     "sidebarAnalysis": "Analiz",

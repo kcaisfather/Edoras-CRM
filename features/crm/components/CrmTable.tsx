@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Building2, FlaskConical, HandCoins, HeartHandshake, MessageSquarePlus, Pencil } from "lucide-react";
+import { Building2, FlaskConical, HandCoins, HeartHandshake, MessageSquareHeart, MessageSquarePlus, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -177,9 +177,31 @@ function RowActions({ lead, actions, title, money }: { lead: CrmLead; actions: C
           <HandCoins />
         </Button>
       )}
+      <SendSurveyButton lead={lead} actions={actions} />
       {actions.renderAssignTask?.(lead)}
       <CrmContactMenu target={contactTargetFor(lead, title, money)} />
     </div>
+  );
+}
+
+/**
+ * "Anket gönder" (anketler modülü `onSendSurvey` verirse): adayın ya da bağlı kurum yetkilisinin e-postası / telefonu
+ * varsa (DeepSport: iletişimi olan lead). Satır, mobil kart ve detay penceresi aynı düğmeyi kullanır.
+ */
+export function SendSurveyButton({ lead, actions, onClick }: { lead: CrmLead; actions: CrmTableActions; onClick?: () => void }) {
+  const t = useTranslations("crm.list");
+  const crm = lead.institution?.crm;
+  if (!actions.onSendSurvey || !(lead.contactEmail || lead.contactPhone || crm?.contactEmail || crm?.contactPhone)) return null;
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={onClick ?? (() => actions.onSendSurvey?.(lead))}
+      aria-label={t("sendSurvey")}
+      title={t("sendSurvey")}
+    >
+      <MessageSquareHeart />
+    </Button>
   );
 }
 

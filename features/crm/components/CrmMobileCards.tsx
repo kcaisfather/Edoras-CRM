@@ -9,7 +9,7 @@ import { formatCrmDate, getLeadTitle } from "@/lib/domain/crm/utils";
 import type { CrmTableActions } from "../types";
 import { DissatisfiedBadge, ProgramBadges, StatusBadge } from "./CrmBadges";
 import { CrmContactMenu, contactTargetFor } from "./CrmContactMenu";
-import { CustomerBadge, LinkedMark, stop } from "./CrmTable";
+import { CustomerBadge, LinkedMark, SendSurveyButton, stop } from "./CrmTable";
 
 /** Mobil kart listesi — tabloyla aynı sade içerik; karta dokunmak detay penceresini açar. */
 export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: CrmTableActions }) {
@@ -93,6 +93,7 @@ export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: 
                     <FlaskConical />
                   </Button>
                 )}
+                <SendSurveyButton lead={lead} actions={actions} />
                 {actions.renderAssignTask?.(lead)}
                 <CrmContactMenu target={contactTargetFor(lead, title, canSeeFinancials)} />
               </div>

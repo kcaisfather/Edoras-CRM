@@ -39,7 +39,11 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
 let crmAdmin: SupabaseClient | null = null;
 let edorasAdmin: SupabaseClient | null = null;
 
-/** CRM projesi service_role istemcisi (RLS'i atlar). YALNIZ `requireStaff()` kapısından sonra. */
+/**
+ * CRM projesi service_role istemcisi (RLS'i atlar). YALNIZ `requireStaff()` kapısından sonra. Tek istisna: herkese açık
+ * anket uçları (lib/server/public-surveys.ts) — orada kapı kişiye özel tokendır ve yalnız crm_survey_open /
+ * crm_survey_submit fonksiyonları çağrılır.
+ */
 export function getSupabaseAdminClient(): SupabaseClient {
   crmAdmin ??= createClient(
     requireEnv("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL),

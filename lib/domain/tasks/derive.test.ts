@@ -15,7 +15,7 @@ import {
   type TaskInstitutionInput,
   type TaskLeadInput,
 } from "./derive";
-import { DEFAULT_RULES, normalizeRules } from "./rules";
+import { DEFAULT_RULES, RULES_NEEDING_MODULE, normalizeRules } from "./rules";
 import type { CrmTaskDto } from "./types";
 import { attachTaskSubjects, taskMatches } from "./view";
 
@@ -49,6 +49,7 @@ const input = (over: Partial<DeriveInput> = {}): DeriveInput => ({
   collections: new Map(),
   internal: new Set(),
   openAssignedLeadIds: new Set(),
+  surveys: new Map(),
   ...over,
 });
 const derive = (over: Partial<DeriveInput>, rules = DEFAULT_RULES, today = TODAY) => deriveTasks(input(over), rules, today);
@@ -194,7 +195,7 @@ describe("deriveTasks — kurum kuralları (demo ve lisans 1 yıl)", () => {
     expect(kinds(tasks)).toEqual(["lostRecontact"]);
   });
 
-  it("kapalı kurallar ve modülü gelmemiş kurallar görev üretmez", () => {
+  it("kapalı kurallar görev üretmez; anket kuralı yalnız yanıt bekleyen davetten, soğuk liste burada hiç", () => {
     const off = normalizeRules(DEFAULT_RULES.map((r) => ({ ...r, enabled: false })));
     const all = {
       leads: [lead({ status: "OLUMSUZ" }), lead({ id: L2, status: "TEKLIF_VERILDI", nextFollowUpAt: "2026-09-27" })],
@@ -203,6 +204,42 @@ describe("deriveTasks — kurum kuralları (demo ve lisans 1 yıl)", () => {
     expect(derive(all, off)).toEqual([]);
     const onlyModules = normalizeRules(DEFAULT_RULES.map((r) => ({ ...r, enabled: r.id === "surveyNoResponse" || r.id === "coldList" })));
     expect(derive(all, onlyModules)).toEqual([]);
+    expect(kinds(derive({ ...all, surveys: new Map([[L1, "2026-09-20"]]) }, onlyModules))).toEqual(["surveyNoResponse"]);
+    expect(derive({ ...all, surveys: new Map([[L1, "2026-09-20"]]) }, off)).toEqual([]);
+  });
+});
+
+describe("deriveTasks — anket araması (surveyNoResponse)", () => {
+  it("artık bir modül beklemiyor", () => {
+    expect(RULES_NEEDING_MODULE.surveyNoResponse).toBeUndefined();
+  });
+
+  it("gönderimden N gün sonra adayda; bağlam günü gönderim günü; her statüde", () => {
+    const tasks = derive({
+      leads: [lead(), lead({ id: L2, status: "OLUMSUZ", updatedOn: TODAY })],
+      surveys: new Map([
+        [L1, "2026-09-20"],
+        [L2, "2026-09-24"],
+      ]),
+    });
+    const survey = tasks.filter((t) => t.kind === "surveyNoResponse");
+    expect(survey).toEqual([
+      { key: `surveyNoResponse:${L1}:2026-09-25`, kind: "surveyNoResponse", leadId: L1, institutionId: null, dueDate: "2026-09-25", refDate: "2026-09-20" },
+      { key: `surveyNoResponse:${L2}:2026-09-29`, kind: "surveyNoResponse", leadId: L2, institutionId: null, dueDate: "2026-09-29", refDate: "2026-09-24" },
+    ]);
+    expect(derive({ leads: [lead()], surveys: new Map([[L1, "2026-09-20"]]) }, withRule("surveyNoResponse", { days: 2 }))[0].dueDate).toBe(
+      "2026-09-22"
+    );
+  });
+
+  it("CRM'de olmayan aday ve iç kurumun adayı görev üretmez", () => {
+    expect(derive({ leads: [lead()], surveys: new Map([[L2, "2026-09-20"]]) }).filter((t) => t.kind === "surveyNoResponse")).toEqual([]);
+    const internal = derive({
+      leads: [lead({ institutionId: I1 })],
+      internal: new Set([I1]),
+      surveys: new Map([[L1, "2026-09-20"]]),
+    });
+    expect(internal).toEqual([]);
   });
 });
 

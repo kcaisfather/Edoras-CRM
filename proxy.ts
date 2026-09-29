@@ -1,14 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { isPublicPath } from "@/lib/permissions";
+import { isCustomerPublicPath, isPublicPath } from "@/lib/permissions";
 import { SERVER_REALTIME } from "@/lib/supabase/realtime";
 
 /**
  * Oturum çerezini tazeler ve oturumsuz isteği /login'e yollar (Next 16: middleware → proxy).
  * Yetki (crm_staff) burada DEĞİL, /api uçlarında `requireStaff()` ile denetlenir; proxy yalnız
  * "oturum var mı" bakar. /api istekleri yönlendirilmez — uç 401 döner, istemci girişe atar.
+ *
+ * Müşteriye açık anket yolları (/s/*, /api/public/*) CRM oturumuyla ilgisizdir: Supabase istemcisi hiç kurulmaz,
+ * çerez okunmaz / tazelenmez, /login'e yönlendirilmez. Token URL'de olduğu için Referer gönderilmez ve arama
+ * motorlarına kapalıdır.
  */
 export async function proxy(request: NextRequest) {
+  if (isCustomerPublicPath(request.nextUrl.pathname)) {
+    const open = NextResponse.next();
+    open.headers.set("Referrer-Policy", "no-referrer");
+    open.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return open;
+  }
+
   let response = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

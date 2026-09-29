@@ -13,7 +13,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | | CRM projesi (`orishbqniebbgdanazrp`) | Edoras (`bmjkpxbrmwxuildwakly`) |
 | --- | --- | --- |
 | Ne | EdorasCRM'in kendi projesi | edoras-admin ve mobilin canlı veritabanı |
-| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
+| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
@@ -52,6 +52,11 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Sonuç anı ancak ve ancak aranmış kişide; CRM bağı taşınma anı olmadan olmaz (tek yönlü: aday silinince bağ boşalır, taşınma anı kalır) | `crm_prospects_outcome_at_check`, `crm_prospects_moved_check` |
 | "Sıcağa taşı" tek transaction: aday (COLD_LIST) + not + taşındı işareti; adayı duran kişi ikinci kez taşınamaz | `crm_convert_prospect` (`CRM_PROSPECT_ALREADY_MOVED`) |
 | Toplu eklemede istek başına en çok 2000 satır; eşzamanlı eklemede liste içi mükerrer atlanır | `crm_add_prospects` |
+| Anket soruları dizi, her soru `{ id, type: NPS\|CSAT\|COMMENT, text?, required }`, her tür bir kez; en çok bir varsayılan anket; link 1–365 gün | `crm_surveys_questions_check`, `crm_surveys_default_key`, `crm_surveys_link_valid_days_check` |
+| Davet token'ı ≥ 43 karakter base64url ve benzersiz (sunucuda 32 bayt rastgele); e-posta kanalında e-posta, WhatsApp / SMS'te telefon (E.164) | `crm_survey_invitations_token_check` / `_token_key`, `_contact_check`, `_phone_check`, `_email_check` |
+| Davet durumu ↔ anları tutarlı; davet açılırken aday ya da kurum zorunlu; token ve anket değişmez; RESPONDED geri dönmez | `crm_survey_invitations_state_check`, `crm_survey_invitations_guard` |
+| Aynı alıcıya 7 gün içinde yanıtsız, süresi dolmamış davet varsa yenisi açılmaz (alıcı başına kilit) | `crm_create_survey_invitation` |
+| Davet başına bir yanıt; NPS 0–10, memnuniyet 1–5, yorum ≤ 2000; zorunlu sorular; süresi dolmuş link yanıt almaz (tek transaction) | `crm_survey_responses_invitation_key`, `crm_survey_submit` (`CRM_SURVEY_EXPIRED` / `_ANSWERED` / `_ANSWER_INVALID`) |
 
 TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tckn/vkn`) ve TypeScript'te
 (`lib/domain/institutions/rules.ts`) birebir aynıdır. Test bunu 3.000 örnekle karşılaştırır.
@@ -62,9 +67,13 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
 2. `.env.local` (örnek: `.env.example`):
    - CRM projesi: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - Edoras: `EDORAS_SUPABASE_URL`, `EDORAS_SUPABASE_SERVICE_ROLE_KEY` (edoras-admin'in `.env.local`'ındaki değerler)
+   - Anketler: `NEXT_PUBLIC_APP_URL` (anket linklerinin kökü, ör. `https://crm.edorasapp.ai`; boşsa isteğin / tarayıcının
+     adresi — üretimde tanımlayın). İsteğe bağlı e-posta: `RESEND_API_KEY` + `EMAIL_FROM` (ikisi de doluysa "E-posta"
+     kanalı açılır; yoksa kanal kapalı, WhatsApp / SMS / Link sağlayıcısız çalışır)
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
    `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
-   `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri).
+   `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri, `20260929190000_crm_surveys.sql` anketler, davetler
+   ve yanıtlar).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -92,7 +101,9 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
                               └──► Edoras (service_role, lib/server/edoras.ts): kurumlar, demo açma
 ```
 
-- `proxy.ts` oturum çerezini tazeler, oturumsuz isteği `/login`'e yollar.
+- `proxy.ts` oturum çerezini tazeler, oturumsuz isteği `/login`'e yollar. Müşteriye açık anket yolları (`/s/*`,
+  `/api/public/*`; `lib/permissions.ts` → `CUSTOMER_PUBLIC_PATHS`) bunun dışındadır: çerez okunmaz / tazelenmez,
+  yönlendirme yok, panel kabuğu çizilmez.
 - Tarayıcıdaki Supabase istemcisi yalnız giriş/çıkış/şifre içindir. Veri her zaman `/api` üzerinden gelir.
 - CRM_AGENT'a tutar, TC/VKN ve adres **sunucuda** boşaltılır; yalnız arayüzde gizlenmez.
 - Geçici şifre yalnız demo açma yanıtında gösterilir, hiçbir yerde saklanmaz.
@@ -108,7 +119,11 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
   CRM_AGENT yalnız kendine ya da havuza atar. Kuralları yalnız ADMIN değiştirir (`/crm/rules`, Ayarlar → Kurallar).
 - Kural seti (Edoras: demo ve lisans 1 yıl): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine
   60 gün kala, Süresi doldu (+0), Açık bakiye +7, Satış olmadı +90, Tarihsiz Aranacak/Takipte +0, Soğuk liste (aranmamış
-  kişi bugün, ulaşılamayan son denemeden +2). Anket (5) kuralı modülü gelince görev üretir. İç kurumlar görev üretmez.
+  kişi bugün, ulaşılamayan son denemeden +2), Anket araması (gönderilmiş / açılmış, yanıtsız ve süresi dolmamış davet →
+  gönderimden +5; aday başına en son davet). İç kurumlar görev üretmez.
+- Anket araması adaya bağlıdır (`crm_tasks_subject_check` kurumu yalnız kurum kurallarına açar; şema değiştirilmedi):
+  kurumdan açılan davet kurumun bağlı adayına düşer, adayı olmayan kurumun daveti görev üretmez. Görevde "Anketi
+  WhatsApp ile tekrar gönder" düğmesi çıkar.
 - Soğuk liste görevleri kişilerden türetilir (`lib/domain/tasks/cold.ts`), `crm_tasks`'a hiç yazılmaz: görevi kapatmak =
   kişinin arama sonucunu girmek (`PATCH /api/crm/prospects/{id}`; Görüşüldü / İlgilenmiyor → düşer, Ulaşılamadı → N gün
   sonra yeniden). CRM'de adayı ya da kurum kaydı olan, telefonu olmayan ve taşınmış kişiler görev olmaz. Aynı anda en çok
@@ -123,6 +138,28 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 - Sunucu istemciye güvenmez: telefonu adaylarla aynı TR normalleştiricisinden, e-postayı veritabanı kuralıyla yeniden
   hesaplar; mükerreri (aynı istek, aynı liste, CRM adayı, kurum yetkilisi) hiçbir koşulda eklemez ve `skipped`'te nedeniyle
   döner. İstek başına en çok 2000 satır ve 2 MB. CRM adayı içe aktarmada onaydan önce `dryRun` ile sunucu raporu alınır.
+
+### Anketler (herkese açık `/s/[token]`)
+
+- Puanı **yalnız müşteri** verir (NPS 0–10, memnuniyet 1–5, yorum); panelde puan giriş alanı ve yazma ucu yoktur.
+  Panel uçları (`/api/crm/surveys/*`) her CRM kullanıcısına açık (DeepSport'ta da ADMIN ve CRM_AGENT).
+- Davet alıcısı CRM adayı ve / veya kurumdur; sunucu ad / e-posta / telefonu aday ya da kurum kaydından kendisi okur
+  (istemcinin yazdığı adrese anket gitmez). Token sunucuda `crypto.randomBytes(32)` → base64url. Aynı alıcıya 7 gün
+  içinde yanıtsız davet varsa yenisi açılmaz, o döner (`reused`; e-posta tekrar gitmez).
+- Kanallar: **E-posta** sunucudan Resend REST API'siyle (`lib/server/mail.ts`, SDK yok; `RESEND_API_KEY` + `EMAIL_FROM`
+  yoksa kanal kapalı, uç 503 `MAIL_NOT_CONFIGURED`; gönderilemezse davet FAILED + 502). **WhatsApp / SMS / Link**
+  sağlayıcısız: sunucu linki üretir (CREATED), personel wa.me / sms: / kopyala ile kendisi gönderir ve "Gönderdim" der
+  (`POST /api/crm/surveys/invitations/{id}/sent` → SENT). E-posta yeniden gönderme yalnız EMAIL davetinde.
+- Zamanlayıcı yok: süre dolumu okurken hesaplanır (ekranda EXPIRED; link ilk açılışta tembelce EXPIRED yazılır).
+- Herkese açık uçlar `GET /api/public/surveys/{token}` (davet OPENED olur) ve `POST …/responses` oturumsuzdur, **asla 401
+  dönmez** (geçersiz 404, süresi dolmuş 410, yanıtlanmış 409, oran sınırı 429); service_role yalnız sunucuda ve yalnız
+  `crm_survey_open` / `crm_survey_submit` için. Yanıt yalnız anket başlığı, giriş metni, sorular ve alıcının ilk adını
+  taşır; gövde ≤ 16 KB. Oran sınırı `lib/server/rate-limit.ts`: IP + token başına kayan pencere (okuma 30 / 10 dk, yazma
+  10 / 10 dk) + IP başına 120 / 10 dk — **bellek içi, tek Node süreci için**; çok örnekli / sunucusuz dağıtımda paylaşılan
+  depo (Redis / Postgres) gerekir.
+- Memnuniyet rozeti (Adaylar tablosu, mobil kart, aday detayı; kurum ayrıntısında "Memnuniyet anketi" kartı) son yanıttan;
+  liste rozetleri tek istekle (`GET /api/crm/surveys/satisfaction`). Eleştirmen yanıtında otomatik ticket / görev yok
+  (DeepSport ile aynı): şikâyet kaydı adayın notlarından elle (`SIKAYET`).
 
 ## Klasörler
 
@@ -148,16 +185,16 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı Aktivite geçmişi ile gelecek) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
-| Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati ve anket görevleri yok) |
+| Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati yok) |
 | Soğuk listeler + Excel/CSV içe aktarma (`/crm/cold-lists`, Adaylar → "İçe aktar"): liste seçici, sonuç süzgeci ve toplu sonuç kaydı, "Sıcağa taşı" (aday + not tek transaction), CSV, şablon; içe aktarma (sütun eşleme, önizleme, mükerrer çözümü, sunucu doğrulaması ve atlanan satırların nedenleri); Görevlerim'de "Soğuk liste araması" (kaynak süzgeci, sonuç gir); KVKK envanteri; `crm_prospect_lists`, `crm_prospects` | ✔ (Arama Kuyruğu / Süresi Dolacaklar / müşteri sekmelerindeki içe aktarma yok — ekranlar yok) |
+| Anketler (`/crm/surveys`, herkese açık `/s/[token]`): özet (NPS, dağılım, yanıt oranı, memnuniyet ort.), gönderimler (süzgeç, CSV, kopyala / WhatsApp hatırlatması / "Gönderdim" / e-postayı yeniden gönder), yanıtlar (süzgeç, CSV), anket tanımı ve önizleme; "Anket gönder" (Adaylar satırı, mobil kart, aday detayı; sayfadan toplu: adaylar + adayı olmayan kurumlar); memnuniyet rozeti (tablo, mobil kart, detay) ve kurum ayrıntısında memnuniyet kartı; Görevlerim'de "Anket araması" (`surveyNoResponse`) + WhatsApp hatırlatması; e-posta Resend ile (isteğe bağlı); KVKK envanteri; `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses` | ✔ (eleştirmen ticket'ı yok — DeepSport'ta da yok) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Anketler (herkese açık `/s/[token]`; `surveyNoResponse` kuralı hazır)
-2. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
-3. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
-4. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-5. Raporlar (Resend)
-6. Aktivite geçmişi (`audit_logs`)
+1. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
+2. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
+3. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
+4. Raporlar (Resend — `lib/server/mail.ts` hazır)
+5. Aktivite geçmişi (`audit_logs`)

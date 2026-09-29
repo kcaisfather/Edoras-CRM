@@ -17,6 +17,7 @@ import { StatusBadge } from "./CrmBadges";
 import { CrmCollectionHistory } from "./CrmCollectionHistory";
 import { CrmContactMenu, contactTargetFor } from "./CrmContactMenu";
 import { CrmLeadInstitution } from "./CrmLeadInstitution";
+import { SendSurveyButton } from "./CrmTable";
 
 const NOTE_LIMIT = 8;
 
@@ -67,6 +68,7 @@ function DetailBody({ lead, onOpenChange, actions }: { lead: CrmLead; onOpenChan
         <SheetDescription className="flex flex-wrap items-center gap-2">
           {subtitle && <span>{subtitle}</span>}
           <StatusBadge status={lead.status} />
+          {actions.renderSatisfaction?.(lead)}
         </SheetDescription>
       </SheetHeader>
 
@@ -88,6 +90,7 @@ function DetailBody({ lead, onOpenChange, actions }: { lead: CrmLead; onOpenChan
         >
           <MessageSquareWarning />
         </Button>
+        <SendSurveyButton lead={lead} actions={actions} onClick={run(actions.onSendSurvey)} />
         {actions.renderAssignTask?.(lead, { showLabel: true })}
         <CrmContactMenu target={contactTargetFor(lead, title, canSeeFinancials)} />
       </div>

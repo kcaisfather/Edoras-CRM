@@ -19,6 +19,9 @@ kopyalanıp Supabase'e taşındı; yeni modüller oradan taşınır. Ayrıntı: 
    doğrulanır, sonra CRM projesine uygulanır (MCP `supabase-crm` → yalnız CRM projesi; `.mcp.json`).
 5. **Veri yalnız `/api` üzerinden.** Her uç `requireStaff()` ile başlar; ADMIN işi `requireStaff({ role: "ADMIN" })`.
    CRM_AGENT'a tutar/TC/VKN/adres sunucuda boşaltılır. `service_role` anahtarları yalnız `lib/supabase/server.ts`.
+   Tek istisna müşteriye açık anket yolları (`/s/*`, `/api/public/*`, `lib/permissions.ts` → `CUSTOMER_PUBLIC_PATHS`):
+   oturum yok; yalnız token ile çalışır, oran sınırlıdır (`lib/server/public-surveys.ts`) ve yalnız anket içeriği ile
+   alıcının ilk adını döndürür. Bu listeye yeni yol eklemek güvenlik kararıdır.
 6. **Hata metni istemciye gitmez.** Veritabanı hatası `lib/api/db-errors.ts` ile koda çevrilir. PostgREST
    `details` alanı satırın tamamını (TC dahil) taşıdığı için ne döndürülür ne loglanır.
 7. **Yalnız Türkçe.** Metinler `messages/tr.json`'da. DeepSport'tan taşınan kodda `@/i18n/routing` →

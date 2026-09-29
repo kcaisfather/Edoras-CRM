@@ -1,6 +1,7 @@
 /**
  * Panelin kendi /api/* uçlarına istemci. Oturum çerezle gider (aynı origin); token saklanmaz.
  */
+import { isPublicPath } from "@/lib/permissions";
 import { isApiErrorCode, type ApiErrorCode, type ApiErrorBody } from "./error-codes";
 
 export class ApiError extends Error {
@@ -15,10 +16,13 @@ export class ApiError extends Error {
   }
 }
 
-/** Oturum düştüyse girişe yollar (React dışı: router yok). Giriş sayfasındaysa dokunmaz. */
+/**
+ * Oturum düştüyse girişe yollar (React dışı: router yok). Giriş sayfasında ve müşteriye açık anket sayfasında (/s/*)
+ * dokunmaz — müşteri hiçbir koşulda panel girişine atılmaz.
+ */
 function handleUnauthorized() {
   if (typeof window === "undefined") return;
-  if (window.location.pathname.startsWith("/login")) return;
+  if (isPublicPath(window.location.pathname)) return;
   window.location.href = "/login";
 }
 

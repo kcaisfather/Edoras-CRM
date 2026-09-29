@@ -19,12 +19,14 @@ import {
 } from "@/lib/domain/tasks/derive";
 import { isInstitutionRule, type RuleConfig } from "@/lib/domain/tasks/rules";
 import { deriveColdListTasks } from "@/lib/domain/tasks/cold";
+import { awaitingSurveyByLead } from "@/lib/domain/surveys/logic";
 import { crmContactSets } from "@/lib/domain/cold-lists/utils";
 import type { CompleteTaskValues } from "@/lib/domain/tasks/schemas";
 import type { AssignmentType, CrmTaskDto, CrmTaskKind, TaskOutcome, TaskStatus, TeamMember } from "@/lib/domain/tasks/types";
 import { recordAudit } from "./audit";
 import { listTaskProspects } from "./crm-prospects";
 import { getRules } from "./crm-rules";
+import { awaitingSurveyInvitations } from "./crm-surveys";
 import { fetchAll } from "./edoras";
 import { internalInstitutionIds } from "./internal-institutions";
 
@@ -39,6 +41,9 @@ import { internalInstitutionIds } from "./internal-institutions";
  * - Tutar taşınmaz (bakiye görevi yalnız "bakiye var" der; tutar ekranda adaydan, yalnız ADMIN'e).
  * - Soğuk liste görevleri (kural coldList) soğuk liste kişilerinden türetilir (lib/domain/tasks/cold.ts); saklanmaz,
  *   tamamlanmaz (kişinin arama sonucu girilir), menü rozetine sayılmaz. Yalnız liste ucu (listTasks) okur.
+ * - Anket araması (kural surveyNoResponse) gönderilmiş / açılmış, yanıtsız davetlerden türetilir; adaya bağlıdır (adayı
+ *   olmayan kurum davetinde kurumun bağlı adayı; o da yoksa görev yok — crm_tasks_subject_check kurum yalnız kurum
+ *   kurallarına izin verir, şema değiştirilmedi).
  * - İşlem kaydına not metni yazılmaz; yalnız tür, anahtar, sonuç ve statü geçişi.
  */
 
@@ -120,7 +125,7 @@ interface TaskContext {
 /** Türetmenin bütün girdisi (yalnız CRM projesi). Tablolar küçük; sayfalama fetchAll ile. */
 async function loadContext(): Promise<TaskContext> {
   const db = getSupabaseAdminClient();
-  const [rules, leads, institutions, licenses, payments, internal, tasks, names] = await Promise.all([
+  const [rules, leads, institutions, licenses, payments, internal, tasks, names, surveyInvites] = await Promise.all([
     getRules(),
     fetchAll<LeadRow>((a, b) =>
       db
@@ -153,6 +158,7 @@ async function loadContext(): Promise<TaskContext> {
     internalInstitutionIds(),
     fetchAll<TaskRow>((a, b) => db.from("crm_tasks").select(TASK_COLUMNS).order("id").range(a, b)),
     staffNames(),
+    surveyFollowUpInvites(),
   ]);
 
   const licenseEnd = new Map<string, string>();
@@ -166,6 +172,10 @@ async function loadContext(): Promise<TaskContext> {
   }
   const stored = tasks.map(toStored);
   const leadOfInstitution = new Map(leads.filter((l) => l.institution_id).map((l) => [l.institution_id as string, l.id]));
+  const surveys = new Map<string, string>();
+  for (const [leadId, sentAt] of awaitingSurveyByLead(surveyInvites, leadOfInstitution, Date.now())) {
+    surveys.set(leadId, todayIso(new Date(sentAt)));
+  }
 
   return {
     input: {
@@ -189,6 +199,7 @@ async function loadContext(): Promise<TaskContext> {
       openAssignedLeadIds: new Set(
         stored.filter((s) => s.kind === "assigned" && s.status === "OPEN" && s.leadId).map((s) => s.leadId as string)
       ),
+      surveys,
     },
     rules,
     stored,
@@ -199,6 +210,19 @@ async function loadContext(): Promise<TaskContext> {
       ...institutions.map((i) => ({ phone: i.contact_phone, email: i.contact_email })),
     ]),
   };
+}
+
+/**
+ * Anket araması girdisi; anket migration'ı (20260929190000) henüz uygulanmamışsa (CONFIG_MISSING) Görevlerim'in geri
+ * kalanı çalışsın diye boş döner — Anketler ekranı aynı hatayı açıkça gösterir.
+ */
+async function surveyFollowUpInvites() {
+  try {
+    return await awaitingSurveyInvitations();
+  } catch (err) {
+    if (err instanceof HttpError && err.code === "CONFIG_MISSING") return [];
+    throw err;
+  }
 }
 
 /**

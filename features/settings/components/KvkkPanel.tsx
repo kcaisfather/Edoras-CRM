@@ -18,6 +18,9 @@ const INVENTORY: { key: string; sensitivity: Sensitivity }[] = [
   { key: "leads", sensitivity: "medium" },
   // Soğuk liste kişileri (crm_prospects): CRM'e girmemiş, içe aktarılmış kişisel veri.
   { key: "prospects", sensitivity: "medium" },
+  // Anketler: davet (alıcı iletişimi + kişiye özel link) ve müşterinin yanıtı (puan + serbest yorum).
+  { key: "surveyInvitations", sensitivity: "medium" },
+  { key: "surveyResponses", sensitivity: "medium" },
   { key: "payments", sensitivity: "medium" },
   { key: "institutionAdmins", sensitivity: "medium" },
   { key: "auditLog", sensitivity: "medium" },
@@ -33,6 +36,7 @@ const CHECKLIST: { key: string; status: Status }[] = [
   { key: "agentMasking", status: "done" },
   { key: "rlsClosed", status: "done" },
   { key: "auditLog", status: "done" },
+  { key: "publicSurvey", status: "done" },
   { key: "exportLog", status: "partial" },
   { key: "dsar", status: "backend" },
   { key: "retention", status: "backend" },

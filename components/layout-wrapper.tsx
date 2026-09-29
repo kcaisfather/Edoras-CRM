@@ -28,7 +28,7 @@ function useRouteGuard(pathname: string | null | undefined) {
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Giriş sayfası: panel kabuğu yok, oturum/rol hook'ları çalışmaz.
+  // Giriş sayfası ve müşteriye açık anket sayfası (/s/*): panel kabuğu yok, oturum/rol hook'ları çalışmaz.
   if (isPublicPath(pathname)) return <>{children}</>;
   return <PanelShell pathname={pathname}>{children}</PanelShell>;
 }

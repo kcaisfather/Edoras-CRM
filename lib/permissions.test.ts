@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessPathFor, filterNavGroups, homePathFor, isPublicPath, panelRoleOf } from "./permissions";
+import { canAccessPathFor, filterNavGroups, homePathFor, isCustomerPublicPath, isPublicPath, panelRoleOf } from "./permissions";
 
 describe("permissions", () => {
   it("rol bilinmiyorsa en dar yetki", () => {
@@ -43,10 +43,29 @@ describe("permissions", () => {
     expect(homePathFor("CRM_AGENT")).toBe("/dashboard");
   });
 
-  it("herkese açık yol yalnız giriş", () => {
+  it("herkese açık yollar: giriş + müşteriye açık anket sayfası ve uçları", () => {
     expect(isPublicPath("/login")).toBe(true);
+    expect(isPublicPath("/s/AbC_123-token")).toBe(true);
+    expect(isPublicPath("/api/public/surveys/tok")).toBe(true);
+    expect(isPublicPath("/api/public/surveys/tok/responses")).toBe(true);
     expect(isPublicPath("/institutions")).toBe(false);
+    expect(isPublicPath("/settings")).toBe(false);
+    expect(isPublicPath("/sales")).toBe(false);
+    expect(isPublicPath("/api/publicx")).toBe(false);
+    expect(isPublicPath("/api/crm/surveys")).toBe(false);
     expect(isPublicPath(null)).toBe(false);
+  });
+
+  it("müşteriye açık yol: proxy oturuma dokunmaz; giriş sayfası bu grupta değil", () => {
+    expect(isCustomerPublicPath("/s/tok")).toBe(true);
+    expect(isCustomerPublicPath("/api/public/surveys/tok")).toBe(true);
+    expect(isCustomerPublicPath("/login")).toBe(false);
+    expect(isCustomerPublicPath("/crm/surveys")).toBe(false);
+    expect(isCustomerPublicPath("/settings")).toBe(false);
+  });
+
+  it("CRM_AGENT Anketler'e girer", () => {
+    expect(canAccessPathFor("CRM_AGENT", "/crm/surveys")).toBe(true);
   });
 });
 

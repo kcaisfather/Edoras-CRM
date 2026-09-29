@@ -53,6 +53,15 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_PROSPECT_INVALID: [400, "VALIDATION"],
   CRM_PROSPECT_BATCH_TOO_LARGE: [413, "PAYLOAD_TOO_LARGE"],
   CRM_PROSPECT_ACTOR_REQUIRED: [400, "VALIDATION"],
+  // 20260929190000_crm_surveys (herkese açık uçlar: geçersiz token 404, süresi dolmuş 410, yanıtlanmış 409 — asla 401)
+  CRM_SURVEY_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_SURVEY_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_SURVEY_EXPIRED: [410, "SURVEY_EXPIRED"],
+  CRM_SURVEY_ANSWERED: [409, "SURVEY_ANSWERED"],
+  CRM_SURVEY_ANSWER_INVALID: [400, "VALIDATION"],
+  CRM_SURVEY_RECIPIENT_REQUIRED: [400, "VALIDATION"],
+  CRM_SURVEY_ACTOR_REQUIRED: [400, "VALIDATION"],
+  CRM_SURVEY_INVALID: [400, "VALIDATION"],
 };
 
 /** CHECK / FK kısıt adı → kod. */
@@ -111,6 +120,22 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_prospects_length_check: [400, "VALIDATION"],
   crm_prospects_list_phone_key: [409, "PROSPECT_DUPLICATE"],
   crm_prospects_list_email_key: [409, "PROSPECT_DUPLICATE"],
+  // 20260929190000_crm_surveys
+  crm_survey_invitations_survey_id_fkey: [404, "NOT_FOUND"],
+  crm_survey_invitations_lead_id_fkey: [404, "NOT_FOUND"],
+  crm_survey_invitations_contact_check: [422, "SURVEY_NO_CONTACT"],
+  crm_survey_invitations_email_check: [422, "CONTACT_INVALID"],
+  crm_survey_invitations_phone_check: [422, "CONTACT_INVALID"],
+  crm_survey_invitations_token_check: [400, "VALIDATION"],
+  crm_survey_invitations_channel_check: [400, "VALIDATION"],
+  crm_survey_invitations_status_check: [400, "VALIDATION"],
+  crm_survey_invitations_state_check: [400, "VALIDATION"],
+  crm_survey_invitations_length_check: [400, "VALIDATION"],
+  crm_survey_responses_invitation_key: [409, "SURVEY_ANSWERED"],
+  crm_survey_responses_nps_check: [400, "VALIDATION"],
+  crm_survey_responses_csat_check: [400, "VALIDATION"],
+  crm_survey_responses_comment_check: [400, "VALIDATION"],
+  crm_survey_responses_answer_check: [400, "VALIDATION"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

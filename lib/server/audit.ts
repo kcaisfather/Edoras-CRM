@@ -45,9 +45,23 @@ export type AuditAction =
   | "PROSPECT_UPDATED"
   | "PROSPECT_DELETED"
   | "PROSPECT_CONVERTED"
-  | "LEADS_IMPORTED";
+  | "LEADS_IMPORTED"
+  // Anketler: e-posta / telefon / yorum yazılmaz; kanal ve bağlı aday / kurum kimliği yeter. Müşterinin (herkese açık
+  // sayfadan) yanıtı işlem kaydına yazılmaz — personel işlemi değildir ve kişisel veri taşır.
+  | "SURVEY_INVITATION_CREATED"
+  | "SURVEY_INVITATION_SENT"
+  | "SURVEY_INVITATION_RESENT";
 
-export type AuditEntityType = "institution" | "staff" | "lead" | "note" | "task" | "rules" | "prospect_list" | "prospect";
+export type AuditEntityType =
+  | "institution"
+  | "staff"
+  | "lead"
+  | "note"
+  | "task"
+  | "rules"
+  | "prospect_list"
+  | "prospect"
+  | "survey_invitation";
 
 export interface AuditEntry {
   action: AuditAction;

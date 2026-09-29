@@ -42,7 +42,12 @@
         "HAS_FINANCIAL_RECORDS": "Kurumun lisans ya da ödeme kaydı var; silinemez.",
         "STAFF_EXISTS": "Bu e-posta zaten ekipte.",
         "SELF_CHANGE": "Kendi rolünü, durumunu ya da şifreni buradan değiştiremezsin.",
-        "LAST_ADMIN": "En az bir aktif yönetici kalmalı."
+        "LAST_ADMIN": "En az bir aktif yönetici kalmalı.",
+        "LEAD_IDENTITY_REQUIRED": "Kurum adı ya da yetkilinin adı girilmeli.",
+        "LEAD_ALREADY_LINKED": "Aday zaten bir kuruma bağlı.",
+        "LEAD_INSTITUTION_TAKEN": "Bu kurum başka bir adaya bağlı; bir kuruma yalnız bir aday bağlanabilir.",
+        "LEAD_NOT_LINKED": "Aday bir kuruma bağlı değil; tahsilat için önce kuruma bağlayın.",
+        "NOTE_NOT_OWNER": "Notu yalnız yazan ya da yönetici değiştirebilir."
       }
     },
     "cancel": "İptal",
@@ -124,14 +129,32 @@
     "dashboard": "Ana Sayfa",
     "institutions": "Kurumlar",
     "institutionsAlertBadge": "{count} kurum aksiyon bekliyor",
+    "crmLeads": "Adaylar",
+    "crmLeadsDescription": "Potansiyel ve mevcut müşteri kurumların satış takibi",
+    "crmAnalytics": "Satış Analizleri",
+    "crmAnalyticsDescription": "Satış hunisi ve satış kırılımları",
     "sidebarCustomers": "Müşteriler",
+    "sidebarCrm": "CRM",
+    "sidebarAnalysis": "Analiz",
     "settings": "Ayarlar",
     "myProfile": "Hesabım",
     "logout": "Çıkış",
     "sidebarExpand": "Kenar çubuğunu genişlet",
     "sidebarCollapse": "Kenar çubuğunu daralt",
     "menu": "Menü",
-    "shellControls": "Genel kontroller"
+    "shellControls": "Genel kontroller",
+    "periodLabel": "Dönem",
+    "periodAll": "Tümü",
+    "periodDaily": "Günlük",
+    "periodWeekly": "Haftalık",
+    "periodMonthly": "Aylık",
+    "periodCustom": "Özel Aralık",
+    "datePickerCancel": "İptal",
+    "datePickerApply": "Uygula",
+    "datePickerStart": "Başlangıç",
+    "datePickerEnd": "Bitiş",
+    "datePickerPrevMonth": "Önceki ay",
+    "datePickerNextMonth": "Sonraki ay"
   },
   "shell": {
     "infoTip": {
@@ -145,7 +168,7 @@
     "palette": {
       "open": "Ara ve git (⌘K / Ctrl+K)",
       "title": "Komut paleti",
-      "description": "Sayfalara git, yeni demo aç ya da kurum ara.",
+      "description": "Sayfalara git, yeni demo ya da aday aç, kurum ara.",
       "placeholder": "Sayfa, kurum, yetkili, e-posta veya telefon ara…",
       "newDemo": "Yeni demo aç",
       "groups": {
@@ -155,7 +178,8 @@
       "noResults": "Eşleşen kurum bulunamadı.",
       "minChars": "Kurum aramak için en az {count} karakter yaz.",
       "hint": "↑↓ gez · Enter aç · Esc kapat",
-      "searchFailed": "Kurum listesi yüklenemedi; sonuçlar eksik olabilir."
+      "searchFailed": "Kurum listesi yüklenemedi; sonuçlar eksik olabilir.",
+      "newLead": "Yeni aday ekle"
     }
   },
   "list": {

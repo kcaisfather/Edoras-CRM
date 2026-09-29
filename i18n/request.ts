@@ -25,6 +25,7 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
   return {
     shell: (await import("@/messages/features/shell.tr.json")).default,
     settingsx: (await import("@/messages/features/settingsx.tr.json")).default,
+    crm: (await import("@/messages/features/crm.tr.json")).default,
   };
 }
 

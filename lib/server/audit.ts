@@ -25,9 +25,18 @@ export type AuditAction =
   | "STAFF_ENABLED"
   | "STAFF_PASSWORD_RESET"
   | "INTERNAL_MARKED"
-  | "INTERNAL_UNMARKED";
+  | "INTERNAL_UNMARKED"
+  | "LEAD_CREATED"
+  | "LEAD_UPDATED"
+  | "LEAD_STATUS_CHANGED"
+  | "LEAD_DELETED"
+  | "LEAD_LINKED"
+  | "LEAD_UNLINKED"
+  | "NOTE_CREATED"
+  | "NOTE_UPDATED"
+  | "NOTE_DELETED";
 
-export type AuditEntityType = "institution" | "staff";
+export type AuditEntityType = "institution" | "staff" | "lead" | "note";
 
 export interface AuditEntry {
   action: AuditAction;

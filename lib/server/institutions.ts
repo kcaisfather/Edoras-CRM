@@ -246,8 +246,15 @@ function enrollParams(
  * DEMO kaydı (bugünden 1 yıl). İki veritabanı arasında transaction olmadığından her adım geri alma
  * işini kaydeder; CRM kaydı dahil herhangi bir adım patlarsa Edoras'ta açılanların hepsi silinir.
  * Geçici şifre yalnız bu yanıtta döner, hiçbir yerde saklanmaz.
+ *
+ * `afterEnroll`: CRM kaydından sonra aynı geri alma zincirinde çalışan ek adım (ör. adayı yeni kuruma
+ * bağlamak — lib/server/crm-leads.ts). Patlarsa CRM kaydı ve Edoras'ta açılanlar da geri alınır.
  */
-export async function createDemoInstitution(input: NewDemoInput, staff: StaffContext): Promise<DemoCredentials> {
+export async function createDemoInstitution(
+  input: NewDemoInput,
+  staff: StaffContext,
+  options: { afterEnroll?: (institutionId: string) => Promise<void> } = {}
+): Promise<DemoCredentials> {
   const contact = toContact(input);
   const name = input.institutionName.trim().replace(/\s+/g, " ");
 
@@ -276,6 +283,13 @@ export async function createDemoInstitution(input: NewDemoInput, staff: StaffCon
       enrollParams(institutionId, name, { ...input, status: "DEMO", demoStartsOn: today }, staff)
     );
     if (error) throw dbError(error);
+    // Yeni demonun lisansı/ödemesi yok: sonraki bir adım patlarsa CRM kaydı da silinebilir.
+    compensator.push("crm:enroll", async () => {
+      const { error: undoError } = await crmDb.from("crm_institutions").delete().eq("institution_id", institutionId);
+      if (undoError) throw undoError;
+    });
+
+    if (options.afterEnroll) await options.afterEnroll(institutionId);
 
     const { data: crm } = await crmDb.from("crm_institutions").select("demo_ends_at").eq("institution_id", institutionId).maybeSingle();
     await recordAudit(staff, {
@@ -385,8 +399,16 @@ export async function updateBilling(id: string, input: BillingInput, staff: Staf
   });
 }
 
-/** Ödeme kaydı. Fatura bilgisi yoksa veritabanı reddeder (CRM_BILLING_REQUIRED). */
-export async function recordPayment(id: string, input: PaymentInput, staff: StaffContext): Promise<void> {
+/**
+ * Ödeme kaydı. Fatura bilgisi yoksa veritabanı reddeder (CRM_BILLING_REQUIRED).
+ * `context.leadId`: ödeme CRM adayının "Tahsilat ekle" penceresinden geldiyse işlem kaydına yazılır.
+ */
+export async function recordPayment(
+  id: string,
+  input: PaymentInput,
+  staff: StaffContext,
+  context: { leadId?: string } = {}
+): Promise<void> {
   const payment = toPayment(input);
   const { error } = await getSupabaseAdminClient()
     .from("crm_payments")
@@ -410,6 +432,6 @@ export async function recordPayment(id: string, input: PaymentInput, staff: Staf
     action: "PAYMENT_RECORDED",
     entityType: "institution",
     entityId: id,
-    details: { amount: payment.amount, method: payment.method, paidOn: payment.paidOn },
+    details: { amount: payment.amount, method: payment.method, paidOn: payment.paidOn, ...(context.leadId ? { leadId: context.leadId } : {}) },
   });
 }

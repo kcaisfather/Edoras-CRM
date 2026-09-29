@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QueryErrorState } from "@/components/query-error-state";
 import { useCurrentUser } from "@/features/auth";
+import { OpenReceivablesCard } from "@/features/crm";
 import { InstitutionStatusBadge, useInstitutions } from "@/features/institutions";
 import { cn } from "@/lib/utils";
 import { todayIso } from "@/lib/domain/institutions/rules";
@@ -24,7 +25,7 @@ interface Row {
   info: InstitutionStatusInfo;
 }
 
-/** Ana sayfa: kurum sayıları ve aksiyon bekleyenler (demosu biten, lisansı biten/yaklaşan). */
+/** Ana sayfa: kurum sayıları, açık alacak (yönetici) ve aksiyon bekleyenler (demosu biten, lisansı biten/yaklaşan). */
 export function Dashboard() {
   const t = useTranslations("dashboard");
   const { data: user } = useCurrentUser();
@@ -86,6 +87,9 @@ export function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {/* Açık alacak (CRM adayları: satış − tahsilat) — yalnız yönetici; CRM_AGENT'a çizilmez, veri de çekilmez. */}
+      <OpenReceivablesCard />
 
       <Card className="glass-panel rounded-2xl border-border/50 p-6">
         <h2 className="mb-1 text-lg font-bold">{t("actionable.title")}</h2>

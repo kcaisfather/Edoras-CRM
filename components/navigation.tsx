@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Building2, LayoutDashboard } from "lucide-react";
+import { Building2, ChartNoAxesColumnIncreasing, ClipboardList, LayoutDashboard } from "lucide-react";
 import { useCurrentUser, usePermissions } from "@/features/auth";
 import { useInstitutionAlerts } from "@/features/institutions";
 import { filterNavGroups } from "@/lib/permissions";
 
-export type NavTranslationKey = "dashboard" | "institutions";
+export type NavTranslationKey = "dashboard" | "institutions" | "crmLeads" | "crmAnalytics";
 
 export interface NavItem {
   /** Sorgu dizesi içerebilir; aktiflik yalnız yol kısmına bakar. */
@@ -18,12 +18,12 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-export type NavGroupKey = "main" | "customers";
+export type NavGroupKey = "main" | "crm" | "customers" | "analysis";
 
 export interface NavGroup {
   key: NavGroupKey;
   /** Bölüm başlığı; ana grupta başlık yok. */
-  labelKey?: "sidebarCustomers";
+  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarAnalysis";
   items: NavItem[];
 }
 
@@ -37,9 +37,21 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [{ href: "/dashboard", icon: LayoutDashboard, translationKey: "dashboard" }],
   },
   {
+    // CRM: adaylar (görevler, soğuk listeler ve anketler taşındıkça bu gruba eklenir).
+    key: "crm",
+    labelKey: "sidebarCrm",
+    items: [{ href: "/crm", icon: ClipboardList, translationKey: "crmLeads" }],
+  },
+  {
     key: "customers",
     labelKey: "sidebarCustomers",
     items: [{ href: "/institutions", icon: Building2, translationKey: "institutions" }],
+  },
+  {
+    // Analiz: operasyon ekranlarından ayrılan analiz görünümleri (satış hunisi ve satış kırılımları).
+    key: "analysis",
+    labelKey: "sidebarAnalysis",
+    items: [{ href: "/crm/analytics", icon: ChartNoAxesColumnIncreasing, translationKey: "crmAnalytics" }],
   },
 ];
 
@@ -53,7 +65,7 @@ export function useVisibleNavGroups(): NavGroup[] {
 }
 
 /** Alt rotaları olan ama kendisi ayrı bir menü öğesi olan kökler yalnız tam eşleşmede aktif sayılır. */
-const EXACT_MATCH_HREFS = new Set(["/dashboard"]);
+const EXACT_MATCH_HREFS = new Set(["/dashboard", "/crm"]);
 
 export function isNavActive(pathname: string | null | undefined, href: string) {
   if (!pathname) return false;

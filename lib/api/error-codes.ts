@@ -28,6 +28,11 @@ export const API_ERROR_CODES = [
   "STAFF_EXISTS",
   "SELF_CHANGE",
   "LAST_ADMIN",
+  "LEAD_IDENTITY_REQUIRED",
+  "LEAD_ALREADY_LINKED",
+  "LEAD_INSTITUTION_TAKEN",
+  "LEAD_NOT_LINKED",
+  "NOTE_NOT_OWNER",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

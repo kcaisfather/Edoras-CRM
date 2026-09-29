@@ -1,10 +1,11 @@
 import type { CurrentUser, PanelRole } from "@/lib/domain/auth/types";
 
 /**
- * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir.
+ * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar ve
+ * Satış Analizleri) açık; tutarlar sunucuda boşaltılır, arayüzde FinancialOnly gizler.
  * Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
  */
-export const CRM_AGENT_PATHS = ["/dashboard", "/institutions", "/settings"] as const;
+export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/settings"] as const;
 
 /** Oturum gerektirmeyen yollar (giriş sayfası). */
 export const PUBLIC_PATHS = ["/login"] as const;

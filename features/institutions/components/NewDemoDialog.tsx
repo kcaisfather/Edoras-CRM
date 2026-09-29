@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,16 +29,40 @@ type Step = "form" | "review" | "done";
  * Yeni demo kurum: form → özet onayı → giriş bilgisi. Onayla birlikte canlı Edoras'ta kurum ve kurum
  * yöneticisi hesabı açılır; bu yüzden ayrı bir onay adımı var. Kural: yetkili ad soyad, kurum adı,
  * telefon ve e-posta olmadan demo açılmaz (form + sunucu + veritabanı).
+ *
+ * CRM adayından açılırken (`features/crm`): `initial` formu adayın bilgileriyle doldurur, `submitRequest` isteği
+ * adayın demo ucuna yollar (aday aynı işlemde yeni kuruma bağlanır), `onCreated` başarıdan sonra çağrılır.
  */
-export function NewDemoDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function NewDemoDialog({
+  open,
+  onOpenChange,
+  initial,
+  submitRequest,
+  onCreated,
+  description,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initial?: Partial<NewDemoInput>;
+  submitRequest?: (input: NewDemoInput) => Promise<DemoCredentials>;
+  onCreated?: (credentials: DemoCredentials) => void;
+  /** Form adımındaki açıklamanın yerine (ör. "Aday bu kuruma bağlanacak"). */
+  description?: string;
+}) {
   const t = useTranslations("institutions.newDemo");
   const tCommon = useTranslations("common");
   const errorMessage = useApiErrorMessage();
-  const create = useCreateDemo();
+  const create = useCreateDemo(submitRequest);
   const [step, setStep] = useState<Step>("form");
   const [credentials, setCredentials] = useState<DemoCredentials | null>(null);
 
-  const form = useForm<NewDemoInput>({ resolver: zodResolver(newDemoSchema), defaultValues: EMPTY });
+  const form = useForm<NewDemoInput>({ resolver: zodResolver(newDemoSchema), defaultValues: { ...EMPTY, ...initial } });
+
+  // Önceden doldurulmuş açılış (CRM adayı): her açılışta formu adayın güncel bilgisiyle başlat.
+  const initialKey = open && initial ? JSON.stringify(initial) : null;
+  useEffect(() => {
+    if (initialKey) form.reset({ ...EMPTY, ...(JSON.parse(initialKey) as Partial<NewDemoInput>) });
+  }, [initialKey, form]);
 
   const close = (next: boolean) => {
     if (!next && create.isPending) return;
@@ -59,6 +83,7 @@ export function NewDemoDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       onSuccess: (data) => {
         setCredentials(data);
         setStep("done");
+        onCreated?.(data);
       },
       onError: (err) => {
         const code = apiErrorCode(err);
@@ -83,7 +108,7 @@ export function NewDemoDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             {step === "done" ? t("doneTitle") : t("title")}
           </DialogTitle>
           <DialogDescription>
-            {step === "done" ? t("doneDescription") : t("description")}
+            {step === "done" ? t("doneDescription") : (description ?? t("description"))}
           </DialogDescription>
         </DialogHeader>
 

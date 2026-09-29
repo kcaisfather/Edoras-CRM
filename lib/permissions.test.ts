@@ -14,6 +14,10 @@ describe("permissions", () => {
     expect(canAccessPathFor("CRM_AGENT", "/institutions?filter=demo")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/dashboard")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/settings")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/analytics")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm?tab=balance&lead=x")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crmx")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/payments")).toBe(false);
     expect(canAccessPathFor("ADMIN", "/payments")).toBe(true);
   });

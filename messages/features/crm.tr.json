@@ -1,0 +1,457 @@
+{
+  "status": {
+    "ARANACAK": "Aranacak",
+    "ULASILAMADI": "Ulaşılamadı",
+    "RANDEVU_PLANLANDI": "Randevu Planlandı",
+    "DEMO_TANIMLANDI": "Demo Tanımlandı",
+    "TEKLIF_VERILDI": "Teklif Verildi",
+    "SATIS_OLDU": "Satış Oldu",
+    "OLUMSUZ": "Satış Olmadı",
+    "TAKIPTE": "Takipte"
+  },
+  "source": {
+    "MANUAL": "Elle girildi",
+    "EDORAS": "Edoras kurumundan",
+    "IMPORT": "İçe aktarma",
+    "COLD_LIST": "Soğuk liste"
+  },
+  "summary": {
+    "totalOffer": "Toplam Teklif",
+    "totalSale": "Toplam Satış",
+    "totalCollected": "Tahsilat",
+    "count": "Aday / Satış adedi",
+    "openReceivables": "Açık alacak",
+    "openReceivablesHint": "Seçili dönemdeki adaylarda satış − tahsilat (bağlı kurumun ödemeleri)"
+  },
+  "list": {
+    "title": "Adaylar",
+    "description": "Potansiyel ve mevcut müşteri kurumlar: arama, demo, teklif, satış ve tahsilat takibi.",
+    "count": "Toplam {count} kayıt (Sayfa {page}/{totalPages})",
+    "search": "Kurum, yetkili, e-posta veya telefon ile ara...",
+    "searchClear": "Aramayı temizle",
+    "addLead": "Yeni aday",
+    "tabs": {
+      "pendingDemo": "Bekleyen Demo",
+      "inProgress": "Satış Sürecinde",
+      "balance": "Bakiyesi olanlar",
+      "demoEnded": "Demo bitti, satış yok",
+      "newSignups": "Yeni kayıtlar",
+      "duplicates": "Olası mükerrer"
+    },
+    "filters": {
+      "status": "Durum ve görünüm",
+      "statusAll": "Tümü",
+      "viewsGroup": "Görünümler",
+      "statusGroup": "Durumlar"
+    },
+    "table": {
+      "customer": "Müşteri",
+      "location": "Konum",
+      "date": "Tarih",
+      "salesStage": "Satış Aşaması",
+      "saleAmount": "Satış Tutarı",
+      "collected": "Tahsil Edilen",
+      "remainingDebt": "Kalan Borç",
+      "actions": "İşlemler"
+    },
+    "actions": {
+      "addNote": "Not Ekle",
+      "edit": "Düzenle"
+    },
+    "openDetail": "{name} — detayı aç",
+    "customerBadge": "Müşteri",
+    "customerBadgeHint": "Kurum sayfasında aç",
+    "linkedHint": "Edoras kurumu: {name}",
+    "linkedUnknown": "Edoras kurumuna bağlı",
+    "remainingShort": "Kalan",
+    "addCollection": "Tahsilat ekle",
+    "openDemo": "Demo aç",
+    "linkInstitution": "Kuruma bağla",
+    "empty": "Bu görünümde aday yok.",
+    "emptyTitle": "Kayıt bulunamadı",
+    "error": "Adaylar yüklenirken hata oluştu.",
+    "retry": "Tekrar Dene",
+    "pagination": {
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "pageSize": "Sayfa boyutu",
+      "showing": "{from}-{to} / {total} kayıt"
+    }
+  },
+  "form": {
+    "leadSection": "Aday",
+    "salesSection": "Satış Detayları",
+    "organizationName": "Kurum Adı",
+    "firstName": "Yetkili Adı",
+    "lastName": "Yetkili Soyadı",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "city": "İl",
+    "district": "İlçe",
+    "country": "Ülke",
+    "status": "Durum",
+    "offerAmount": "Teklif Tutarı (₺)",
+    "saleAmount": "Satış Tutarı (₺)",
+    "collectedAmount": "Tahsil Edilen",
+    "remainingAmount": "Kalan Borç",
+    "amountPlaceholder": "Ör. 45.000",
+    "identityHint": "Kurum adı ya da yetkilinin adı zorunlu; diğer alanlar isteğe bağlı."
+  },
+  "add": {
+    "title": "Yeni aday",
+    "description": "Potansiyel müşteri kurumu ya da yetkilisini kaydedin.",
+    "submit": "Kaydet",
+    "success": "Aday oluşturuldu",
+    "error": "Aday oluşturulamadı"
+  },
+  "edit": {
+    "title": "Adayı düzenle",
+    "description": "Aday, takip ve satış bilgilerini güncelleyin.",
+    "submit": "Kaydet",
+    "success": "Aday güncellendi",
+    "deleteButton": "Adayı Sil",
+    "deleteConfirmTitle": "Adayı sil",
+    "deleteConfirmDescription": "Bu aday ve notları kalıcı olarak silinecek. Bağlı kurumun kaydı, lisansı ve ödemeleri etkilenmez. Bu işlem geri alınamaz.",
+    "deleteConfirm": "Sil",
+    "deleting": "Siliniyor...",
+    "deleteSuccess": "Aday silindi",
+    "error": "Aday güncellenemedi",
+    "deleteError": "Aday silinemedi",
+    "collectionHint": "Tahsilat bağlı kurumun ödemeleridir; \"Tahsilat ekle\" ile girilir."
+  },
+  "institution": {
+    "title": "Edoras kurumu",
+    "notLinked": "Bu aday henüz bir Edoras kurumuna bağlı değil. Demo açın ya da Edoras'taki mevcut bir kuruma bağlayın.",
+    "unknown": "Kurum bilgisi yüklenemedi.",
+    "missing": "Bağlı kurum Edoras'ta bulunamadı (silinmiş olabilir).",
+    "open": "Kurumu aç",
+    "unlink": "Bağlantıyı kaldır",
+    "unlinked": "Kurum bağlantısı kaldırıldı",
+    "unlinkError": "Bağlantı kaldırılamadı",
+    "usage": "{students} öğrenci · {teachers} öğretmen · {classes} sınıf"
+  },
+  "link": {
+    "title": "Kuruma bağla",
+    "description": "{name} adayını Edoras'taki mevcut bir kuruma bağlayın. Bir kuruma yalnız bir aday bağlanabilir.",
+    "search": "Kurum, yetkili, e-posta veya telefon ara",
+    "empty": "Bağlanabilecek kurum bulunamadı.",
+    "taken": "Başka adaya bağlı",
+    "internal": "İç kurum",
+    "submit": "Bağla",
+    "linked": "Aday {name} kurumuna bağlandı",
+    "error": "Aday kuruma bağlanamadı"
+  },
+  "demo": {
+    "description": "Kurum Edoras'ta açılır, yetkiliye kurum yöneticisi hesabı verilir ve aday bu kuruma bağlanıp \"Demo Tanımlandı\" olur. Demo 1 dönem (1 yıl) sürer."
+  },
+  "offer": {
+    "sectionTitle": "Takip",
+    "nextCall": "Sonraki arama tarihi",
+    "nextCallHint": "Görev listesi gelince o gün görev olarak düşer.",
+    "lostReason": "Kayıp nedeni",
+    "lostReasonPlaceholder": "Neden seçin",
+    "noReason": "Belirtilmedi",
+    "reasons": {
+      "FIYAT": "Fiyat",
+      "ZAMANLAMA": "Zamanlama",
+      "RAKIP": "Rakip tercih edildi",
+      "IHTIYAC_YOK": "İhtiyaç yok",
+      "BUTCE": "Bütçe yok",
+      "DIGER": "Diğer"
+    },
+    "offerDate": "Teklif tarihi: {date}",
+    "clear": "Temizle",
+    "amountHint": "Boş bırakılan tutar satışa / teklife geçerken 0 TL olarak kaydedilir; liste fiyatı otomatik doldurulmaz."
+  },
+  "dissatisfied": {
+    "badge": "Şikâyet",
+    "resolve": "Çözüldü",
+    "resolvedBadge": "Şikâyet çözüldü",
+    "resolvedNote": "Çözüldü olarak işaretlendi.",
+    "categoryLabel": "Kategori",
+    "severityLabel": "Önem",
+    "statusLabel": "Durum",
+    "descriptionLabel": "Açıklama",
+    "category": {
+      "teknik": "Teknik hata",
+      "kurulum": "Kurulum / hesap",
+      "lisans": "Lisans / demo",
+      "odeme": "Ödeme",
+      "egitim": "Eğitim ihtiyacı",
+      "ozellik": "Özellik isteği",
+      "icerik": "İçerik (soru, deneme)"
+    },
+    "severity": {
+      "dusuk": "Düşük",
+      "orta": "Orta",
+      "yuksek": "Yüksek",
+      "kritik": "Kritik"
+    },
+    "status": {
+      "acik": "Açık",
+      "cozuldu": "Çözüldü"
+    },
+    "noScoreHint": "Şikâyet kaydı yapılandırılmış not olarak tutulur; memnuniyet puanı anket modülüyle gelecek."
+  },
+  "notes": {
+    "title": "Aday notları",
+    "description": "Görüşme notu, şikâyet kaydı ya da satış sonrası devir notu ekleyin.",
+    "content": "Not",
+    "contentPlaceholder": "Not içeriği...",
+    "submit": "Kaydet",
+    "empty": "Henüz not yok.",
+    "unknownAuthor": "Bilinmeyen yazar",
+    "error": "Not kaydedilemedi",
+    "deleteError": "Not silinemedi",
+    "modeLabel": "Not türü",
+    "mode": {
+      "note": "Not",
+      "dissatisfied": "Şikâyet kaydı",
+      "handoff": "Devir"
+    },
+    "tag": {
+      "SIKAYET": "Şikâyet kaydı",
+      "DEVIR": "Devir notu",
+      "ILETISIM": "İletişim denemesi",
+      "PROGRAM": "Program etiketi"
+    },
+    "edited": "düzenlendi",
+    "saved": "Not kaydedildi",
+    "disabledReason": {
+      "empty": "Kaydetmek için not yazın.",
+      "emptyNote": "Kaydetmek için not yazın ya da program etiketi seçin."
+    }
+  },
+  "handoff": {
+    "followUp": "Takip tarihi",
+    "followUpBadge": "Takip: {date}",
+    "hint": "Satış sonrası devir: karar verici, kullanım amacı ve yenileme onayı kayda geçer.",
+    "template": "Karar verici: \nKurumdaki sorumlu kişi: \nKullanım amacı (deneme takibi / ödev / devamsızlık): \nBaşarı kriteri: \nEğitim tarihi: \nBeklenen yenileme tarihi: \nYenilemeyi onaylayacak kişi: "
+  },
+  "program": {
+    "label": "Hızlı etiket",
+    "erken": "Erken yenileme",
+    "yillik": "Yıllık ön ödeme",
+    "hint": "Etiket notun başına yapılandırılmış önek olarak yazılır ve aday satırında rozet olarak görünür."
+  },
+  "contact": {
+    "label": "İletişim",
+    "call": "Ara",
+    "email": "E-posta gönder",
+    "whatsapp": "WhatsApp şablonu",
+    "phoneInvalid": "Telefon numarası geçersiz",
+    "attemptNote": "İletişim denemesi başlatıldı."
+  },
+  "templates": {
+    "welcome": {
+      "label": "Hoş geldin",
+      "text": "Merhaba {ad}, Edoras'a hoş geldiniz! Kurulum ve ilk adımlarınızda yardımcı olmak isteriz."
+    },
+    "demoWelcome": {
+      "label": "Demo hoş geldin",
+      "text": "Merhaba {ad}, {kurum} için Edoras demo hesabınız hazır. Kurulumu birlikte yapmak ister misiniz?"
+    },
+    "demoEnding": {
+      "label": "Demo bitiyor",
+      "text": "Merhaba {ad}, Edoras demo süreniz {bitisTarihi} tarihinde bitiyor. Devam etmek için lisans seçeneklerini konuşalım mı?"
+    },
+    "demoEnded": {
+      "label": "Demo bitti, teklif",
+      "text": "Merhaba {ad}, Edoras demo süreniz sona erdi. {kurum} için hazırladığımız teklifi paylaşmak isteriz."
+    },
+    "renewal": {
+      "label": "Lisans yenileme",
+      "text": "Merhaba {ad}, {kurum} Edoras lisansınız {bitisTarihi} tarihinde bitiyor. Yenileme için size yardımcı olalım."
+    },
+    "payment": {
+      "label": "Ödeme hatırlatma",
+      "text": "Merhaba {ad}, {kurum} Edoras lisans ödemenizle ilgili kısa bir hatırlatma yapmak istedik."
+    },
+    "balanceReminder": {
+      "label": "Bakiye hatırlatma",
+      "text": "Merhaba {ad}, {kurum} Edoras lisansınızın {kalanBakiye} tutarındaki kalan ödemesi için hatırlatma yapmak istedik. Uygun olduğunuzda dönüş yapabilir misiniz?"
+    }
+  },
+  "pipeline": {
+    "label": "Satış aşamaları",
+    "clear": "Filtreyi temizle",
+    "clearHint": "Süzgeci kaldırmak için tekrar tıklayın",
+    "filterHint": "Listeyi “{status}” aşamasına süz"
+  },
+  "audit": {
+    "created": "Oluşturan: {name} ({date})",
+    "updated": "Güncelleyen: {name} ({date})",
+    "unknown": "Bilinmeyen"
+  },
+  "signups": {
+    "rangeLabel": "Kayıt aralığı",
+    "last14": "Son 14 gün",
+    "last30": "Son 30 gün",
+    "all": "Tümü",
+    "count": "{count, plural, =0 {Adayı olmayan kurum yok} other {# kurumun adayı yok}}",
+    "coverage": "Edoras'ta açılmış, CRM'de adayı olmayan kurumlar (iç / sunum kurumları hariç), en yeni önce.",
+    "error": "Kurum listesi yüklenemedi.",
+    "empty": "Bu aralıkta adayı olmayan yeni kurum yok.",
+    "createLead": "Aday oluştur",
+    "created": "Aday oluşturuldu",
+    "createError": "Aday oluşturulamadı",
+    "table": {
+      "signedUp": "Açılış",
+      "institution": "Kurum",
+      "contact": "Yetkili",
+      "status": "Durum",
+      "actions": "İşlemler"
+    }
+  },
+  "export": {
+    "button": "CSV indir",
+    "yes": "Evet",
+    "no": "Hayır",
+    "h": {
+      "organization": "Kurum",
+      "contact": "Yetkili",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "city": "Şehir",
+      "district": "İlçe",
+      "status": "Statü",
+      "source": "Kaynak",
+      "created": "Kayıt tarihi",
+      "nextCall": "Sonraki arama",
+      "lostReason": "Kayıp nedeni",
+      "institution": "Edoras kurumu",
+      "offer": "Teklif",
+      "sale": "Satış",
+      "collected": "Tahsilat",
+      "remaining": "Kalan"
+    }
+  },
+  "funnel": {
+    "label": "Satış hunisi",
+    "hint": "Aşama geçmişi tutulmadığı için ileri aşamadaki kayıt önceki aşamaları geçmiş sayılır. Olumsuz / Takipte kayıtlar yalnız bir Edoras kurumuna bağlıysa (demo açılmışsa) demo aşamasında sayılır.",
+    "stage": {
+      "lead": "Aday",
+      "demo": "Demo",
+      "inProgress": "Satış sürecinde",
+      "customer": "Aktif müşteri"
+    },
+    "stepRate": "Adım {rate}",
+    "overallRate": "Genel {rate}"
+  },
+  "duplicates": {
+    "count": "{count, plural, =0 {Olası mükerrer grup yok} other {# olası mükerrer grup}}",
+    "empty": "Olası mükerrer kayıt bulunamadı.",
+    "institutionOnly": "Kurum (adaya bağlı değil)",
+    "edit": "Düzenle",
+    "linkHere": "Adayı bu kuruma bağla",
+    "linked": "Aday kuruma bağlandı",
+    "linkError": "Aday kuruma bağlanamadı",
+    "confidence": {
+      "high": "Yüksek olasılık",
+      "medium": "Orta olasılık"
+    },
+    "reason": {
+      "email": "Aynı e-posta",
+      "phone": "Aynı telefon",
+      "organization": "Benzer kurum adı",
+      "name": "Benzer yetkili adı"
+    },
+    "f": {
+      "contact": "Yetkili",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "city": "Şehir",
+      "created": "Kayıt",
+      "institution": "Edoras kurumu"
+    },
+    "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
+  },
+  "detail": {
+    "edit": "Düzenle",
+    "contact": "İletişim",
+    "phone": "Telefon",
+    "email": "E-posta",
+    "location": "Konum",
+    "createdAt": "Kayıt tarihi",
+    "details": "Takip",
+    "source": "Kaynak",
+    "nextCall": "Sonraki arama",
+    "offerDate": "Teklif tarihi",
+    "soldAt": "Satış tarihi",
+    "lostReason": "Kayıp nedeni",
+    "offer": "Teklif",
+    "notes": "Notlar",
+    "notesLoading": "Notlar yükleniyor…",
+    "notesEmpty": "Henüz not yok.",
+    "allNotes": "Tüm notlar ({count})",
+    "purchaseHistory": "Alım-satım geçmişi",
+    "markDissatisfied": "Şikâyet kaydı ekle"
+  },
+  "analytics": {
+    "title": "Satış Analizleri",
+    "description": "Seçili dönemde oluşturulan adayların satış hunisi ve satış kırılımları.",
+    "cohort": "Bu dönemde oluşturulan {count} kayıt"
+  },
+  "collections": {
+    "title": "Tahsilat ekle",
+    "sale": "Satış",
+    "collected": "Tahsil edilen",
+    "remaining": "Kalan",
+    "amount": "Tutar (₺)",
+    "amountInvalid": "Tutar 0 TL'den büyük olmalı.",
+    "date": "Tarih",
+    "dateInvalid": "Geçerli bir tarih seçin.",
+    "method": "Ödeme yöntemi",
+    "note": "Not (isteğe bağlı)",
+    "notePlaceholder": "Ör. havale, dekont no",
+    "overpay": "Tutar kalan bakiyeyi {amount} aşıyor; fazla ödeme olarak kaydedilecek.",
+    "preview": "Toplam tahsilat {from} → {to} · kalan {remaining}",
+    "institution": "Ödeme {name} kurumuna kaydedilir (kurum ayrıntısındaki ödemelerde de görünür).",
+    "cancel": "Vazgeç",
+    "confirm": "Onayla ve {amount} ekle",
+    "saved": "{amount} tahsilat kaydedildi",
+    "failed": "Tahsilat kaydedilemedi",
+    "blocked": {
+      "notLinked": "Tahsilat, adayın bağlı olduğu kuruma ödeme olarak kaydedilir. Önce adayı bir Edoras kurumuna bağlayın (Demo aç ya da Kuruma bağla).",
+      "notEnrolled": "Bağlı kurumun CRM kaydı yok. Kurum sayfasından \"CRM'e kaydet\" ile kaydedin; ödeme ancak kayıtlı kuruma alınabilir.",
+      "billingMissing": "Bağlı kurumun fatura bilgisi (adres + TC Kimlik No / Vergi No) eksik; ödeme alınamaz. Kurum sayfasından fatura bilgisini girin."
+    },
+    "openInstitution": "Kurum sayfasına git",
+    "historyTitle": "Tahsilat geçmişi",
+    "historyTotal": "Toplam {amount}",
+    "historyEmpty": "Henüz kayıtlı tahsilat yok.",
+    "historyNotLinked": "Aday bir kuruma bağlı değil; tahsilat geçmişi yok."
+  },
+  "breakdowns": {
+    "label": "Kırılım",
+    "views": {
+      "month": "Aylık",
+      "customer": "Müşteri"
+    },
+    "headers": {
+      "month": "Ay",
+      "customer": "Müşteri"
+    },
+    "count": "Adet",
+    "amount": "Ciro",
+    "collected": "Tahsil edilen",
+    "balance": "Kalan",
+    "last": "Son satış",
+    "noDate": "Tarihsiz",
+    "empty": "Bu dönemde satış yok"
+  },
+  "receivables": {
+    "title": "Açık alacak",
+    "customers": "{count} müşteri",
+    "showList": "Listeyi gör",
+    "coverage": "CRM adaylarında satış − tahsilat (tahsilat = bağlı kurumun ödemeleri); tarih filtresinden bağımsız."
+  },
+  "institutionCard": {
+    "title": "CRM adayı",
+    "open": "Adaylar'da aç",
+    "nextCall": "Sonraki arama: {date}",
+    "notes": "Son notlar",
+    "noNotes": "Henüz not yok.",
+    "error": "Aday bilgisi yüklenemedi."
+  }
+}

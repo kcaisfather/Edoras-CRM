@@ -15,6 +15,7 @@ const INVENTORY: { key: string; sensitivity: Sensitivity }[] = [
   { key: "billing", sensitivity: "high" },
   { key: "demoCredentials", sensitivity: "high" },
   { key: "institutionContact", sensitivity: "medium" },
+  { key: "leads", sensitivity: "medium" },
   { key: "payments", sensitivity: "medium" },
   { key: "institutionAdmins", sensitivity: "medium" },
   { key: "auditLog", sensitivity: "medium" },

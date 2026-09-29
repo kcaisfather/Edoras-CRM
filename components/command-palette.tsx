@@ -79,6 +79,7 @@ export function CommandPalette({ shortcut = true }: { shortcut?: boolean } = {})
         icon: it.icon,
       }));
     nav.push({ key: "p-new-demo", group: "pages", label: t("newDemo"), href: "/institutions?new=demo", icon: Plus });
+    nav.push({ key: "p-new-lead", group: "pages", label: t("newLead"), href: "/crm?new=lead", icon: Plus });
     nav.push({ key: "p-/settings", group: "pages", label: tNav("settings"), href: "/settings", icon: Settings });
     const needle = fold(input.trim());
     return needle ? nav.filter((p) => fold(p.label).includes(needle)) : nav;

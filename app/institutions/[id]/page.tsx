@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { InstitutionLeadCard } from "@/features/crm";
 import { InstitutionDetailPage } from "@/features/institutions/components/InstitutionDetailPage";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,7 +12,8 @@ export default async function InstitutionDetailRoutePage({ params }: { params: P
   const { id } = await params;
   return (
     <div className="container mx-auto p-6">
-      <InstitutionDetailPage id={id} />
+      {/* CRM adayı kartı burada verilir: kurumlar modülü CRM'i import etmez (bağımlılık tek yönlü). */}
+      <InstitutionDetailPage id={id} aside={<InstitutionLeadCard institutionId={id} />} />
     </div>
   );
 }

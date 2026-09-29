@@ -19,7 +19,11 @@ import { BillingCard, ContactCard, DemoCard, LicensesCard, PaymentsCard, Section
 import { ConvertDialog } from "./dialogs";
 import { EnrollDialog } from "./EnrollDialog";
 
-export function InstitutionDetailPage({ id }: { id: string }) {
+/**
+ * Kurum ayrıntısı. `aside`: sağ sütunun başına eklenen parça — başka modüllerin kartları (ör. CRM adayı)
+ * route dosyasında verilir; kurumlar modülü onları import etmez (feature bağımlılığı tek yönlü kalır).
+ */
+export function InstitutionDetailPage({ id, aside }: { id: string; aside?: React.ReactNode }) {
   const t = useTranslations("institutions.detail");
   const query = useInstitution(id);
 
@@ -53,6 +57,7 @@ export function InstitutionDetailPage({ id }: { id: string }) {
           <PaymentsCard institution={institution} />
         </div>
         <div className="space-y-6">
+          {aside}
           <DemoCard institution={institution} />
           <BillingCard institution={institution} />
           <UsageCard institution={institution} />

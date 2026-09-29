@@ -81,6 +81,13 @@
           "stored": "CRM veritabanı; CSV ile dışa aktarılabilir",
           "retention": "Tanımlı değil"
         },
+        "leads": {
+          "category": "CRM adayları ve notları",
+          "fields": "Kurum adı, yetkili ad soyad, telefon, e-posta, il/ilçe; görüşme notları ve şikâyet kayıtları",
+          "screens": "Adaylar, aday ayrıntısı, kurum ayrıntısı (CRM adayı kartı)",
+          "stored": "CRM veritabanı (crm_leads, crm_notes); CSV ile dışa aktarılabilir; tutarlar satış temsilcisine gönderilmez",
+          "retention": "Tanımlı değil"
+        },
         "payments": {
           "category": "Lisans ve ödeme kayıtları",
           "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi (kart bilgisi yok)",

@@ -10,6 +10,7 @@ import type {
   PaymentInput,
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
+import type { DemoCredentials } from "@/lib/domain/institutions/types";
 import { institutionsApi } from "./api";
 import { institutionKeys } from "./queries";
 
@@ -22,10 +23,14 @@ function useInvalidate() {
   };
 }
 
-export function useCreateDemo() {
+/**
+ * Yeni demo. `submit` verilirse istek onunla atılır (ör. CRM adayından demo: POST /api/crm/leads/[id]/demo —
+ * aynı form, aday bağlantısı sunucuda aynı geri alma zincirinde).
+ */
+export function useCreateDemo(submit?: (input: NewDemoInput) => Promise<DemoCredentials>) {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (input: NewDemoInput) => institutionsApi.createDemo(input),
+    mutationFn: (input: NewDemoInput) => (submit ?? institutionsApi.createDemo)(input),
     onSuccess: () => invalidate(),
   });
 }

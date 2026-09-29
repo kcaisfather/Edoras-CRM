@@ -17,7 +17,7 @@ export interface MappedDbError {
   reason: string;
 }
 
-/** supabase/migrations/20260929120000_crm_core.sql içindeki `raise exception 'CRM_…'` kodları. */
+/** supabase/migrations/*.sql içindeki `raise exception 'CRM_…'` kodları. */
 const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_INSTITUTION_NAME_REQUIRED: [400, "VALIDATION"],
   CRM_INSTITUTION_NAME_TAKEN: [409, "INSTITUTION_NAME_TAKEN"],
@@ -49,6 +49,20 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_licenses_one_year_check: [422, "LICENSE_INVALID"],
   crm_licenses_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
   crm_payments_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
+  // 20260929160000_crm_leads
+  crm_leads_identity_check: [422, "LEAD_IDENTITY_REQUIRED"],
+  crm_leads_contact_phone_check: [422, "CONTACT_INVALID"],
+  crm_leads_contact_email_check: [422, "CONTACT_INVALID"],
+  crm_leads_status_check: [400, "VALIDATION"],
+  crm_leads_source_check: [400, "VALIDATION"],
+  crm_leads_offer_amount_check: [400, "VALIDATION"],
+  crm_leads_sale_amount_check: [400, "VALIDATION"],
+  crm_leads_lost_reason_check: [400, "VALIDATION"],
+  crm_leads_sold_at_check: [400, "VALIDATION"],
+  crm_leads_length_check: [400, "VALIDATION"],
+  crm_leads_institution_id_key: [409, "LEAD_INSTITUTION_TAKEN"],
+  crm_notes_content_check: [400, "VALIDATION"],
+  crm_notes_lead_id_fkey: [404, "NOT_FOUND"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

@@ -1,0 +1,93 @@
+/** Kurum CRM alan tipleri — API yanıtları ve ekranlar bu şekilleri paylaşır. */
+
+export type CrmStatus = "DEMO" | "UCRETLI";
+export type InstitutionProgram = "yks" | "lgs";
+
+export const PAYMENT_METHODS = ["HAVALE", "KREDI_KARTI", "NAKIT", "DIGER"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export interface CrmRecord {
+  status: CrmStatus;
+  contactName: string;
+  /** E.164 (+905XXXXXXXXX). */
+  contactPhone: string;
+  contactEmail: string;
+  demoStartedAt: string | null;
+  demoEndsAt: string | null;
+  convertedAt: string | null;
+  /** Adres + (TC veya Vergi No) kayıtlı mı. Ayrıntıyı görmeyen rol de bunu görür. */
+  billingComplete: boolean;
+}
+
+export interface InstitutionListItem {
+  id: string;
+  name: string;
+  /** Edoras'ta kurum yoksa (silinmiş) bilinmez: null. */
+  program: InstitutionProgram | null;
+  isActive: boolean;
+  /** CRM kaydı var ama kurum Edoras'ta bulunamadı (silinmiş). Ad, CRM'deki kayıt anı adıdır. */
+  missingInEdoras: boolean;
+  createdAt: string | null;
+  /** CRM kaydı yoksa null ("Kayıtsız": CRM öncesinden kalan kurum). */
+  crm: CrmRecord | null;
+  /** Lisansın bitişi (CRM lisanslarının en geçi). */
+  licenseEndsOn: string | null;
+}
+
+export interface Billing {
+  address: string | null;
+  tcNo: string | null;
+  taxNo: string | null;
+}
+
+export interface License {
+  id: string;
+  startsOn: string;
+  endsOn: string;
+  /** Finansal yetkisi olmayan rol için null. */
+  price: number | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface Payment {
+  id: string;
+  licenseId: string | null;
+  amount: number;
+  paidOn: string;
+  method: PaymentMethod;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface InstitutionAdmin {
+  userId: string;
+  fullName: string | null;
+  email: string | null;
+  isActive: boolean;
+}
+
+export interface InstitutionUsage {
+  students: number;
+  teachers: number;
+  classes: number;
+}
+
+export interface InstitutionDetail extends InstitutionListItem {
+  /** Finansal yetkisi olmayan rol için null (TC, Vergi No ve adres gösterilmez). */
+  billing: Billing | null;
+  licenses: License[];
+  /** Finansal yetkisi olmayan rol için null. */
+  payments: Payment[] | null;
+  admins: InstitutionAdmin[];
+  usage: InstitutionUsage;
+}
+
+/** Demo açılınca bir kez gösterilen giriş bilgisi (şifre başka yerde saklanmaz). */
+export interface DemoCredentials {
+  institutionId: string;
+  loginEmail: string;
+  temporaryPassword: string;
+  demoEndsAt: string;
+  panelUrl: string;
+}

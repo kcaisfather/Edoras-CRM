@@ -1,0 +1,444 @@
+{
+  "app": {
+    "name": "Edoras CRM",
+    "description": "Edoras kurum, lisans ve demo yönetimi"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "errors": {
+      "noAuth": "Devam etmek için lütfen giriş yapın.",
+      "fetchFailed": "Veri yüklenemedi. Lütfen tekrar deneyin.",
+      "generic": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "network": "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+      "forbidden": "Bu işlem için yetkiniz yok.",
+      "notFound": "İstenen kayıt bulunamadı.",
+      "conflict": "Bu işlem mevcut bir kayıtla çakışıyor.",
+      "validation": "Gönderilen bilgiler geçersiz. Lütfen alanları kontrol edin.",
+      "unauthorized": "Oturumunuzun süresi dolmuş olabilir. Lütfen tekrar giriş yapın.",
+      "codes": {
+        "UNAUTHORIZED": "Oturumunuz kapanmış. Lütfen tekrar giriş yapın.",
+        "NOT_STAFF": "Bu hesabın EdorasCRM erişimi yok.",
+        "FORBIDDEN": "Bu işlemi yalnız yöneticiler yapabilir.",
+        "VALIDATION": "Bilgiler geçersiz. Lütfen alanları kontrol edin.",
+        "NOT_FOUND": "Kayıt bulunamadı.",
+        "CONFIG_MISSING": "Sunucu yapılandırması eksik (ortam değişkeni ya da veritabanı migration'ı).",
+        "INTERNAL": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+        "EMAIL_TAKEN": "Bu e-postayla Edoras'ta zaten bir hesap var.",
+        "INSTITUTION_NAME_TAKEN": "Bu adla bir kurum zaten var.",
+        "ALREADY_ENROLLED": "Kurum zaten CRM'de kayıtlı.",
+        "NOT_ENROLLED": "Kurumun CRM kaydı yok.",
+        "ALREADY_PAID": "Kurum zaten ücretli.",
+        "NOT_PAID": "Lisans yalnız ücretli kuruma verilebilir.",
+        "NOT_DEMO": "Kurum demoda değil.",
+        "BILLING_REQUIRED": "Adres ve TC Kimlik No / Vergi No olmadan ücretli hesap açılamaz ve ödeme alınamaz.",
+        "CONTACT_INVALID": "Yetkili bilgisi geçersiz (ad soyad, telefon, e-posta).",
+        "TAX_ID_INVALID": "TC Kimlik No ya da Vergi No geçersiz.",
+        "LICENSE_REQUIRED": "Lisans başlangıcı ve bedeli zorunlu.",
+        "LICENSE_INVALID": "Lisans süresi 1 yıl olmalı.",
+        "LICENSE_OVERLAP": "Bu tarihlerde kurumun başka bir lisansı var.",
+        "DEMO_INVALID": "Demo tarihleri geçersiz (demo 1 dönem = 1 yıl sürer).",
+        "HAS_FINANCIAL_RECORDS": "Kurumun lisans ya da ödeme kaydı var; silinemez."
+      }
+    },
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "close": "Kapat",
+    "back": "Geri",
+    "saving": "Kaydediliyor...",
+    "submitting": "Gönderiliyor...",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "pagination": "Sayfalama",
+    "retry": "Tekrar Dene"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Sayfa Bulunamadı",
+      "description": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
+      "backHome": "Ana Sayfaya Dön",
+      "backDashboard": "Ana Sayfaya Git"
+    },
+    "error": {
+      "title": "Bir Hata Oluştu",
+      "description": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+      "retry": "Tekrar Dene",
+      "backHome": "Ana Sayfaya Dön"
+    },
+    "globalError": {
+      "title": "Kritik Hata",
+      "description": "Kritik bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.",
+      "refresh": "Sayfayı Yenile"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Giriş Yap",
+      "description": "Edoras CRM hesabınızla giriş yapın",
+      "welcome": "Kurum, lisans ve demo yönetimi",
+      "copyright": "© 2026 Edoras. Tüm hakları saklıdır.",
+      "email": {
+        "label": "E-posta",
+        "placeholder": "E-posta adresinizi girin",
+        "validation": {
+          "required": "E-posta gereklidir",
+          "invalid": "Geçerli bir e-posta adresi girin"
+        }
+      },
+      "password": {
+        "label": "Şifre",
+        "placeholder": "Şifrenizi girin",
+        "validation": {
+          "required": "Şifre gereklidir"
+        }
+      },
+      "submit": "Giriş Yap",
+      "submitting": "Giriş yapılıyor...",
+      "error": {
+        "invalidCredentials": "E-posta veya şifre hatalı",
+        "notStaff": "Bu hesabın EdorasCRM erişimi yok. Yöneticinize başvurun.",
+        "configMissing": "Sunucu yapılandırması eksik. Yöneticinize haber verin.",
+        "networkError": "Bağlantı hatası. Lütfen tekrar deneyin.",
+        "generic": "Giriş yapılırken bir hata oluştu"
+      }
+    }
+  },
+  "header": {
+    "theme": {
+      "toggle": "Tema Değiştir",
+      "light": "Açık Tema",
+      "dark": "Koyu Tema",
+      "system": "Sistem Teması"
+    }
+  },
+  "navigation": {
+    "dashboard": "Ana Sayfa",
+    "institutions": "Kurumlar",
+    "institutionsAlertBadge": "{count} kurum aksiyon bekliyor",
+    "sidebarCustomers": "Müşteriler",
+    "settings": "Hesabım",
+    "myProfile": "Hesabım",
+    "logout": "Çıkış",
+    "sidebarExpand": "Kenar çubuğunu genişlet",
+    "sidebarCollapse": "Kenar çubuğunu daralt",
+    "menu": "Menü",
+    "shellControls": "Genel kontroller"
+  },
+  "shell": {
+    "infoTip": {
+      "label": "Açıklama"
+    },
+    "sort": {
+      "toAsc": "Artan sırala",
+      "toDesc": "Azalan sırala",
+      "toOff": "Sıralamayı kaldır"
+    },
+    "palette": {
+      "open": "Ara ve git (⌘K / Ctrl+K)",
+      "title": "Komut paleti",
+      "description": "Sayfalara git, yeni demo aç ya da kurum ara.",
+      "placeholder": "Sayfa, kurum, yetkili, e-posta veya telefon ara…",
+      "newDemo": "Yeni demo aç",
+      "groups": {
+        "pages": "Sayfalar ve komutlar",
+        "institutions": "Kurumlar"
+      },
+      "noResults": "Eşleşen kurum bulunamadı.",
+      "minChars": "Kurum aramak için en az {count} karakter yaz.",
+      "hint": "↑↓ gez · Enter aç · Esc kapat",
+      "searchFailed": "Kurum listesi yüklenemedi; sonuçlar eksik olabilir."
+    }
+  },
+  "list": {
+    "csv": "CSV indir",
+    "search": "Kurum, yetkili, e-posta veya telefon ara",
+    "empty": "Bu görünümde kayıt yok.",
+    "truncated": "İlk {loaded} / {total} kayıt yüklendi; liste eksik olabilir."
+  },
+  "dashboard": {
+    "title": "Ana Sayfa",
+    "greeting": "Merhaba {name}",
+    "description": "Kurumların durumu ve aksiyon bekleyenler",
+    "kpi": {
+      "all": "Toplam kurum",
+      "paid": "Ücretli",
+      "demo": "Demoda",
+      "demoExpired": "Demosu biten",
+      "license": "Lisansı biten / yaklaşan"
+    },
+    "actionable": {
+      "title": "Aksiyon bekleyenler",
+      "description": "Demosu biten, lisansı biten ya da 30 gün içinde bitecek kurumlar.",
+      "empty": "Şu an aksiyon bekleyen kurum yok."
+    }
+  },
+  "settings": {
+    "title": "Hesabım",
+    "description": "CRM hesabınız ve şifreniz",
+    "account": "Hesap",
+    "name": "Ad Soyad",
+    "email": "E-posta",
+    "role": "Rol",
+    "roles": {
+      "ADMIN": "Yönetici",
+      "CRM_AGENT": "Satış temsilcisi"
+    },
+    "password": {
+      "title": "Şifre değiştir",
+      "old": "Mevcut şifre",
+      "new": "Yeni şifre",
+      "confirm": "Yeni şifre (tekrar)",
+      "submit": "Şifreyi değiştir",
+      "required": "Zorunlu",
+      "tooShort": "En az {count} karakter olmalı",
+      "mismatch": "Şifreler eşleşmiyor",
+      "wrongOld": "Mevcut şifre hatalı",
+      "saved": "Şifreniz değiştirildi",
+      "failed": "Şifre değiştirilemedi"
+    }
+  },
+  "institutions": {
+    "status": {
+      "demo": "Demo",
+      "demoDaysLeft": "Demo · {days} gün kaldı",
+      "demoEndedToday": "Demo bugün bitti",
+      "demoEnded": "Demo bitti · {days} gün önce",
+      "paid": "Ücretli",
+      "paidDaysLeft": "Ücretli · {days} gün kaldı",
+      "licenseEndedToday": "Lisans bugün bitti",
+      "licenseEnded": "Lisans bitti · {days} gün önce",
+      "unregistered": "CRM kaydı yok",
+      "inactive": "Pasif",
+      "missingInEdoras": "Edoras'ta yok"
+    },
+    "filters": {
+      "all": "Tümü",
+      "demo": "Demo",
+      "demoExpired": "Demosu biten",
+      "paid": "Ücretli",
+      "licenseSoon": "Lisansı yaklaşan",
+      "licenseExpired": "Lisansı biten",
+      "unregistered": "Kayıtsız",
+      "inactive": "Pasif"
+    },
+    "list": {
+      "title": "Kurumlar",
+      "description": "Edoras'taki tüm kurumlar: demo, ücretli ve CRM kaydı olmayanlar. Aksiyon bekleyenler üstte.",
+      "newDemo": "Yeni demo",
+      "filtersLabel": "Durum süzgeci",
+      "billingOk": "Tam",
+      "billingMissing": "Eksik",
+      "cols": {
+        "name": "Kurum",
+        "status": "Durum",
+        "contact": "Yetkili",
+        "endsOn": "Bitiş",
+        "billing": "Fatura bilgisi"
+      },
+      "csv": {
+        "name": "Kurum",
+        "program": "Program",
+        "status": "Durum",
+        "contact": "Yetkili",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "endsOn": "Demo/Lisans bitişi",
+        "billing": "Fatura bilgisi"
+      }
+    },
+    "newDemo": {
+      "title": "Yeni demo kurum",
+      "description": "Kurum Edoras'ta açılır ve yetkili kişiye kurum yöneticisi hesabı verilir. Demo 1 dönem (1 yıl) sürer.",
+      "institutionName": "Kurum adı",
+      "institutionNamePlaceholder": "Ör. Işıklar Koleji",
+      "program": "Sınav programı",
+      "contact": "Yetkili",
+      "phone": "Telefon",
+      "login": "Giriş e-postası",
+      "demoEnds": "Demo bitişi",
+      "rulesHint": "Yetkilinin adı soyadı, kurum adı, telefon ve e-posta olmadan demo açılamaz.",
+      "continue": "Devam",
+      "confirm": "Onayla ve demoyu aç",
+      "creating": "Açılıyor…",
+      "willCreateInstitution": "Edoras'ta kurum, aktif öğretim yılı ve dönemiyle açılır.",
+      "willCreateAdmin": "Yetkilinin e-postasıyla kurum yöneticisi hesabı açılır; geçici şifre bir kez gösterilir.",
+      "willNotDeactivate": "Demo süresi dolunca kurum kapanmaz; CRM'de \"Demo bitti\" olarak görünür.",
+      "emailTaken": "Bu e-postayla Edoras'ta zaten bir hesap var.",
+      "nameTaken": "Bu adla bir kurum zaten var.",
+      "doneTitle": "Demo açıldı",
+      "doneDescription": "Giriş bilgisini kurum yetkilisine iletin.",
+      "openInstitution": "Kuruma git"
+    },
+    "credentials": {
+      "email": "Giriş e-postası",
+      "password": "Geçici şifre",
+      "panel": "Panel adresi",
+      "demoEndsAt": "Demo bitişi",
+      "copy": "Kopyala",
+      "copyAll": "Tümünü kopyala",
+      "all": "Giriş bilgileri",
+      "copied": "{label} kopyalandı",
+      "copyFailed": "Kopyalanamadı",
+      "onlyOnce": "Şifre yalnız şimdi gösterilir ve hiçbir yerde saklanmaz. Pencereyi kapatmadan önce kopyalayıp yetkiliye iletin; ilk girişte değiştirmesini isteyin.",
+      "copyBlock": "Edoras paneli: {url}\nE-posta: {email}\nGeçici şifre: {password}\nDemo bitişi: {date}"
+    },
+    "form": {
+      "contactName": "Yetkili adı soyadı",
+      "contactNamePlaceholder": "Ad Soyad",
+      "contactPhone": "Telefon",
+      "contactEmail": "E-posta",
+      "address": "Açık adres",
+      "addressPlaceholder": "Mahalle, cadde, no, ilçe / il",
+      "idType": "Kimlik türü",
+      "idTypeTc": "TC Kimlik No",
+      "idTypeVkn": "Vergi No",
+      "tcNo": "TC Kimlik No",
+      "taxNo": "Vergi No",
+      "licenseStartsOn": "Lisans başlangıcı",
+      "licenseEndsPreview": "Bitiş: {date} (1 yıl)",
+      "licensePrice": "Lisans bedeli (₺)",
+      "payAmount": "Ödenen tutar (₺)",
+      "payMethod": "Ödeme yöntemi",
+      "payMethodPlaceholder": "Seçin",
+      "paidOn": "Ödeme tarihi"
+    },
+    "paymentMethod": {
+      "HAVALE": "Havale / EFT",
+      "KREDI_KARTI": "Kredi kartı",
+      "NAKIT": "Nakit",
+      "DIGER": "Diğer"
+    },
+    "dialogs": {
+      "contact": {
+        "title": "Yetkili bilgisi",
+        "description": "Demo ve satış görüşmeleri için kurumdaki yetkili kişi.",
+        "submit": "Kaydet",
+        "saved": "Yetkili bilgisi güncellendi"
+      },
+      "billing": {
+        "title": "Fatura bilgisi",
+        "description": "Ücretli hesap ve ödeme için açık adres ile TC Kimlik No ya da Vergi No zorunludur.",
+        "submit": "Kaydet",
+        "saved": "Fatura bilgisi kaydedildi"
+      },
+      "convert": {
+        "title": "Ücretli hesaba geçir",
+        "description": "Adres ve TC Kimlik No / Vergi No olmadan ücretli hesap açılamaz. Lisans 1 yıllıktır.",
+        "billingSection": "Fatura bilgisi",
+        "licenseSection": "Lisans (1 yıl)",
+        "withPayment": "İlk ödemeyi de şimdi kaydet",
+        "submit": "Ücretliye geçir",
+        "saved": "Kurum ücretli hesaba geçti"
+      },
+      "renew": {
+        "title": "Lisansı yenile",
+        "description": "Yeni lisans: {start} – {end} (1 yıl).",
+        "submit": "Yenile",
+        "saved": "Lisans yenilendi",
+        "lastPrice": "Son lisans bedeli: {amount}"
+      },
+      "payment": {
+        "title": "Ödeme kaydet",
+        "description": "Ödeme yalnız kurumun fatura bilgisi (adres + TC/VKN) kayıtlıysa alınabilir.",
+        "submit": "Kaydet",
+        "submitAmount": "{amount} ödemeyi kaydet",
+        "saved": "Ödeme kaydedildi",
+        "license": "Lisans",
+        "noLicense": "Lisansa bağlama",
+        "note": "Not",
+        "notePlaceholder": "Ör. dekont no"
+      },
+      "enroll": {
+        "title": "CRM'e kaydet",
+        "description": "{name} CRM kurulmadan önce açılmış bir kurum. Durumunu ve yetkili bilgisini girin; kurumun Edoras hesabına dokunulmaz.",
+        "status": "Durum",
+        "statusDemo": "Demo",
+        "statusPaid": "Ücretli",
+        "billingSection": "Fatura bilgisi",
+        "licenseSection": "Süren lisans (1 yıl)",
+        "submitDemo": "Demo olarak kaydet",
+        "demoStartsOn": "Demo başlangıcı",
+        "demoEndsPreview": "Bitiş: {date} (1 yıl)",
+        "submitPaid": "Ücretli olarak kaydet",
+        "saved": "Kurum CRM'e kaydedildi"
+      }
+    },
+    "detail": {
+      "title": "Kurum",
+      "back": "Kurumlara dön",
+      "notFound": "Kurum bulunamadı.",
+      "createdAt": "Oluşturma: {date}",
+      "enroll": "CRM'e kaydet",
+      "convert": "Ücretliye geçir",
+      "inactiveNote": "Bu kurum Edoras'ta pasif (edoras-admin). CRM bu durumu değiştirmez.",
+      "missingNote": "Bu kurum Edoras'ta bulunamadı (silinmiş olabilir). CRM kaydı, lisans ve ödemeler burada korunuyor.",
+      "convertAdminOnly": "Ücretliye geçirme, lisans ve ödeme işlemlerini yalnız yöneticiler yapabilir.",
+      "contact": {
+        "title": "Yetkili",
+        "edit": "Düzenle",
+        "name": "Ad Soyad",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "call": "Ara"
+      },
+      "billing": {
+        "title": "Fatura bilgisi",
+        "edit": "Düzenle",
+        "add": "Ekle",
+        "missing": "Adres ve TC Kimlik No / Vergi No girilmeden ücretli hesap açılamaz ve ödeme alınamaz.",
+        "address": "Adres",
+        "tcNo": "TC Kimlik No",
+        "taxNo": "Vergi No",
+        "hiddenComplete": "Fatura bilgisi kayıtlı (yalnız yöneticiler görür).",
+        "hiddenMissing": "Fatura bilgisi eksik (yalnız yöneticiler girebilir)."
+      },
+      "demo": {
+        "title": "Demo",
+        "started": "Başlangıç",
+        "ends": "Bitiş",
+        "daysLeft": "{days} gün kaldı",
+        "endedToday": "Demo bugün bitti",
+        "ended": "Demo {days} gün önce bitti",
+        "rule": "Demo 1 dönem (1 yıl) sürer. Süre dolunca kurum kapanmaz; yalnız burada ve listede \"Demo bitti\" görünür."
+      },
+      "licenses": {
+        "title": "Lisanslar",
+        "renew": "Lisansı yenile",
+        "empty": "Lisans kaydı yok.",
+        "emptyDemo": "Demo kurum — ücretliye geçince 1 yıllık lisans başlar.",
+        "rule": "Kural: 1 dönem = 1 yıl. Yenileme, süren lisansın bitişinden başlar.",
+        "state": {
+          "active": "Geçerli",
+          "ended": "Bitti",
+          "upcoming": "Başlayacak"
+        }
+      },
+      "payments": {
+        "title": "Ödemeler",
+        "record": "Ödeme kaydet",
+        "billingRequired": "Fatura bilgisi (adres + TC/VKN) girilmeden ödeme alınamaz.",
+        "empty": "Ödeme kaydı yok.",
+        "total": "Toplam"
+      },
+      "usage": {
+        "title": "Edoras kullanımı",
+        "students": "Öğrenci",
+        "teachers": "Öğretmen",
+        "classes": "Sınıf",
+        "admins": "Kurum yöneticileri",
+        "noAdmins": "Yönetici hesabı yok.",
+        "convertedAt": "Ücretliye geçiş: {date}"
+      },
+      "unregistered": {
+        "title": "CRM kaydı yok",
+        "description": "Bu kurum CRM kurulmadan önce açılmış. Yetkili bilgisini ve durumunu (demo / ücretli) girmek için \"CRM'e kaydet\" düğmesini kullanın."
+      }
+    }
+  }
+}

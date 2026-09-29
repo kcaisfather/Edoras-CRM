@@ -19,3 +19,6 @@ export interface CrmTableActions {
   renderAssignTask?: (lead: CrmLead, opts?: { showLabel?: boolean }) => ReactNode;
   renderSatisfaction?: (lead: CrmLead) => ReactNode;
 }
+
+/** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata; ileride anket memnuniyeti). */
+export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction">;

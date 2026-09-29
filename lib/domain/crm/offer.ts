@@ -11,11 +11,6 @@ import type { CrmLead, CrmStatus, LostReason } from "./types";
 /** Sonraki arama alanının gösterildiği statüler (düzenleme ve ekleme formları). */
 export const FOLLOW_UP_STATUSES: CrmStatus[] = ["TEKLIF_VERILDI", "TAKIPTE", "OLUMSUZ"];
 
-/**
- * Statü seçilince önerilen sonraki arama (bugünden +gün). DeepSport'ta /crm/rules'daki "offer" (+3) ve
- * "lostRecontact" (+90) kurallarından okunur; kural motoru taşınınca oradan okunacak.
- */
-export const FOLLOW_UP_SUGGEST_DAYS: Partial<Record<CrmStatus, number>> = { TEKLIF_VERILDI: 3, OLUMSUZ: 90 };
 
 export interface LeadFollowUp {
   displayStatus: CrmStatus | null;

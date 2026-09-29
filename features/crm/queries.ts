@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useInstitutions } from "@/features/institutions";
 import { usePermissions } from "@/features/auth";
 import type { CrmLead, CrmLeadDto } from "@/lib/domain/crm/types";
 import type { InstitutionListItem } from "@/lib/domain/institutions/types";
+import { DEFAULT_RULES, normalizeRules, type RuleConfig } from "@/lib/domain/tasks/rules";
 import { crmApi } from "./api";
 
 export const crmKeys = {
@@ -13,6 +14,7 @@ export const crmKeys = {
   leads: () => [...crmKeys.all, "leads"] as const,
   forInstitution: (institutionId: string) => [...crmKeys.all, "institution", institutionId] as const,
   collections: (leadId: string) => [...crmKeys.all, "collections", leadId] as const,
+  rules: () => [...crmKeys.all, "rules"] as const,
 };
 
 /**
@@ -70,4 +72,32 @@ export function useLeadCollections(lead: Pick<CrmLead, "id" | "institutionId"> |
     enabled: enabled && canSeeFinancials && !!lead?.institutionId,
     staleTime: 60 * 1000,
   });
+}
+
+/**
+ * Takip kuralları (crm_rules — Madde 12; DeepSport'taki gibi crm modülünde: aday formu da önerdiği arama gününü
+ * buradan okur). Kayıt yalnız ADMIN (uç 403); kaydedince aday ve görev önbelleği (crmKeys altında) tazelenir.
+ * Yüklenemezse varsayılanlar kullanılır, `isError` ekrana yazılır.
+ */
+export function useCrmRules(enabled = true) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: crmKeys.rules(),
+    queryFn: async ({ signal }) => normalizeRules(await crmApi.rules(signal)),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+  const mutation = useMutation({
+    mutationFn: (rules: RuleConfig[]) => crmApi.saveRules(normalizeRules(rules)),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: crmKeys.all }),
+  });
+  return {
+    rules: query.data ?? DEFAULT_RULES,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    isSaving: mutation.isPending,
+    save: async (rules: RuleConfig[]) => {
+      await mutation.mutateAsync(rules);
+    },
+  };
 }

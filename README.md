@@ -13,7 +13,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | | CRM projesi (`orishbqniebbgdanazrp`) | Edoras (`bmjkpxbrmwxuildwakly`) |
 | --- | --- | --- |
 | Ne | EdorasCRM'in kendi projesi | edoras-admin ve mobilin canlı veritabanı |
-| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
+| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
@@ -43,6 +43,10 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Adayın en az kurum adı ya da yetkili adı olur; telefon E.164, e-posta biçimli | `crm_leads_identity_check`, `crm_leads_contact_*_check` |
 | Bir Edoras kurumuna en fazla bir aday bağlanır | `crm_leads_institution_id_key` (kısmi benzersiz dizin) |
 | Kayıp nedeni yalnız "Satış olmadı"da, satış tarihi yalnız "Satış oldu"da; tutarlar ≥ 0 | `crm_leads_lost_reason_check`, `crm_leads_sold_at_check`, `crm_leads_*_amount_check` |
+| Kural görevi yalnız tamamlanınca saklanır, anahtarı tür + özne + vadeyle tutarlı, bir kez tamamlanır | `crm_tasks_rule_done_check`, `crm_tasks_key_check`, `crm_tasks_task_key_key` |
+| Elle atanan görev geçmiş güne atanamaz; atanan kişi aktif CRM personeli | `crm_tasks_guard` tetikleyicisi |
+| Tamamlama tek transaction: görev + sonuç notu + adayın statüsü / arama tarihi; geri al yalnız tamamlayan ya da ADMIN | `crm_complete_task`, `crm_reopen_task` |
+| Kural günü 0–365; "Planlanan arama" parametresiz | `crm_rules_days_check`, `crm_rules_scheduled_check` |
 
 TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tckn/vkn`) ve TypeScript'te
 (`lib/domain/institutions/rules.ts`) birebir aynıdır. Test bunu 3.000 örnekle karşılaştırır.
@@ -54,7 +58,7 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    - CRM projesi: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - Edoras: `EDORAS_SUPABASE_URL`, `EDORAS_SUPABASE_SERVICE_ROLE_KEY` (edoras-admin'in `.env.local`'ındaki değerler)
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
-   `20260929160000_crm_leads.sql` adaylar ve notlar).
+   `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -88,6 +92,18 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 - Geçici şifre yalnız demo açma yanıtında gösterilir, hiçbir yerde saklanmaz.
 - Node 20'de supabase-js WebSocket ister; sunucu istemcilerine `ws` verilir (`lib/supabase/realtime.ts`).
 
+### Görevler (zamanlayıcı yok)
+
+- Açık kural görevleri tabloya önceden yazılmaz: `/api/crm/tasks` her istekte CRM tablolarından (adaylar, kurum
+  kaydı, lisanslar, ödemeler, iç kurumlar, `crm_rules`) **sunucuda türetir** (`lib/domain/tasks/derive.ts`).
+  `crm_tasks`'ta yalnız elle atanan görevler ve tamamlanan kural görevleri durur (anahtar `tür:özne:vade`).
+- Tamamlarken sunucu görevi yeniden türetir; istemcinin gönderdiği anahtar bugün açık bir görev değilse 404.
+- Görünürlük: kural görevleri ve atanmamış görevler ekip havuzu; atanmış görev yalnız atanan + ADMIN. ADMIN herkese,
+  CRM_AGENT yalnız kendine ya da havuza atar. Kuralları yalnız ADMIN değiştirir (`/crm/rules`, Ayarlar → Kurallar).
+- Kural seti (Edoras: demo ve lisans 1 yıl): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine
+  60 gün kala, Süresi doldu (+0), Açık bakiye +7, Satış olmadı +90, Tarihsiz Aranacak/Takipte +0. Anket (5) ve soğuk
+  liste (2) kuralları modülleri gelince görev üretir. İç kurumlar görev üretmez.
+
 ## Klasörler
 
 | Yol | İçerik |
@@ -111,16 +127,16 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı Aktivite geçmişi ile gelecek) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
+| Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati, soğuk liste ve anket görevleri yok) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Görevler + kural motoru (adayın `next_follow_up_at` alanı hazır; aday satırında `renderAssignTask` yuvası boş)
-2. Soğuk listeler (+ Excel/CSV içe aktarma)
-3. Anketler (herkese açık `/s/[token]`)
-4. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
-5. Müşteri analizleri (yenileme, kullanım, segmentler)
-6. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-7. Raporlar (Resend)
-8. Aktivite geçmişi (`audit_logs`)
+1. Soğuk listeler (+ Excel/CSV içe aktarma; `coldList` kuralı hazır, görev üretmeye başlar)
+2. Anketler (herkese açık `/s/[token]`; `surveyNoResponse` kuralı hazır)
+3. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
+4. Müşteri analizleri (yenileme, kullanım, segmentler)
+5. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
+6. Raporlar (Resend)
+7. Aktivite geçmişi (`audit_logs`)

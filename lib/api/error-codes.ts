@@ -33,6 +33,14 @@ export const API_ERROR_CODES = [
   "LEAD_INSTITUTION_TAKEN",
   "LEAD_NOT_LINKED",
   "NOTE_NOT_OWNER",
+  "TASK_NOT_FOUND",
+  "TASK_ALREADY_DONE",
+  "TASK_NOT_DONE",
+  "TASK_NOT_ASSIGNEE",
+  "TASK_NOT_COMPLETER",
+  "TASK_ASSIGNEE_INVALID",
+  "TASK_PAST_DUE",
+  "TASK_NO_LEAD",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

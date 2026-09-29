@@ -34,6 +34,17 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_BILLING_REQUIRED: [422, "BILLING_REQUIRED"],
   CRM_STATUS_INVALID: [400, "VALIDATION"],
   CRM_LAST_ADMIN: [409, "LAST_ADMIN"],
+  // 20260929170000_crm_tasks
+  CRM_TASK_NOT_FOUND: [404, "TASK_NOT_FOUND"],
+  CRM_TASK_ALREADY_DONE: [409, "TASK_ALREADY_DONE"],
+  CRM_TASK_NOT_DONE: [409, "TASK_NOT_DONE"],
+  CRM_TASK_NOT_ASSIGNEE: [403, "TASK_NOT_ASSIGNEE"],
+  CRM_TASK_NOT_COMPLETER: [403, "TASK_NOT_COMPLETER"],
+  CRM_TASK_ASSIGNEE_INVALID: [422, "TASK_ASSIGNEE_INVALID"],
+  CRM_TASK_PAST_DUE: [400, "TASK_PAST_DUE"],
+  CRM_TASK_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_TASK_INVALID: [400, "VALIDATION"],
+  CRM_TASK_ACTOR_REQUIRED: [400, "VALIDATION"],
 };
 
 /** CHECK / FK kısıt adı → kod. */
@@ -63,6 +74,22 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_leads_institution_id_key: [409, "LEAD_INSTITUTION_TAKEN"],
   crm_notes_content_check: [400, "VALIDATION"],
   crm_notes_lead_id_fkey: [404, "NOT_FOUND"],
+  // 20260929170000_crm_tasks
+  crm_tasks_lead_id_fkey: [404, "NOT_FOUND"],
+  crm_tasks_task_key_key: [409, "TASK_ALREADY_DONE"],
+  crm_tasks_kind_check: [400, "VALIDATION"],
+  crm_tasks_status_check: [400, "VALIDATION"],
+  crm_tasks_outcome_check: [400, "VALIDATION"],
+  crm_tasks_assignment_type_check: [400, "VALIDATION"],
+  crm_tasks_subject_check: [400, "VALIDATION"],
+  crm_tasks_rule_done_check: [400, "VALIDATION"],
+  crm_tasks_key_check: [400, "VALIDATION"],
+  crm_tasks_assigned_fields_check: [400, "VALIDATION"],
+  crm_tasks_done_check: [400, "VALIDATION"],
+  crm_tasks_note_check: [400, "VALIDATION"],
+  crm_rules_id_check: [400, "VALIDATION"],
+  crm_rules_days_check: [400, "VALIDATION"],
+  crm_rules_scheduled_check: [400, "VALIDATION"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

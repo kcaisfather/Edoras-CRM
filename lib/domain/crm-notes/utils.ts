@@ -5,7 +5,8 @@
  * saklanıyordu: `[ETIKET|a|b|c] gövde`. EdorasCRM'de gerçek evi olanlar kolona/tabloya taşındı:
  *   TEKLIF, TAKIP  → crm_leads.offer_sent_at / next_follow_up_at / lost_reason (CRM_OFFER_FIELDS)
  *   TAHSILAT       → bağlı kurumun crm_payments satırları (COLLECTIONS)
- *   GOREV, ATAMA   → görev modülüyle gelecek (crm_tasks); bugün yazılmaz
+ *   GOREV, ATAMA   → crm_tasks (elle atanan görev ve tamamlanan kural görevi satırları); sonuç notu düz
+ *                    metin olarak crm_notes'a yazılır (supabase/migrations/20260929170000_crm_tasks.sql)
  *   DONDURMA, MEMNUNIYETSIZ → Edoras'ta karşılığı yok (paket dondurma yok; eski önek verisi yok)
  * Başka evi olana kadar önekle kalanlar (gövde düz metin kalır, önekli not her ekranda okunur):
  *   SIKAYET|kategori|önem|durum  → şikâyet kaydı (anket modülü gelene kadar; CRM_DISSATISFACTION_FIELD)

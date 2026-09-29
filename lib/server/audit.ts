@@ -34,9 +34,13 @@ export type AuditAction =
   | "LEAD_UNLINKED"
   | "NOTE_CREATED"
   | "NOTE_UPDATED"
-  | "NOTE_DELETED";
+  | "NOTE_DELETED"
+  | "TASK_ASSIGNED"
+  | "TASK_COMPLETED"
+  | "TASK_REOPENED"
+  | "RULES_UPDATED";
 
-export type AuditEntityType = "institution" | "staff" | "lead" | "note";
+export type AuditEntityType = "institution" | "staff" | "lead" | "note" | "task" | "rules";
 
 export interface AuditEntry {
   action: AuditAction;

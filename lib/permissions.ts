@@ -1,11 +1,17 @@
 import type { CurrentUser, PanelRole } from "@/lib/domain/auth/types";
 
 /**
- * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar ve
+ * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar, Görevlerim ve
  * Satış Analizleri) açık; tutarlar sunucuda boşaltılır, arayüzde FinancialOnly gizler.
  * Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
  */
 export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/settings"] as const;
+
+/**
+ * CRM_AGENT_PATHS altında olsa da CRM_AGENT'a kapalı yollar (DeepSport CRM_AGENT_DENIED_PATHS): kural motoru
+ * yönetici işidir (PUT /api/crm/rules da 403).
+ */
+export const CRM_AGENT_DENIED_PATHS = ["/crm/rules"] as const;
 
 /** Oturum gerektirmeyen yollar (giriş sayfası). */
 export const PUBLIC_PATHS = ["/login"] as const;
@@ -28,6 +34,7 @@ export function panelRoleOf(user: CurrentUser | null | undefined): PanelRole {
 export function canAccessPathFor(role: PanelRole, pathname: string): boolean {
   if (role === "ADMIN") return true;
   const path = pathname.split(/[?#]/)[0] || "/";
+  if (CRM_AGENT_DENIED_PATHS.some((p) => matchesPrefix(path, p))) return false;
   return CRM_AGENT_PATHS.some((p) => matchesPrefix(path, p));
 }
 

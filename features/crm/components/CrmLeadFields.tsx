@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { LeadFormValues } from "@/lib/domain/crm/form";
-import { FOLLOW_UP_STATUSES, FOLLOW_UP_SUGGEST_DAYS, addDaysIso } from "@/lib/domain/crm/offer";
+import { FOLLOW_UP_STATUSES, addDaysIso } from "@/lib/domain/crm/offer";
 import { CRM_STATUSES, type CrmStatus } from "@/lib/domain/crm/types";
+import { followUpSuggestDays } from "@/lib/domain/tasks/rules";
+import { useCrmRules } from "../queries";
 import { CrmFollowUpFields } from "./CrmFollowUpFields";
 
 type LeadForm = UseFormReturn<LeadFormValues>;
@@ -38,7 +40,8 @@ export function LeadField({
 
 /**
  * Aday formunun ortak alanları (ekleme ve düzenleme): kurum, yetkili, iletişim, konum, statü ve takip.
- * Statü seçilince sonraki arama alanı boşsa öneri tarihiyle dolar (Teklif +3, Satış olmadı +90 gün).
+ * Statü seçilince sonraki arama alanı boşsa öneri tarihiyle dolar: günler takip kurallarından (Teklif verildi →
+ * "offer" +3, Satış olmadı → "lostRecontact" +90; kural kapalıysa öneri yok).
  */
 export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; idPrefix: string; offerDate?: string | null }) {
   const t = useTranslations("crm.form");
@@ -53,9 +56,10 @@ export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; i
   const [status, nextCall, lostReason] = useWatch({ control, name: ["status", "nextCall", "lostReason"] });
   const id = (name: string) => `${idPrefix}-${name}`;
 
+  const { rules } = useCrmRules();
   const onStatusPicked = (next: CrmStatus) => {
     if (getValues("nextCall")) return;
-    const days = FOLLOW_UP_SUGGEST_DAYS[next];
+    const days = followUpSuggestDays(rules)[next];
     if (days != null) setValue("nextCall", addDaysIso(new Date(), days), { shouldDirty: true });
   };
 

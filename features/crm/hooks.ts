@@ -13,7 +13,7 @@ import { isCrmStatus, type CrmLead, type CrmNoteMode } from "@/lib/domain/crm/ty
 import { getRemainingAmount } from "@/lib/domain/crm/utils";
 import { CRM_QUICK_TABS, FINANCIAL_VIEWS, type CrmQuickTab } from "@/lib/domain/crm/views";
 import { useAllCrmLeads } from "./queries";
-import type { CrmTableActions } from "./types";
+import type { CrmRowSlots, CrmTableActions } from "./types";
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZES = [10, 20, 50, 100] as const;
@@ -58,7 +58,7 @@ function useSearchInput(search: string, commit: (value: string) => void) {
  * kurum sayfasındaki "Adaylar'da aç" bağlantısı doğrudan açar. Pencereler (düzenle, not, demo, bağla,
  * tahsilat) yerel durumdadır.
  */
-export function useCrmList() {
+export function useCrmList(slots: CrmRowSlots = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { canSeeFinancials } = usePermissions();
@@ -153,6 +153,7 @@ export function useCrmList() {
     onLink: (lead) => setLinkId(lead.id),
     // Tahsilat yalnız finans yetkisiyle (uç da CRM_AGENT'a 403).
     onAddCollection: canSeeFinancials ? (lead) => setCollectionId(lead.id) : undefined,
+    ...slots,
   };
 
   return {

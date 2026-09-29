@@ -24,7 +24,7 @@ function handleUnauthorized() {
 
 export async function apiRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; signal?: AbortSignal } = {}
+  options: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; signal?: AbortSignal } = {}
 ): Promise<T> {
   const { method = "GET", body, signal } = options;
   let res: Response;

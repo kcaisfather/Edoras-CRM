@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { usePermissions } from "@/features/auth";
+import { RulesEditor } from "@/features/tasks";
 import { useUrlParam } from "@/lib/hooks/use-url-param";
 import { AccountPanel } from "./AccountPanel";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
@@ -10,11 +11,12 @@ import { InternalInstitutionsPanel } from "./InternalInstitutionsPanel";
 import { KvkkPanel } from "./KvkkPanel";
 import { TeamPanel } from "./TeamPanel";
 
-type SettingsTab = "general" | "team" | "dataQuality" | "diagnostics" | "kvkk";
+type SettingsTab = "general" | "team" | "rules" | "dataQuality" | "diagnostics" | "kvkk";
 
 /**
- * Ayarlar (DeepSportAdmin düzeni): Genel · Ekip · Veri kalitesi · Hata kaydı · KVKK. Sekme URL'de (?tab=).
- * Satış temsilcisi yalnız Genel ve KVKK'yı görür. (Raporlar sekmesi rapor modülüyle gelecek.)
+ * Ayarlar (DeepSportAdmin düzeni): Genel · Ekip · Kurallar · Veri kalitesi · Hata kaydı · KVKK. Sekme URL'de
+ * (?tab=). Satış temsilcisi yalnız Genel ve KVKK'yı görür. Kurallar sekmesi /crm/rules ile aynı düzenleyici
+ * (DeepSport /settings?tab=rules). (Raporlar sekmesi rapor modülüyle gelecek.)
  */
 export function SettingsPage() {
   const t = useTranslations("settings");
@@ -22,7 +24,7 @@ export function SettingsPage() {
   const { isAdmin } = usePermissions();
   const [tabParam, setTab] = useUrlParam("tab", "general");
 
-  const tabs: SettingsTab[] = isAdmin ? ["general", "team", "dataQuality", "diagnostics", "kvkk"] : ["general", "kvkk"];
+  const tabs: SettingsTab[] = isAdmin ? ["general", "team", "rules", "dataQuality", "diagnostics", "kvkk"] : ["general", "kvkk"];
   const tab: SettingsTab = (tabs as string[]).includes(tabParam) ? (tabParam as SettingsTab) : "general";
 
   return (
@@ -40,6 +42,7 @@ export function SettingsPage() {
       />
       {tab === "general" && <AccountPanel />}
       {tab === "team" && <TeamPanel />}
+      {tab === "rules" && <RulesEditor embedded />}
       {tab === "dataQuality" && <InternalInstitutionsPanel />}
       {tab === "diagnostics" && <DiagnosticsPanel />}
       {tab === "kvkk" && <KvkkPanel />}

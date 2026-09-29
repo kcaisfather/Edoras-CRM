@@ -1,0 +1,193 @@
+{
+  "tasks": {
+    "title": "Görevlerim",
+    "description": "Kurallardan türetilen ve elle atanan gecikmiş, bugünkü ve yaklaşan görevler.",
+    "buckets": {
+      "overdue": "Gecikmiş",
+      "today": "Bugün",
+      "upcoming": "Yaklaşan (14 gün)"
+    },
+    "kind": {
+      "scheduled": "Planlanan arama",
+      "offer": "Teklif takibi",
+      "demoEnding": "Demo bitiyor",
+      "annualRenewal": "Yıllık yenileme araması",
+      "expired": "Süresi doldu",
+      "balance": "Tahsilat (açık bakiye)",
+      "lostRecontact": "Yeniden temas",
+      "undatedFollowUp": "Tarihsiz takip",
+      "surveyNoResponse": "Anket araması",
+      "coldList": "Soğuk liste araması",
+      "assigned": "Atanan görev"
+    },
+    "ref": {
+      "offer": "Teklif: {date}",
+      "demoEnding": "Demo bitişi: {date}",
+      "annualRenewal": "Lisans bitişi: {date}",
+      "expiredDemo": "Demo bitti: {date}",
+      "expiredLicense": "Lisans bitti: {date}",
+      "lostRecontact": "Satış olmadı: {date}",
+      "undatedFollowUp": "Son güncelleme: {date}",
+      "surveyNoResponse": "Anket: {date}",
+      "balance": "Kalan: {amount}",
+      "balanceHidden": "Açık bakiye var",
+      "scheduled": ""
+    },
+    "due": {
+      "overdue": "{days} gün gecikti",
+      "today": "Bugün",
+      "inDays": "{days} gün sonra"
+    },
+    "table": {
+      "customer": "Müşteri",
+      "task": "Görev",
+      "due": "Vade",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "complete": "Tamamla",
+    "undo": "Geri al",
+    "undoHint": "Görevi yeniden açar. Yazılan sonuç notu ve kayıt değişiklikleri geri alınmaz.",
+    "undone": "Görev yeniden açıldı. Sonuç notu ve kayıt değişiklikleri geri alınmadı.",
+    "undoError": "Görev geri alınamadı.",
+    "done": "Tamamlandı",
+    "doneBy": "{name} tamamladı",
+    "showDone": "Tamamlananları göster ({count})",
+    "hideDone": "Tamamlananları gizle",
+    "sharedNote": "Görevler kurallardan her açılışta yeniden hesaplanır; tamamlanan görev ekipçe görünür (son 90 gün).",
+    "empty": "Bu grupta görev yok.",
+    "allClear": "Bugün için açık görev yok.",
+    "rulesLink": "Kuralları düzenle",
+    "crmLink": "Adaylar'a dön",
+    "noLead": "CRM adayı yok",
+    "institutionsLoadError": "Kurum listesi okunamadı; CRM adayı olmayan kurumların görevleri bu listede eksik.",
+    "search": "Kurum, kişi, telefon ara…",
+    "counts": "{overdue} gecikmiş · {today} bugün · {upcoming} yaklaşan",
+    "dialog": {
+      "title": "Görevi tamamla",
+      "description": "Sonuç notu müşterinin CRM notlarına yazılır.",
+      "descriptionNoLead": "Bu kurumun CRM adayı yok: sonuç notu yalnız görevin kaydında tutulur, statü ve arama tarihi değiştirilemez.",
+      "outcome": "Sonuç",
+      "outcomes": {
+        "ulasildi": "Ulaşıldı, görüşüldü",
+        "ulasilamadi": "Ulaşılamadı",
+        "tekrar": "Tekrar aranacak",
+        "ilgilenmiyor": "İlgilenmiyor"
+      },
+      "note": "Not (isteğe bağlı)",
+      "status": "Statüyü değiştir (isteğe bağlı)",
+      "keepStatus": "Değiştirme ({status})",
+      "submit": "Kaydet ve tamamla",
+      "confirmTitle": "Statü değişikliğini onayla",
+      "confirmBody": "“{name}” kaydının statüsü “{from}” → “{to}” olarak güncellenecek ve sonuç notu yazılacak.",
+      "confirm": "Onayla ve kaydet",
+      "back": "Geri",
+      "success": "Görev tamamlandı",
+      "error": "Kaydedilemedi; görev açık kaldı.",
+      "noteTitle": "Görev: {task} — Sonuç: {outcome}",
+      "pastDate": "Sonraki arama için bugün ya da sonrası geçerli bir tarih seçin."
+    },
+    "assign": {
+      "title": "Görev ata",
+      "description": "Görev ekiple paylaşılan görev listesine eklenir ve Görevlerim'de görünür.",
+      "type": "Amaç",
+      "types": {
+        "arama": "Arama",
+        "anket": "Anket araması",
+        "yenileme": "Yenileme görüşmesi",
+        "tahsilat": "Tahsilat takibi",
+        "demo": "Demo takibi",
+        "teklif": "Teklif takibi",
+        "diger": "Diğer"
+      },
+      "date": "Tarih",
+      "quickLabel": "Hızlı tarih seçimi",
+      "quick": {
+        "today": "Bugün",
+        "tomorrow": "Yarın",
+        "plus3": "+3 gün",
+        "plus7": "+1 hafta"
+      },
+      "pastDate": "Bugün ya da sonrası için geçerli bir tarih seçin.",
+      "note": "Not (isteğe bağlı)",
+      "notePlaceholder": "Ne konuşulacak, neye dikkat edilmeli?",
+      "assignee": "Atanan kişi (isteğe bağlı)",
+      "unassigned": "Atanmamış (ekip havuzu)",
+      "assigneeHint": "Atanan görevi yalnız atanan kişi ve yöneticiler görür; atanmamış görevi tüm ekip görür.",
+      "agentHint": "Görevi kendinize ya da ekip havuzuna atayabilirsiniz.",
+      "assigneeLabel": "Atanan: {name}",
+      "submit": "Görevi ata",
+      "success": "Görev atandı",
+      "error": "Görev kaydedilemedi; tekrar deneyin.",
+      "menuLabel": "Görev ata",
+      "menuAssign": "Görev ata…",
+      "menuCallList": "Arama listesine ekle",
+      "needsCrm": "Görev atamak için CRM kaydı gerekli.",
+      "callListTitle": "Arama listesine ekle",
+      "callListBody": "“{name}” için bugüne bir “Arama” görevi oluşturulacak. Görev Görevlerim'de görünür.",
+      "callListConfirm": "Listeye ekle",
+      "callListSuccess": "Arama listesine eklendi"
+    }
+  },
+  "rules": {
+    "title": "Takip kuralları",
+    "description": "Görevlerim listesini üreten kurallar. Gün sayısını ve aktifliği değiştirebilirsiniz.",
+    "name": {
+      "scheduled": "Planlanan arama",
+      "offer": "Teklif takibi",
+      "demoEnding": "Demo bitiyor",
+      "annualRenewal": "Yıllık yenileme araması",
+      "expired": "Süresi doldu",
+      "balance": "Tahsilat (açık bakiye)",
+      "lostRecontact": "Yeniden temas",
+      "undatedFollowUp": "Tarihsiz Aranacak / Takipte",
+      "surveyNoResponse": "Anket araması",
+      "coldList": "Soğuk liste araması"
+    },
+    "when": {
+      "scheduled": "Kayda sonraki arama tarihi girildiğinde o gün",
+      "offer": "Teklif verildikten {days} gün sonra ara",
+      "demoEnding": "Demo (1 yıl) bitişine {days} gün kala ara",
+      "annualRenewal": "Yıllık lisans bitişine {days} gün kala ara",
+      "expired": "Demo ya da lisans bittikten {days} gün sonra ara (ücretliye geçmediyse ya da yenilenmediyse; son 90 gün)",
+      "balance": "Açık bakiye varsa kaydın son güncellemesinden ya da son tahsilattan {days} gün sonra tahsilat araması",
+      "lostRecontact": "Satış olmadıktan {days} gün sonra yeniden temas",
+      "undatedFollowUp": "Arama tarihi planlanmamış Aranacak ve Takipte kayıtlarını son güncellemeden {days} gün sonra ara",
+      "surveyNoResponse": "Anket gönderildikten {days} gün sonra yanıt yoksa ara",
+      "coldList": "Soğuk listede aranmamış kişileri bugün, ulaşılamayanları {days} gün sonra yeniden ara"
+    },
+    "table": {
+      "rule": "Kural",
+      "when": "Ne zaman",
+      "days": "Değer",
+      "active": "Aktif"
+    },
+    "daysLabel": "{rule} gün sayısı",
+    "unit": {
+      "days": "gün"
+    },
+    "activeLabel": "{rule} aktif",
+    "needsModule": {
+      "surveys": "Anketler modülü taşınınca görev üretir.",
+      "coldLists": "Soğuk listeler modülü taşınınca görev üretir."
+    },
+    "noDays": "—",
+    "save": "Kaydet",
+    "saved": "Kurallar kaydedildi",
+    "reset": "Varsayılana dön",
+    "unsaved": "Kaydedilmemiş değişiklik var.",
+    "confirmTitle": "Kuralları kaydet",
+    "confirmBody": "Kurallar tüm ekip için güncellenecek; Görevlerim listesi yeniden hesaplanır.",
+    "confirm": "Onayla ve kaydet",
+    "error": "Kurallar kaydedilemedi",
+    "loadError": "Kurallar yüklenemedi; varsayılanlar gösteriliyor.",
+    "defaults": "Varsayılanlar kullanılıyor",
+    "adminOnly": "Kuralları yalnız yöneticiler değiştirebilir.",
+    "outOfRange": "{min} ile {max} arasında bir tam sayı girin."
+  },
+  "nav": {
+    "leads": "Adaylar",
+    "tasks": "Görevlerim",
+    "rules": "Kurallar"
+  }
+}

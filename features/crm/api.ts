@@ -4,6 +4,7 @@ import type { LeadCreateInput, LeadPatchInput } from "@/lib/domain/crm/schemas";
 import type { CrmLeadDto } from "@/lib/domain/crm/types";
 import type { NewDemoInput, PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
+import type { RuleConfig } from "@/lib/domain/tasks/rules";
 
 const base = (id: string) => `/api/crm/leads/${encodeURIComponent(id)}`;
 
@@ -22,4 +23,7 @@ export const crmApi = {
   collections: (id: string, signal?: AbortSignal) => apiRequest<CollectionRecord[]>(`${base(id)}/collections`, { signal }),
   addCollection: (id: string, input: PaymentInput) =>
     apiRequest<{ ok: true }>(`${base(id)}/collections`, { method: "POST", body: input }),
+  /** Takip kuralları (Madde 12): okuma herkese, kaydetme yalnız ADMIN. */
+  rules: (signal?: AbortSignal) => apiRequest<RuleConfig[]>("/api/crm/rules", { signal }),
+  saveRules: (rules: RuleConfig[]) => apiRequest<RuleConfig[]>("/api/crm/rules", { method: "PUT", body: rules }),
 };

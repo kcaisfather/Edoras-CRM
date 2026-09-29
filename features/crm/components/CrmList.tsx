@@ -14,6 +14,7 @@ import { CRM_SORT_KEYS } from "@/lib/domain/crm/sort";
 import { crmApi } from "../api";
 import { useCrmList } from "../hooks";
 import { useInvalidateCrm } from "../mutations";
+import type { CrmRowSlots } from "../types";
 import { CrmAddModal } from "./CrmAddModal";
 import { CrmCollectionDialog } from "./CrmCollectionDialog";
 import { CrmDuplicates } from "./CrmDuplicates";
@@ -35,12 +36,13 @@ import { LinkInstitutionDialog } from "./LinkInstitutionDialog";
 /**
  * Adaylar (DeepSport CRM operasyon ekranı): tüm adaylar — satış olmuşlar da ("Müşteri" rozetiyle, bağlı kurum
  * sayfasına gider). Satış hunisi Satış Analizleri'nde (/crm/analytics). Tek tarih kontrolü: dönem seçici
- * (aday oluşturma tarihi) — özet kartlar, aşama şeridi ve liste aynı aralığı izler.
+ * (aday oluşturma tarihi) — özet kartlar, aşama şeridi ve liste aynı aralığı izler. Başka modüllerin satır
+ * parçaları (Görev ata) `slots` ile gelir (app/crm/_components/CrmScreen.tsx) — crm → tasks bağımlılığı yok.
  */
-export function CrmList() {
+export function CrmList(slots: CrmRowSlots = {}) {
   const t = useTranslations("crm.list");
   const mounted = useMounted();
-  const list = useCrmList();
+  const list = useCrmList(slots);
   const colSort = useUrlSort(CRM_SORT_KEYS);
 
   if (!mounted || list.isLoading) {

@@ -147,7 +147,7 @@
   "offer": {
     "sectionTitle": "Takip",
     "nextCall": "Sonraki arama tarihi",
-    "nextCallHint": "Görev listesi gelince o gün görev olarak düşer.",
+    "nextCallHint": "Görevlerim listesinde o gün görünür.",
     "lostReason": "Kayıp nedeni",
     "lostReasonPlaceholder": "Neden seçin",
     "noReason": "Belirtilmedi",

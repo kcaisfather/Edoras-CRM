@@ -47,7 +47,15 @@
         "LEAD_ALREADY_LINKED": "Aday zaten bir kuruma bağlı.",
         "LEAD_INSTITUTION_TAKEN": "Bu kurum başka bir adaya bağlı; bir kuruma yalnız bir aday bağlanabilir.",
         "LEAD_NOT_LINKED": "Aday bir kuruma bağlı değil; tahsilat için önce kuruma bağlayın.",
-        "NOTE_NOT_OWNER": "Notu yalnız yazan ya da yönetici değiştirebilir."
+        "NOTE_NOT_OWNER": "Notu yalnız yazan ya da yönetici değiştirebilir.",
+        "TASK_NOT_FOUND": "Görev artık yok ya da koşulu değişti; liste yenilendi.",
+        "TASK_ALREADY_DONE": "Görev zaten tamamlanmış.",
+        "TASK_NOT_DONE": "Görev tamamlanmamış; geri alınacak bir şey yok.",
+        "TASK_NOT_ASSIGNEE": "Atanmış görevi yalnız atanan kişi ya da yönetici tamamlayabilir.",
+        "TASK_NOT_COMPLETER": "Görevi yalnız tamamlayan kişi ya da yönetici geri alabilir.",
+        "TASK_ASSIGNEE_INVALID": "Görev yalnız aktif ekip üyesine atanabilir.",
+        "TASK_PAST_DUE": "Görev bugün ya da sonrasına atanabilir.",
+        "TASK_NO_LEAD": "Bu görevin CRM adayı yok; statü ve arama tarihi değiştirilemez."
       }
     },
     "cancel": "İptal",
@@ -133,6 +141,11 @@
     "crmLeadsDescription": "Potansiyel ve mevcut müşteri kurumların satış takibi",
     "crmAnalytics": "Satış Analizleri",
     "crmAnalyticsDescription": "Satış hunisi ve satış kırılımları",
+    "crmTasks": "Görevlerim",
+    "crmTasksDescription": "Bugün, gecikmiş ve yaklaşan aramalar",
+    "crmTasksDueBadge": "{count} görev bugün/gecikmiş",
+    "crmRules": "Kurallar",
+    "crmRulesDescription": "Otomatik takip ve arama görevi kuralları",
     "sidebarCustomers": "Müşteriler",
     "sidebarCrm": "CRM",
     "sidebarAnalysis": "Analiz",

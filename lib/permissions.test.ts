@@ -22,6 +22,16 @@ describe("permissions", () => {
     expect(canAccessPathFor("ADMIN", "/payments")).toBe(true);
   });
 
+  it("CRM_AGENT Görevlerim'e girer, kurallara giremez (yasaklı yol izinli önekten önce denetlenir)", () => {
+    expect(canAccessPathFor("CRM_AGENT", "/crm/tasks")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/tasks?b=overdue")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/rules")).toBe(false);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/rules/")).toBe(false);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/rules?x=1")).toBe(false);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/rulesx")).toBe(true);
+    expect(canAccessPathFor("ADMIN", "/crm/rules")).toBe(true);
+  });
+
   it("benzer önekleri eşlemez", () => {
     expect(canAccessPathFor("CRM_AGENT", "/institutionsx")).toBe(false);
   });
@@ -39,6 +49,17 @@ describe("permissions", () => {
 });
 
 describe("filterNavGroups", () => {
+  it("CRM_AGENT menüde Kurallar'ı görmez, Görevlerim'i görür", () => {
+    const groups = [
+      { key: "crm", labelKey: "sidebarCrm", items: [{ href: "/crm" }, { href: "/crm/tasks" }] },
+      { key: "analysis", labelKey: "sidebarAnalysis", items: [{ href: "/crm/analytics" }, { href: "/crm/rules" }] },
+    ];
+    const agent = filterNavGroups(groups, { isAdmin: false, canAccessPath: (h) => canAccessPathFor("CRM_AGENT", h) });
+    expect(agent.flatMap((g) => g.items.map((i) => i.href))).toEqual(["/crm", "/crm/tasks", "/crm/analytics"]);
+    const admin = filterNavGroups(groups, { isAdmin: true, canAccessPath: (h) => canAccessPathFor("ADMIN", h) });
+    expect(admin.flatMap((g) => g.items.map((i) => i.href))).toContain("/crm/rules");
+  });
+
   const groups = [
     { key: "main", items: [{ href: "/dashboard" }] },
     { key: "customers", labelKey: "sidebarCustomers", items: [{ href: "/institutions" }] },

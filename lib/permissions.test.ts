@@ -67,6 +67,13 @@ describe("permissions", () => {
   it("CRM_AGENT Anketler'e girer", () => {
     expect(canAccessPathFor("CRM_AGENT", "/crm/surveys")).toBe(true);
   });
+
+  it("Ödeme Geçmişi ve Faturalar yalnız ADMIN (tutar içerir; yollar CRM_AGENT_PATHS'te yok)", () => {
+    for (const path of ["/payment-history", "/payment-history?page=2", "/sales/invoices", "/sales/invoices?status=FAILED", "/sales"]) {
+      expect(canAccessPathFor("CRM_AGENT", path), path).toBe(false);
+      expect(canAccessPathFor("ADMIN", path), path).toBe(true);
+    }
+  });
 });
 
 describe("filterNavGroups", () => {

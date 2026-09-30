@@ -56,6 +56,7 @@ describe("tahsilat ön koşulu", () => {
     demoEndsAt: null,
     convertedAt: null,
     billingComplete: true,
+    billingProfileComplete: false,
   };
   const institution = {
     id: "i1",

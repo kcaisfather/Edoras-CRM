@@ -4,6 +4,7 @@ import { randomInt } from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { EDORAS_PANEL_URL } from "@/lib/env";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
+import { billingProfileCompleteness } from "@/lib/domain/institutions/billing-profile";
 import {
   generateTemporaryPassword,
   initialAcademicPeriod,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/domain/institutions/rules";
 import {
   toBilling,
+  toBillingProfile,
   toContact,
   toLicense,
   toPayment,
@@ -23,6 +25,8 @@ import {
   type PaymentInput,
 } from "@/lib/domain/institutions/schemas";
 import type {
+  BillingProfile,
+  BillingType,
   CrmRecord,
   DemoCredentials,
   InstitutionDetail,
@@ -53,10 +57,10 @@ import {
 
 // --- CRM satırları ------------------------------------------------------------------------------
 
-const CRM_COLUMNS =
-  "institution_id, institution_name, status, contact_name, contact_phone, contact_email, address, tc_no, tax_no, demo_started_at, demo_ends_at, converted_at, created_at";
+export const CRM_COLUMNS =
+  "institution_id, institution_name, status, contact_name, contact_phone, contact_email, address, tc_no, tax_no, billing_type, legal_name, tax_office, billing_city, billing_district, postal_code, billing_email, e_invoice_registered, demo_started_at, demo_ends_at, converted_at, created_at";
 
-interface CrmRow {
+export interface CrmRow {
   institution_id: string;
   institution_name: string;
   status: "DEMO" | "UCRETLI";
@@ -66,10 +70,35 @@ interface CrmRow {
   address: string | null;
   tc_no: string | null;
   tax_no: string | null;
+  billing_type: BillingType | null;
+  legal_name: string | null;
+  tax_office: string | null;
+  billing_city: string | null;
+  billing_district: string | null;
+  postal_code: string | null;
+  billing_email: string | null;
+  e_invoice_registered: boolean | null;
   demo_started_at: string | null;
   demo_ends_at: string | null;
   converted_at: string | null;
   created_at: string;
+}
+
+/** Fatura profili (adres + kimlik + genişletilmiş alanlar); yalnız ADMIN'e verilir. */
+export function toProfile(row: CrmRow): BillingProfile {
+  return {
+    address: row.address,
+    tcNo: row.tc_no,
+    taxNo: row.tax_no,
+    billingType: row.billing_type,
+    legalName: row.legal_name,
+    taxOffice: row.tax_office,
+    city: row.billing_city,
+    district: row.billing_district,
+    postalCode: row.postal_code,
+    email: row.billing_email,
+    eInvoiceRegistered: row.e_invoice_registered,
+  };
 }
 
 function toCrmRecord(row: CrmRow): CrmRecord {
@@ -82,6 +111,7 @@ function toCrmRecord(row: CrmRow): CrmRecord {
     demoEndsAt: row.demo_ends_at,
     convertedAt: row.converted_at,
     billingComplete: isBillingComplete({ address: row.address, tcNo: row.tc_no, taxNo: row.tax_no }),
+    billingProfileComplete: billingProfileCompleteness(toProfile(row)).complete,
   };
 }
 
@@ -205,7 +235,7 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
   const latestEnd = licenseList.reduce<string | null>((max, l) => (!max || l.endsOn > max ? l.endsOn : max), null);
   return {
     ...toListItem(inst, crmRow, latestEnd, internal.has(id)),
-    billing: financial && crmRow ? { address: crmRow.address, tcNo: crmRow.tc_no, taxNo: crmRow.tax_no } : null,
+    billing: financial && crmRow ? toProfile(crmRow) : null,
     licenses: licenseList,
     payments: paymentList,
     ...extras,
@@ -381,22 +411,46 @@ export async function updateContact(id: string, input: ContactInput, staff: Staf
   await recordAudit(staff, { action: "CONTACT_UPDATED", entityType: "institution", entityId: id });
 }
 
-export async function updateBilling(id: string, input: BillingInput, staff: StaffContext): Promise<void> {
-  const billing = toBilling(input);
+/** Fatura profili (GET /api/institutions/{id}/billing) — yalnız ADMIN çağırır. Kayıt yoksa 404 NOT_ENROLLED. */
+export async function getBilling(id: string): Promise<BillingProfile> {
+  const { data, error } = await getSupabaseAdminClient().from("crm_institutions").select(CRM_COLUMNS).eq("institution_id", id).maybeSingle();
+  if (error) throw dbError(error);
+  if (!data) throw new HttpError(404, "NOT_ENROLLED");
+  return toProfile(data as CrmRow);
+}
+
+/**
+ * Fatura profilini yazar (adres + kimlik + unvan / il / ilçe / e-posta / vergi dairesi). Tür kimlikten türetilir;
+ * `e_invoice_registered` panelden yazılmaz. Sonuç güncel profildir.
+ */
+export async function updateBilling(id: string, input: BillingInput, staff: StaffContext): Promise<BillingProfile> {
+  const billing = toBillingProfile(input);
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_institutions")
-    .update({ address: billing.address, tc_no: billing.tcNo, tax_no: billing.taxNo })
+    .update({
+      address: billing.address,
+      tc_no: billing.tcNo,
+      tax_no: billing.taxNo,
+      billing_type: billing.billingType,
+      legal_name: billing.legalName,
+      tax_office: billing.taxOffice,
+      billing_city: billing.city,
+      billing_district: billing.district,
+      postal_code: billing.postalCode,
+      billing_email: billing.email,
+    })
     .eq("institution_id", id)
-    .select("institution_id");
+    .select(CRM_COLUMNS);
   if (error) throw dbError(error);
   if (!data?.length) throw new HttpError(404, "NOT_ENROLLED");
-  // Değerler (adres, TC/VKN) kayda yazılmaz; yalnız hangi kimlik türünün girildiği.
+  // Değerler (adres, TC/VKN, unvan, e-posta) kayda yazılmaz; yalnız fatura türü.
   await recordAudit(staff, {
     action: "BILLING_UPDATED",
     entityType: "institution",
     entityId: id,
-    details: { idType: billing.taxNo ? "VKN" : "TC" },
+    details: { billingType: billing.billingType },
   });
+  return toProfile(data[0] as unknown as CrmRow);
 }
 
 /**

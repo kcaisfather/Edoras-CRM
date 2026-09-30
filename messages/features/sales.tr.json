@@ -1,0 +1,157 @@
+{
+  "common": {
+    "cancel": "Vazgeç",
+    "back": "Geri"
+  },
+  "access": {
+    "title": "Bu bölüm yetkinize kapalı",
+    "body": "Satışlar ve faturalar tutar bilgisi içerir; yalnızca yönetici hesapları görebilir.",
+    "toCrm": "CRM'e dön"
+  },
+  "billing": {
+    "complete": "Fatura profili eksiksiz",
+    "incomplete": "{count} eksik alan",
+    "fields": {
+      "legalName": "Unvan / ad soyad",
+      "taxNumber": "TC / Vergi No",
+      "taxOffice": "Vergi dairesi",
+      "address": "Adres",
+      "city": "İl",
+      "district": "İlçe",
+      "email": "Fatura e-postası"
+    }
+  },
+  "invoices": {
+    "page": {
+      "title": "Faturalar",
+      "subtitle": "Kesilen, e-postayla talep edilen ve elle kaydedilen faturaların durumu.",
+      "toSales": "CRM'e dön"
+    },
+    "filterLabel": "Durum filtresi",
+    "filters": {
+      "all": "Tümü",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "clear": "Tarihi temizle"
+    },
+    "statuses": {
+      "PENDING": "Bekliyor",
+      "ISSUED": "Kesildi",
+      "SENT": "Gönderildi",
+      "FAILED": "Hata",
+      "CANCELLED": "İptal"
+    },
+    "modes": {
+      "PROVIDER": "Platform",
+      "EMAIL": "E-posta",
+      "MANUAL": "Elle kayıt"
+    },
+    "table": {
+      "date": "Fatura tarihi",
+      "customer": "Müşteri",
+      "description": "Açıklama",
+      "mode": "Yöntem",
+      "invoiceNo": "Fatura no",
+      "net": "KDV hariç",
+      "vat": "KDV",
+      "amount": "Toplam",
+      "status": "Durum",
+      "seller": "Kaydeden",
+      "error": "Hata",
+      "actions": "İşlemler"
+    },
+    "empty": "Fatura yok",
+    "attempts": "{count}. deneme",
+    "pdf": "PDF",
+    "pagination": {
+      "showing": "{from}–{to} / {total} fatura",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    },
+    "retry": "Yeniden dene",
+    "retryTitle": "Fatura yeniden denensin mi?",
+    "retryBody": "{customer} için fatura ({mode}) tekrar gönderilecek.",
+    "retryOk": "Fatura yeniden gönderildi",
+    "retryFailedAgain": "Yine hata: {error}",
+    "retryError": "İstek başarısız oldu",
+    "statusNote": "\"Gönderildi\": fatura talebi e-postayla muhasebeciye iletildi, kesim muhasebecide. \"Kesildi\": fatura kesilmiş ve numarası kayıtlı (elle kayıt ya da platform).",
+    "providerNote": "Platform (Paraşüt) entegrasyonu henüz bağlı değil; faturalar e-posta talebi ya da elle kayıtla yönetilir.",
+    "paymentAction": {
+      "issue": "Fatura kes",
+      "status": "Fatura: {status}",
+      "more": "Fatura kes (yeni)"
+    },
+    "dialog": {
+      "title": "Fatura kes",
+      "saleLabel": "Satış",
+      "salePayment": "Ödeme · {date} · {method} · {amount}",
+      "saleLicense": "Lisans · {start} – {end} · {amount}",
+      "noSale": "Bu kurumda faturalanacak lisans ya da ödeme yok.",
+      "loading": "Kurum bilgisi yükleniyor…",
+      "loadError": "Kurum bilgisi okunamadı.",
+      "modeLabel": "Fatura yöntemi",
+      "modes": {
+        "EMAIL": "E-posta ile talep",
+        "MANUAL": "Elle kayıt",
+        "PROVIDER": "Platforma aktar"
+      },
+      "modeHints": {
+        "EMAIL": "Fatura talebi muhasebeciye (isterseniz müşteriye de) e-postayla gider; faturayı muhasebeci keser.",
+        "MANUAL": "Faturayı başka yerde kestiniz: numarasını ve tarihini kaydedin, fatura \"Kesildi\" olur.",
+        "PROVIDER": "Fatura Paraşüt'te oluşturulur ve resmileştirilir; PDF ve fatura no buraya döner."
+      },
+      "emailUnavailableTitle": "E-posta yöntemi kapalı",
+      "emailUnavailableBody": "Sunucuda RESEND_API_KEY, EMAIL_FROM ve muhasebeci adresi (ACCOUNTANT_EMAIL) tanımlı değil. Faturayı başka yerde kestiyseniz \"Elle kayıt\" yöntemini kullanın.",
+      "providerUnavailable": "Paraşüt bağlantısı henüz kurulmadı (API anahtarları yok); bu yöntem kapalı.",
+      "billingProfile": "Müşteri fatura profili",
+      "billingProfileLink": "Kurum sayfasında tamamla",
+      "amount": "Tutar (₺)",
+      "amountHintPayment": "Ödeme tutarı otomatik yazıldı; faturaya yazılacak tutarı kontrol edin.",
+      "amountHintLicense": "Lisans bedeli otomatik yazıldı; faturaya yazılacak tutarı kontrol edin.",
+      "vatRate": "KDV oranı",
+      "vatIncluded": "Tutar KDV dahil",
+      "description": "Açıklama",
+      "defaultDescription": "Edoras yıllık lisans bedeli",
+      "issueDate": "Fatura tarihi",
+      "invoiceNo": "Fatura numarası",
+      "invoiceNoPlaceholder": "Ör. ABC2026000123",
+      "net": "KDV hariç",
+      "vatLine": "KDV (%{rate})",
+      "gross": "Toplam",
+      "recipients": "Alıcı",
+      "recipientsHint": "Talep, sunucuda tanımlı muhasebeci adresine gider.",
+      "copyCustomer": "Müşteriye de gönder ({email})",
+      "note": "Not (isteğe bağlı)",
+      "duplicateWarning": "Bu satış için zaten {count} fatura kaydı var.",
+      "allowDuplicate": "Yine de yeni fatura oluştur",
+      "problems": {
+        "amount": "Tutar 0 ₺'den büyük olmalı.",
+        "description": "Açıklama gerekli.",
+        "date": "Geçerli bir fatura tarihi seçin.",
+        "invoiceNo": "Elle kayıt için fatura numarası gerekli.",
+        "billingBase": "Kurumun fatura bilgisi (adres + TC/VKN) eksik; fatura kaydedilemez.",
+        "billing": "Bu yöntem için fatura profili eksiksiz olmalı (unvan, il, ilçe, fatura e-postası, kurumsalda vergi dairesi).",
+        "duplicate": "Mükerrer fatura onayı gerekli.",
+        "checkingExisting": "Bu satışa ait mevcut faturalar kontrol ediliyor…",
+        "existingUnknown": "Mevcut faturalar okunamadı; mükerrer fatura kontrolü yapılamadığı için kayıt kapalı.",
+        "emailUnavailable": "E-posta yöntemi kapalı.",
+        "providerUnavailable": "Platform yöntemi kapalı.",
+        "noSale": "Faturalanacak bir ödeme ya da lisans seçin."
+      },
+      "next": "Devam",
+      "confirmEmail": "Fatura talebi muhasebeciye e-postayla gönderilecek{copy}.",
+      "confirmCopy": " (müşteri kopyasıyla)",
+      "confirmManual": "Fatura \"{no}\" numarasıyla kesilmiş olarak kaydedilecek.",
+      "confirmProvider": "Fatura {provider} üzerinde kesilecek. Bu işlem resmi bir belge oluşturur.",
+      "confirmNote": "Onayladığınızda işlem hemen yapılır.",
+      "confirmSend": "Onayla ve gönder",
+      "confirmSave": "Onayla ve kaydet",
+      "confirmIssue": "Onayla ve faturayı kes",
+      "sentToast": "Fatura talebi gönderildi",
+      "savedToast": "Fatura kaydedildi",
+      "replayedToast": "Aynı fatura zaten kayıtlı; tekrar oluşturulmadı",
+      "failedToast": "Fatura talebi gönderilemedi ({error}). Faturalar sayfasından yeniden deneyebilirsiniz.",
+      "errorToast": "İstek başarısız oldu"
+    }
+  }
+}

@@ -13,7 +13,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | | CRM projesi (`orishbqniebbgdanazrp`) | Edoras (`bmjkpxbrmwxuildwakly`) |
 | --- | --- | --- |
 | Ne | EdorasCRM'in kendi projesi | edoras-admin ve mobilin canlı veritabanı |
-| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
+| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses`, `crm_invoices`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
@@ -40,6 +40,9 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Demo süresi dolunca kurum **pasife düşmez**, yalnız ekranda "Demo bitti" görünür | — (hiçbir iş Edoras'ta `is_active`'e dokunmaz) |
 | Adres + (TC Kimlik No veya Vergi No) olmadan ücretli hesap açılamaz | `crm_institutions_paid_billing_check` |
 | Aynı bilgiler olmadan ödeme alınamaz | `crm_guard_payment` tetikleyicisi |
+| Aynı bilgiler olmadan fatura da kaydedilemez; faturanın satış referansı (ödeme / lisans) o kuruma ait olmalı; kayıttan sonra kurum, satış ve tutar alanları değişmez | `crm_guard_invoice` tetikleyicisi (`CRM_BILLING_REQUIRED`, `CRM_INVOICE_SALE_MISMATCH`, `CRM_INVOICE_IMMUTABLE`) |
+| Fatura profili: `billing_type` doluysa unvan + il + ilçe + fatura e-postası + adres tam; TC ⇔ bireysel, Vergi No ⇔ kurumsal (+ vergi dairesi); vergi dairesi yalnız Vergi No ile; posta kodu 5 hane. Eski satırlar (tür boş) geçerli kalır | `crm_institutions_billing_profile_check`, `_tax_office_vkn_check`, `_billing_type_check`, `_billing_text_check`, `_postal_code_check`, `_billing_email_check` |
+| Fatura: ödeme ya da lisans referansı; tutar > 0; KDV oranı 0–100; net + KDV = toplam (±0,01); PROVIDER ⇔ sağlayıcı; e-posta talebinde 1–5 alıcı; ISSUED numara + an ister, SENT yalnız e-posta, FAILED hata kodu ister, elle kayıt daima numaralı ve kesilmiş; Idempotency-Key benzersiz | `crm_invoices_*_check`, `crm_invoices_idempotency_key_key` |
 | Adayın en az kurum adı ya da yetkili adı olur; telefon E.164, e-posta biçimli | `crm_leads_identity_check`, `crm_leads_contact_*_check` |
 | Bir Edoras kurumuna en fazla bir aday bağlanır | `crm_leads_institution_id_key` (kısmi benzersiz dizin) |
 | Kayıp nedeni yalnız "Satış olmadı"da, satış tarihi yalnız "Satış oldu"da; tutarlar ≥ 0 | `crm_leads_lost_reason_check`, `crm_leads_sold_at_check`, `crm_leads_*_amount_check` |
@@ -70,10 +73,14 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    - Anketler: `NEXT_PUBLIC_APP_URL` (anket linklerinin kökü, ör. `https://crm.edorasapp.ai`; boşsa isteğin / tarayıcının
      adresi — üretimde tanımlayın). İsteğe bağlı e-posta: `RESEND_API_KEY` + `EMAIL_FROM` (ikisi de doluysa "E-posta"
      kanalı açılır; yoksa kanal kapalı, WhatsApp / SMS / Link sağlayıcısız çalışır)
+   - Faturalar: isteğe bağlı `ACCOUNTANT_EMAIL` (fatura talebinin gideceği muhasebeci adresi; `RESEND_API_KEY` +
+     `EMAIL_FROM` ile birlikte doluysa "E-posta ile talep" açılır, yoksa 503 `MAIL_NOT_CONFIGURED` ve ekran "Elle kayıt"ı
+     önerir). İsteğe bağlı `PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`,
+     `PARASUT_COMPANY_ID` (hepsi doluysa sağlayıcı "yapılandırıldı" görünür; gerçek Paraşüt istemcisi henüz yazılmadı)
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
    `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
    `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri, `20260929190000_crm_surveys.sql` anketler, davetler
-   ve yanıtlar).
+   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -161,6 +168,36 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
   liste rozetleri tek istekle (`GET /api/crm/surveys/satisfaction`). Eleştirmen yanıtında otomatik ticket / görev yok
   (DeepSport ile aynı): şikâyet kaydı adayın notlarından elle (`SIKAYET`).
 
+### Satış ve faturalar (yalnız ADMIN)
+
+- **Ödeme Geçmişi** (`/payment-history`, DeepSport `/log-products` karşılığı): tüm kurumların `crm_payments`'ı — kurum adı
+  arama, yöntem, tarih aralığı, sayfalama; süzgece uyan TÜM kayıtların toplamı; ödemenin faturası varsa durum rozeti;
+  üstte açık alacak kartı. Satış = 1 yıllık lisans (`crm_licenses`), tahsilat = `crm_payments`; kanal / ürün kataloğu yok,
+  "satıcı" kaydı açan personeldir (`created_by` → `crm_staff.full_name`).
+- **Faturalar** (`/sales/invoices`): durum sekmeleri (sayaçlı), fatura tarihi aralığı, sayfalama, CSV, başarısız faturayı
+  yeniden dene. "Satış & Fatura" menü grubu yalnız ADMIN'e görünür; iki yol da `CRM_AGENT_PATHS`'te yok, uçlar CRM_AGENT'a 403.
+- **Fatura kes** (`InvoiceDialog`): kurum ayrıntısında her ödeme satırında (fatura durumu rozeti + düğme) ve CRM adayı
+  satırında / detayında (ücretli kuruma bağlıysa; satış — ödeme ya da lisans — pencerede seçilir). İki adımlı onay, KDV
+  (varsayılan %20, dahil / hariç), aynı satışta ikinci fatura için uyarı + onay (sert engel değil).
+  - **E-posta ile talep**: talep Resend ile `ACCOUNTANT_EMAIL` adresine (istenirse müşterinin fatura e-postasına da) gider;
+    muhasebeci keser. Gönderilirse `SENT`, olmazsa `FAILED` + kısa hata kodu (`resend:422`…). Resend ya da adres yoksa
+    satır açılmaz, 503 `MAIL_NOT_CONFIGURED`.
+  - **Elle kayıt**: faturayı başka yerde kestiniz; numara + tarih kaydedilir, `ISSUED`.
+  - **Platforma aktar (Paraşüt)**: `lib/server/invoices.ts` → `InvoiceProvider` arayüzü hazır, istemci yazılmadı
+    (kimlik bilgisi yok; TODO orada). `GET /api/sales/invoices/providers` PARASUT için `configured: false` döner
+    (`PARASUT_*` ortam değişkenleri tümüyle doluysa `true`, ama çağrı `parasut:not-implemented` ile FAILED olur).
+  - Yeniden deneme yalnız `FAILED` (`POST /api/sales/invoices/{id}/retry`; koşullu güncelleme: iki eşzamanlı istekten biri
+    gönderir). Aynı `Idempotency-Key` (başlık ya da gövde) yeni satır açmaz, var olanı döndürür (200; yeni fatura 201).
+    DeepSport'ta iptal ucu yok → `CANCELLED` durumu şemada var, uç yok.
+  - Fatura ancak fatura bilgisi (adres + TC/VKN) tam kuruma açılır (veritabanı zorlar). E-posta ve platform yöntemleri ayrıca
+    **tam fatura profili** ister (unvan, il, ilçe, fatura e-postası, kurumsalda vergi dairesi); elle kayıt istemez.
+- **Fatura profili** `crm_institutions`'ta (ayrı tablo yok): kurum ayrıntısı → "Fatura bilgileri" (`GET / PUT
+  /api/institutions/{id}/billing`; PATCH eski adı). Tür (bireysel = TC, kurumsal = Vergi No) kimlikten türetilir. Ücretliye
+  geçiş ve kayda alma formları yalnız adres + kimlik ister (profil sonradan tamamlanır); ücretliye geçişte tür boşalır.
+- Uçlar: `GET /api/sales/payments`, `GET|POST /api/sales/invoices`, `POST /api/sales/invoices/{id}/retry`,
+  `GET /api/sales/invoices/providers|options`. İşlem kaydı: `INVOICE_CREATED / _ISSUED / _FAILED / _RETRIED`, `BILLING_UPDATED`
+  (tutar, yöntem, durum, satış referansı; e-posta, adres, TC/VKN, unvan yazılmaz).
+
 ## Klasörler
 
 | Yol | İçerik |
@@ -187,14 +224,15 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
 | Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati yok) |
 | Soğuk listeler + Excel/CSV içe aktarma (`/crm/cold-lists`, Adaylar → "İçe aktar"): liste seçici, sonuç süzgeci ve toplu sonuç kaydı, "Sıcağa taşı" (aday + not tek transaction), CSV, şablon; içe aktarma (sütun eşleme, önizleme, mükerrer çözümü, sunucu doğrulaması ve atlanan satırların nedenleri); Görevlerim'de "Soğuk liste araması" (kaynak süzgeci, sonuç gir); KVKK envanteri; `crm_prospect_lists`, `crm_prospects` | ✔ (Arama Kuyruğu / Süresi Dolacaklar / müşteri sekmelerindeki içe aktarma yok — ekranlar yok) |
+| Satış ve faturalar (`/payment-history`, `/sales/invoices`, yalnız ADMIN): Ödeme Geçmişi (tüm kurumların ödemeleri, süzgeç, sayfalama, toplam, fatura rozeti), Faturalar (durum sekmeleri, tarih, sayfalama, CSV, yeniden dene), "Fatura kes" (kurum ödeme satırı, aday satırı / detayı; e-posta talebi Resend + `ACCOUNTANT_EMAIL`, elle kayıt, Paraşüt arayüzü hazır — istemci yok), genişletilmiş fatura profili (`crm_institutions` sütunları, "Fatura bilgileri" formu), KVKK envanteri; `crm_invoices` | ✔ (Paraşüt entegrasyonu yok; e-Fatura mükellef sorgusu yok; iptal ucu DeepSport'ta da yok) |
 | Anketler (`/crm/surveys`, herkese açık `/s/[token]`): özet (NPS, dağılım, yanıt oranı, memnuniyet ort.), gönderimler (süzgeç, CSV, kopyala / WhatsApp hatırlatması / "Gönderdim" / e-postayı yeniden gönder), yanıtlar (süzgeç, CSV), anket tanımı ve önizleme; "Anket gönder" (Adaylar satırı, mobil kart, aday detayı; sayfadan toplu: adaylar + adayı olmayan kurumlar); memnuniyet rozeti (tablo, mobil kart, detay) ve kurum ayrıntısında memnuniyet kartı; Görevlerim'de "Anket araması" (`surveyNoResponse`) + WhatsApp hatırlatması; e-posta Resend ile (isteğe bağlı); KVKK envanteri; `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses` | ✔ (eleştirmen ticket'ı yok — DeepSport'ta da yok) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Satış ve faturalar (`crm_licenses` / `crm_payments` üzerine)
-2. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
-3. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-4. Raporlar (Resend — `lib/server/mail.ts` hazır)
-5. Aktivite geçmişi (`audit_logs`)
+1. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
+2. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
+3. Raporlar (Resend — `lib/server/mail.ts` hazır)
+4. Aktivite geçmişi (`audit_logs`)
+5. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)

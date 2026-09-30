@@ -62,6 +62,9 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_SURVEY_RECIPIENT_REQUIRED: [400, "VALIDATION"],
   CRM_SURVEY_ACTOR_REQUIRED: [400, "VALIDATION"],
   CRM_SURVEY_INVALID: [400, "VALIDATION"],
+  // 20260929200000_crm_invoices
+  CRM_INVOICE_SALE_MISMATCH: [400, "VALIDATION"],
+  CRM_INVOICE_IMMUTABLE: [409, "VALIDATION"],
 };
 
 /** CHECK / FK kısıt adı → kod. */
@@ -74,6 +77,13 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_institutions_contact_phone_check: [422, "CONTACT_INVALID"],
   crm_institutions_contact_email_check: [422, "CONTACT_INVALID"],
   crm_institutions_demo_dates_check: [422, "DEMO_INVALID"],
+  // 20260929200000_crm_invoices: fatura profili (form + sunucu zaten doğrular; buraya düşerse alan hatası gibi)
+  crm_institutions_billing_type_check: [422, "VALIDATION"],
+  crm_institutions_billing_text_check: [422, "VALIDATION"],
+  crm_institutions_postal_code_check: [422, "VALIDATION"],
+  crm_institutions_billing_email_check: [422, "VALIDATION"],
+  crm_institutions_tax_office_vkn_check: [422, "VALIDATION"],
+  crm_institutions_billing_profile_check: [422, "BILLING_PROFILE_INCOMPLETE"],
   crm_licenses_one_year_check: [422, "LICENSE_INVALID"],
   crm_licenses_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
   crm_payments_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
@@ -136,6 +146,23 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_survey_responses_csat_check: [400, "VALIDATION"],
   crm_survey_responses_comment_check: [400, "VALIDATION"],
   crm_survey_responses_answer_check: [400, "VALIDATION"],
+  // 20260929200000_crm_invoices
+  crm_invoices_institution_id_fkey: [404, "NOT_ENROLLED"],
+  crm_invoices_payment_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
+  crm_invoices_license_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
+  crm_invoices_sale_ref_check: [400, "VALIDATION"],
+  crm_invoices_mode_check: [400, "VALIDATION"],
+  crm_invoices_provider_check: [400, "VALIDATION"],
+  crm_invoices_type_check: [400, "VALIDATION"],
+  crm_invoices_recipients_check: [400, "VALIDATION"],
+  crm_invoices_amount_check: [400, "VALIDATION"],
+  crm_invoices_vat_rate_check: [400, "VALIDATION"],
+  crm_invoices_vat_sum_check: [400, "VALIDATION"],
+  crm_invoices_currency_check: [400, "VALIDATION"],
+  crm_invoices_status_check: [400, "VALIDATION"],
+  crm_invoices_state_check: [400, "VALIDATION"],
+  crm_invoices_attempts_check: [400, "VALIDATION"],
+  crm_invoices_text_check: [400, "VALIDATION"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

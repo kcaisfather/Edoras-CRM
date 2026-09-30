@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Building2, FlaskConical, HandCoins, HeartHandshake, MessageSquareHeart, MessageSquarePlus, Pencil } from "lucide-react";
+import { Building2, FileText, FlaskConical, HandCoins, HeartHandshake, MessageSquareHeart, MessageSquarePlus, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -177,6 +177,7 @@ function RowActions({ lead, actions, title, money }: { lead: CrmLead; actions: C
           <HandCoins />
         </Button>
       )}
+      <IssueInvoiceButton lead={lead} actions={actions} />
       <SendSurveyButton lead={lead} actions={actions} />
       {actions.renderAssignTask?.(lead)}
       <CrmContactMenu target={contactTargetFor(lead, title, money)} />
@@ -201,6 +202,38 @@ export function SendSurveyButton({ lead, actions, onClick }: { lead: CrmLead; ac
       title={t("sendSurvey")}
     >
       <MessageSquareHeart />
+    </Button>
+  );
+}
+
+/**
+ * "Fatura kes" (faturalar modülü `onIssueInvoice` verirse): yalnız finans yetkisiyle ve ücretli kuruma bağlı adayda
+ * (fatura kurumun lisansı / ödemesi içindir). Satır, mobil kart ve detay penceresi aynı düğmeyi kullanır.
+ */
+export function IssueInvoiceButton({
+  lead,
+  actions,
+  onClick,
+  showLabel,
+}: {
+  lead: CrmLead;
+  actions: CrmTableActions;
+  onClick?: () => void;
+  showLabel?: boolean;
+}) {
+  const t = useTranslations("crm.list");
+  const { canSeeFinancials } = usePermissions();
+  if (!actions.onIssueInvoice || !canSeeFinancials || !lead.institutionId || lead.institution?.crm?.status !== "UCRETLI") return null;
+  return (
+    <Button
+      variant={showLabel ? "outline" : "ghost"}
+      size={showLabel ? "sm" : "icon-sm"}
+      onClick={onClick ?? (() => actions.onIssueInvoice?.(lead))}
+      aria-label={t("issueInvoice")}
+      title={t("issueInvoice")}
+    >
+      <FileText />
+      {showLabel ? t("issueInvoice") : null}
     </Button>
   );
 }

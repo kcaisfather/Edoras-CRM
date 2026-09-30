@@ -50,7 +50,12 @@ export type AuditAction =
   // sayfadan) yanıtı işlem kaydına yazılmaz — personel işlemi değildir ve kişisel veri taşır.
   | "SURVEY_INVITATION_CREATED"
   | "SURVEY_INVITATION_SENT"
-  | "SURVEY_INVITATION_RESENT";
+  | "SURVEY_INVITATION_RESENT"
+  // Faturalar: tutar, yöntem, durum ve satış referansı yazılır; alıcı e-postası, adres, TC/VKN, unvan yazılmaz.
+  | "INVOICE_CREATED"
+  | "INVOICE_ISSUED"
+  | "INVOICE_FAILED"
+  | "INVOICE_RETRIED";
 
 export type AuditEntityType =
   | "institution"
@@ -61,7 +66,8 @@ export type AuditEntityType =
   | "rules"
   | "prospect_list"
   | "prospect"
-  | "survey_invitation";
+  | "survey_invitation"
+  | "invoice";
 
 export interface AuditEntry {
   action: AuditAction;

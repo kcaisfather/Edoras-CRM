@@ -34,6 +34,9 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
     ),
     // Anketler DeepSport'taki ad alanında: surveys.* (herkese açık sayfa dahil: surveys.public, surveys.form).
     surveys: (await import("@/messages/features/surveys.tr.json")).default,
+    // Satış ve faturalar DeepSport'taki ad alanlarında: paymentHistory.* (Ödeme Geçmişi), sales.* (faturalar, fatura profili).
+    paymentHistory: (await import("@/messages/features/paymentsx.tr.json")).default,
+    sales: (await import("@/messages/features/sales.tr.json")).default,
   };
 }
 

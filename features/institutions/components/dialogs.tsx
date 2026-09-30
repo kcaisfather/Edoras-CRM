@@ -11,6 +11,7 @@ import { formatTry, parseAmount } from "@/lib/utils/money";
 import { licenseEndDate, renewalStartDate, todayIso } from "@/lib/domain/institutions/rules";
 import {
   billingFormValues,
+  billingProfileFormValues,
   billingSchema,
   contactSchema,
   convertSchema,
@@ -25,7 +26,7 @@ import {
 import type { InstitutionDetail } from "@/lib/domain/institutions/types";
 import { useConvertToPaid, useRecordPayment, useRenewLicense, useUpdateBilling, useUpdateContact } from "../mutations";
 import { formatDate } from "../format";
-import { BillingFields, ContactFields, LicenseFields, PaymentFields, SelectField, TextField, applyServerFieldErrors } from "./fields";
+import { BillingFields, BillingProfileFields, ContactFields, LicenseFields, PaymentFields, SelectField, TextField, applyServerFieldErrors } from "./fields";
 import { FormDialog } from "./FormDialog";
 
 interface DialogProps {
@@ -84,14 +85,18 @@ export function ContactDialog({ institution, open, onOpenChange }: DialogProps) 
 export function BillingDialog({ institution, open, onOpenChange }: DialogProps) {
   const t = useTranslations("institutions.dialogs.billing");
   const mutation = useUpdateBilling(institution.id);
-  const form = useForm<BillingInput>({ resolver: zodResolver(billingSchema), defaultValues: billingFormValues(institution.billing) });
+  // Kayıt yoksa unvan = kurum adı, fatura e-postası = yetkili e-postası önerilir (yönetici değiştirebilir).
+  const initial = (): BillingInput =>
+    billingProfileFormValues(institution.billing, { legalName: institution.name, email: institution.crm?.contactEmail ?? "" });
+  const form = useForm<BillingInput>({ resolver: zodResolver(billingSchema), defaultValues: initial() });
   useResetOnOpen(open, () => {
-    form.reset(billingFormValues(institution.billing));
+    form.reset(initial());
     mutation.reset();
   });
 
   return (
     <FormDialog
+      wide
       open={open}
       onOpenChange={onOpenChange}
       title={t("title")}
@@ -110,7 +115,7 @@ export function BillingDialog({ institution, open, onOpenChange }: DialogProps) 
         })
       }
     >
-      <BillingFields />
+      <BillingProfileFields />
     </FormDialog>
   );
 }

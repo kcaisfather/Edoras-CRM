@@ -166,6 +166,45 @@ export function BillingFields() {
   );
 }
 
+/**
+ * Fatura profili (kurum ayrıntısı → "Fatura bilgileri"): BillingFields'ın alanları + unvan, vergi dairesi (yalnız kurumsal),
+ * il, ilçe, posta kodu ve fatura e-postası. TC ⇔ bireysel, Vergi No ⇔ kurumsal (SQL: crm_institutions_billing_profile_check).
+ */
+export function BillingProfileFields() {
+  const t = useTranslations("institutions.form");
+  const idType = useWatch({ name: "idType" }) as "TC" | "VKN";
+  const company = idType === "VKN";
+  return (
+    <>
+      <ChoiceField<"TC" | "VKN">
+        name="idType"
+        label={t("idType")}
+        options={[
+          { value: "TC", label: t("idTypeTcHint") },
+          { value: "VKN", label: t("idTypeVknHint") },
+        ]}
+      />
+      <TextField name="legalName" label={company ? t("legalNameCompany") : t("legalNamePerson")} autoComplete="organization" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          name="idNumber"
+          label={company ? t("taxNo") : t("tcNo")}
+          placeholder={company ? "10 haneli Vergi No" : "11 haneli TC Kimlik No"}
+          inputMode="numeric"
+        />
+        {company ? <TextField name="taxOffice" label={t("taxOffice")} placeholder="Ör. Kadıköy" /> : null}
+      </div>
+      <TextField name="address" label={t("address")} placeholder={t("addressPlaceholder")} multiline />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <TextField name="city" label={t("city")} autoComplete="address-level1" />
+        <TextField name="district" label={t("district")} autoComplete="address-level2" />
+        <TextField name="postalCode" label={t("postalCode")} inputMode="numeric" autoComplete="postal-code" />
+      </div>
+      <TextField name="email" label={t("billingEmail")} type="email" description={t("billingEmailHint")} autoComplete="off" />
+    </>
+  );
+}
+
 /** Lisans: başlangıç + bedel; bitiş (1 yıl) önizlenir. */
 export function LicenseFields({ withStart = true }: { withStart?: boolean }) {
   const t = useTranslations("institutions.form");

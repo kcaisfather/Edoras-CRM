@@ -6,6 +6,8 @@ import {
   Building2,
   ChartNoAxesColumnIncreasing,
   ClipboardList,
+  CreditCard,
+  FileText,
   LayoutDashboard,
   ListTodo,
   MessageSquareHeart,
@@ -25,7 +27,9 @@ export type NavTranslationKey =
   | "crmColdLists"
   | "crmSurveys"
   | "crmAnalytics"
-  | "crmRules";
+  | "crmRules"
+  | "paymentHistory"
+  | "salesInvoices";
 
 export interface NavItem {
   /** Sorgu dizesi içerebilir; aktiflik yalnız yol kısmına bakar. */
@@ -36,12 +40,12 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-export type NavGroupKey = "main" | "crm" | "customers" | "analysis";
+export type NavGroupKey = "main" | "crm" | "customers" | "sales" | "analysis";
 
 export interface NavGroup {
   key: NavGroupKey;
   /** Bölüm başlığı; ana grupta başlık yok. */
-  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarAnalysis";
+  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarSales" | "sidebarAnalysis";
   items: NavItem[];
 }
 
@@ -69,6 +73,15 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "customers",
     labelKey: "sidebarCustomers",
     items: [{ href: "/institutions", icon: Building2, translationKey: "institutions" }],
+  },
+  {
+    // Satış & Fatura: tüm kurumların ödemeleri ve faturalar (tutar içerir → yalnız ADMIN; yollar CRM_AGENT_PATHS'te de yok).
+    key: "sales",
+    labelKey: "sidebarSales",
+    items: [
+      { href: "/payment-history", icon: CreditCard, translationKey: "paymentHistory", adminOnly: true },
+      { href: "/sales/invoices", icon: FileText, translationKey: "salesInvoices", adminOnly: true },
+    ],
   },
   {
     // Analiz: operasyon ekranlarından ayrılan analiz görünümleri (satış hunisi ve satış kırılımları). Kurallar

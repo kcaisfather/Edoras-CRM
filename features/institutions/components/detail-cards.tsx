@@ -22,8 +22,9 @@ import { Money } from "@/components/ui/money";
 import { FinancialOnly, usePermissions } from "@/features/auth";
 import { toTelLink, toWhatsAppLink } from "@/lib/utils/phone";
 import { cn } from "@/lib/utils";
+import { billingProfileCompleteness, effectiveBillingType } from "@/lib/domain/institutions/billing-profile";
 import { daysBetween, todayIso } from "@/lib/domain/institutions/rules";
-import type { InstitutionDetail, License } from "@/lib/domain/institutions/types";
+import type { InstitutionDetail, License, Payment } from "@/lib/domain/institutions/types";
 import { formatDate, formatDateTime, formatPhone } from "../format";
 import { BillingDialog, ContactDialog, PaymentDialog, RenewDialog } from "./dialogs";
 
@@ -137,15 +138,48 @@ export function BillingCard({ institution }: { institution: InstitutionDetail })
         </p>
       ) : null}
       {billing ? (
-        <dl className="grid gap-4">
-          <Field label={t("address")}>{billing.address ?? "—"}</Field>
-          {billing.taxNo ? <Field label={t("taxNo")}>{billing.taxNo}</Field> : <Field label={t("tcNo")}>{billing.tcNo ?? "—"}</Field>}
-        </dl>
+        <BillingDetails billing={billing} />
       ) : (
-        <p className="text-sm text-muted-foreground">{crm.billingComplete ? t("hiddenComplete") : t("hiddenMissing")}</p>
+        <p className="text-sm text-muted-foreground">
+          {!crm.billingComplete ? t("hiddenMissing") : crm.billingProfileComplete ? t("hiddenComplete") : t("hiddenProfileMissing")}
+        </p>
       )}
       {isAdmin ? <BillingDialog institution={institution} open={open} onOpenChange={setOpen} /> : null}
     </SectionCard>
+  );
+}
+
+/** Fatura profili ayrıntısı (yalnız ADMIN): tür, unvan, kimlik, vergi dairesi, adres, il/ilçe, fatura e-postası + tamlık notu. */
+function BillingDetails({ billing }: { billing: NonNullable<InstitutionDetail["billing"]> }) {
+  const t = useTranslations("institutions.detail.billing");
+  const type = effectiveBillingType(billing);
+  const completeness = billingProfileCompleteness(billing);
+  return (
+    <>
+      {billing.address && (billing.taxNo || billing.tcNo) && !completeness.complete ? (
+        <p className="mb-4 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t("profileIncomplete")}
+        </p>
+      ) : null}
+      <dl className="grid gap-4">
+        <Field label={t("type")}>{t(`types.${type}`)}</Field>
+        <Field label={t("legalName")}>{billing.legalName ?? "—"}</Field>
+        {type === "COMPANY" ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Field label={t("taxNo")}>{billing.taxNo ?? "—"}</Field>
+            <Field label={t("taxOffice")}>{billing.taxOffice ?? "—"}</Field>
+          </div>
+        ) : (
+          <Field label={t("tcNo")}>{billing.tcNo ?? "—"}</Field>
+        )}
+        <Field label={t("address")}>{billing.address ?? "—"}</Field>
+        <Field label={t("location")}>{[billing.district, billing.city].filter(Boolean).join(" / ") || "—"}</Field>
+        {billing.postalCode ? <Field label={t("postalCode")}>{billing.postalCode}</Field> : null}
+        <Field label={t("email")}>{billing.email ?? "—"}</Field>
+        {billing.eInvoiceRegistered != null ? <Field label={t("eInvoice")}>{billing.eInvoiceRegistered ? t("eInvoice") : t("eArchive")}</Field> : null}
+      </dl>
+    </>
   );
 }
 
@@ -234,7 +268,14 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
 }
 
 /** Ödemeler (yalnız ADMIN). Fatura bilgisi eksikse ödeme düğmesi yerine uyarı çıkar (kural). */
-export function PaymentsCard({ institution }: { institution: InstitutionDetail }) {
+export function PaymentsCard({
+  institution,
+  renderPaymentAction,
+}: {
+  institution: InstitutionDetail;
+  /** Ödeme satırının sağ tarafına eklenen parça (ör. "Fatura kes" — faturalar modülü; route dosyası verir). */
+  renderPaymentAction?: (payment: Payment, institution: InstitutionDetail) => React.ReactNode;
+}) {
   const t = useTranslations("institutions.detail.payments");
   const tMethod = useTranslations("institutions.paymentMethod");
   const [open, setOpen] = useState(false);
@@ -271,7 +312,10 @@ export function PaymentsCard({ institution }: { institution: InstitutionDetail }
                   <span className="text-muted-foreground"> · {tMethod(p.method)}</span>
                   {p.note ? <span className="block text-xs text-muted-foreground">{p.note}</span> : null}
                 </span>
-                <Money value={p.amount} fractionDigits={2} className="font-medium" />
+                <span className="flex items-center gap-2">
+                  {renderPaymentAction?.(p, institution)}
+                  <Money value={p.amount} fractionDigits={2} className="font-medium" />
+                </span>
               </li>
             ))}
           </ul>

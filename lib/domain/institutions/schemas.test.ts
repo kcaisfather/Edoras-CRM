@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  billingCoreSchema,
+  billingProfileFormValues,
   billingSchema,
+  toBillingProfile,
   convertSchema,
   enrollSchema,
   newDemoSchema,
@@ -46,14 +49,14 @@ describe("demo kuralı: ad soyad + kurum adı + telefon + e-posta", () => {
 
 describe("ücretli kuralı: adres + TC veya Vergi No", () => {
   it("TC ile", () => {
-    const v = billingSchema.parse({ address: ADDRESS, idType: "TC", idNumber: "100 000 001 46" });
+    const v = billingCoreSchema.parse({ address: ADDRESS, idType: "TC", idNumber: "100 000 001 46" });
     expect(toBilling(v)).toEqual({ address: ADDRESS, tcNo: "10000000146", taxNo: null });
   });
 
   it("adres ya da geçerli numara yoksa reddedilir", () => {
-    expect(issues(billingSchema.safeParse({ address: "", idType: "TC", idNumber: "10000000146" }))).toEqual(["address"]);
-    expect(issues(billingSchema.safeParse({ address: ADDRESS, idType: "TC", idNumber: "" }))).toEqual(["idNumber"]);
-    expect(issues(billingSchema.safeParse({ address: ADDRESS, idType: "VKN", idNumber: "10000000146" }))).toEqual([
+    expect(issues(billingCoreSchema.safeParse({ address: "", idType: "TC", idNumber: "10000000146" }))).toEqual(["address"]);
+    expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "TC", idNumber: "" }))).toEqual(["idNumber"]);
+    expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "VKN", idNumber: "10000000146" }))).toEqual([
       "idNumber",
     ]);
   });
@@ -101,5 +104,71 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
   it("ödeme: sıfır tutar reddedilir", () => {
     const r = paymentSchema.safeParse({ payAmount: "0", payMethod: "HAVALE", paidOn: "2026-09-29", licenseId: "", note: "" });
     expect(issues(r)).toEqual(["payAmount"]);
+  });
+});
+
+describe("fatura profili (genişletilmiş billingSchema)", () => {
+  const person = {
+    address: ADDRESS,
+    idType: "TC" as const,
+    idNumber: "10000000146",
+    legalName: "Ayşe Yılmaz",
+    taxOffice: "",
+    city: "İstanbul",
+    district: "Bakırköy",
+    postalCode: "",
+    email: "Fatura@Kurum.com",
+  };
+  const company = { ...person, idType: "VKN" as const, idNumber: "9876543217", legalName: "Deneme Koleji A.Ş.", taxOffice: "Kadıköy" };
+
+  it("bireysel: tür TC'den türetilir, vergi dairesi yazılmaz, e-posta küçük harf", () => {
+    const v = billingSchema.parse(person);
+    expect(toBillingProfile(v)).toEqual({
+      address: ADDRESS,
+      tcNo: "10000000146",
+      taxNo: null,
+      billingType: "INDIVIDUAL",
+      legalName: "Ayşe Yılmaz",
+      taxOffice: null,
+      city: "İstanbul",
+      district: "Bakırköy",
+      postalCode: null,
+      email: "fatura@kurum.com",
+    });
+  });
+
+  it("kurumsal: Vergi No + vergi dairesi zorunlu", () => {
+    const v = billingSchema.parse(company);
+    expect(toBillingProfile(v)).toMatchObject({ billingType: "COMPANY", tcNo: null, taxNo: "9876543217", taxOffice: "Kadıköy" });
+    expect(issues(billingSchema.safeParse({ ...company, taxOffice: "" }))).toEqual(["taxOffice"]);
+  });
+
+  it("bireyselde bırakılan vergi dairesi yok sayılır (SQL: vergi dairesi yalnız VKN ile)", () => {
+    expect(toBillingProfile(billingSchema.parse({ ...person, taxOffice: "Kadıköy" })).taxOffice).toBeNull();
+  });
+
+  it.each([
+    ["legalName", ""],
+    ["city", " "],
+    ["district", ""],
+    ["email", "yok"],
+    ["postalCode", "3400"],
+  ])("%s eksik ya da geçersizse reddedilir", (field, value) => {
+    expect(issues(billingSchema.safeParse({ ...person, [field]: value }))).toEqual([field]);
+  });
+
+  it("posta kodu 5 hane ya da boş", () => {
+    expect(toBillingProfile(billingSchema.parse({ ...person, postalCode: "34158" })).postalCode).toBe("34158");
+  });
+
+  it("form başlangıcı: eski kayıtta tür kimlikten çıkar, kayıt yoksa varsayılanlar kullanılır", () => {
+    const legacy = {
+      address: ADDRESS, tcNo: null, taxNo: "9876543217", billingType: null, legalName: null, taxOffice: null,
+      city: null, district: null, postalCode: null, email: null, eInvoiceRegistered: null,
+    };
+    expect(billingProfileFormValues(legacy, { legalName: "Kurum", email: "a@b.co" })).toMatchObject({
+      idType: "VKN", idNumber: "9876543217", legalName: "Kurum", email: "a@b.co",
+    });
+    expect(billingProfileFormValues(null, { legalName: "Kurum" })).toMatchObject({ idType: "TC", idNumber: "", legalName: "Kurum" });
   });
 });

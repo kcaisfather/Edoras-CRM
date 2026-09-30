@@ -11,6 +11,7 @@ const crm: CrmRecord = {
   demoEndsAt: null,
   convertedAt: null,
   billingComplete: false,
+  billingProfileComplete: false,
 };
 
 const items = [

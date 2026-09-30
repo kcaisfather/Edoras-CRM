@@ -68,6 +68,21 @@ describe("mapDbError", () => {
     ).toMatchObject({ status: 404, code: "NOT_FOUND" });
   });
 
+  it("fatura kuralları: fatura bilgisi, satış referansı, tutar, çift istek, ödeme koruması", () => {
+    expect(mapDbError({ code: "P0001", message: "CRM_BILLING_REQUIRED" })).toMatchObject({ status: 422, code: "BILLING_REQUIRED" });
+    expect(mapDbError({ code: "P0001", message: "CRM_INVOICE_SALE_MISMATCH" })).toMatchObject({ status: 400, code: "VALIDATION" });
+    expect(mapDbError({ code: "P0001", message: "CRM_INVOICE_IMMUTABLE" })).toMatchObject({ status: 409, code: "VALIDATION" });
+    expect(
+      mapDbError({ code: "23514", message: 'new row for relation "crm_invoices" violates check constraint "crm_invoices_vat_sum_check"' })
+    ).toMatchObject({ status: 400, code: "VALIDATION" });
+    expect(
+      mapDbError({ code: "23514", message: 'new row for relation "crm_institutions" violates check constraint "crm_institutions_billing_profile_check"' })
+    ).toMatchObject({ status: 422, code: "BILLING_PROFILE_INCOMPLETE" });
+    expect(
+      mapDbError({ code: "23503", message: 'update or delete on table "crm_payments" violates foreign key constraint "crm_invoices_payment_id_fkey" on table "crm_invoices"' })
+    ).toMatchObject({ status: 409, code: "HAS_FINANCIAL_RECORDS" });
+  });
+
   it("migration'lardaki her CRM_ hata kodu bir API koduna eşlenir", () => {
     const dir = fileURLToPath(new URL("../../supabase/migrations/", import.meta.url));
     const raised = new Set<string>();

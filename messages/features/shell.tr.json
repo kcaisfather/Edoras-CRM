@@ -63,10 +63,10 @@
       "rows": {
         "billing": {
           "category": "Fatura bilgisi",
-          "fields": "Açık adres, TC Kimlik No, Vergi No",
-          "screens": "Kurum ayrıntısı (yalnız yönetici)",
+          "fields": "Açık adres, TC Kimlik No, Vergi No, unvan / ad soyad, vergi dairesi, il / ilçe, posta kodu, fatura e-postası",
+          "screens": "Kurum ayrıntısı (yalnız yönetici); fatura talebi e-postası ve Faturalar sayfası",
           "stored": "CRM veritabanı; satış temsilcisine sunucudan hiç gönderilmez",
-          "retention": "Mali mevzuat süreleri (hukuk onayı gerekir)"
+          "retention": "Yasal saklama süresi boyunca (fatura ve mali mevzuat; hukuk onayı gerekir)"
         },
         "demoCredentials": {
           "category": "Demo giriş bilgisi",
@@ -112,10 +112,10 @@
         },
         "payments": {
           "category": "Lisans ve ödeme kayıtları",
-          "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi (kart bilgisi yok)",
-          "screens": "Kurum ayrıntısı (yalnız yönetici)",
+          "fields": "Lisans dönemi ve bedeli, ödeme tutarı, yöntemi, tarihi, kaydı açan personel (kart bilgisi yok)",
+          "screens": "Kurum ayrıntısı, Ödeme Geçmişi (yalnız yönetici)",
           "stored": "CRM veritabanı",
-          "retention": "Mali mevzuat süreleri (hukuk onayı gerekir)"
+          "retention": "Yasal saklama süresi boyunca (mali mevzuat; hukuk onayı gerekir)"
         },
         "institutionAdmins": {
           "category": "Kurum yöneticileri (Edoras)",
@@ -151,6 +151,13 @@
           "screens": "Panelin kendisi",
           "stored": "Çerez / localStorage / sessionStorage",
           "retention": "Oturum çıkışta, sessionStorage sekme kapanınca silinir"
+        },
+        "invoices": {
+          "category": "Faturalar",
+          "fields": "Fatura tutarı, KDV, açıklama, tarih, fatura numarası, PDF adresi, alıcı e-posta adresleri (muhasebeci / müşteri), gönderim durumu ve hata kodu",
+          "screens": "Faturalar, kurum ayrıntısı, Ödeme Geçmişi, aday detayı (yalnız yönetici)",
+          "stored": "CRM veritabanı; fatura talebi e-postası Resend ile muhasebeciye gider (e-postada unvan, adres ve TC / Vergi No bulunur)",
+          "retention": "Yasal saklama süresi boyunca (fatura ve mali mevzuat; hukuk onayı gerekir)"
         }
       },
       "checklistTitle": "Uyum kontrol listesi",

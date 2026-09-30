@@ -22,6 +22,8 @@ const INVENTORY: { key: string; sensitivity: Sensitivity }[] = [
   { key: "surveyInvitations", sensitivity: "medium" },
   { key: "surveyResponses", sensitivity: "medium" },
   { key: "payments", sensitivity: "medium" },
+  // Faturalar (crm_invoices): tutar, alıcı e-postaları, durum; fatura talebi e-postası muhasebeciye giden kişisel veri içerir.
+  { key: "invoices", sensitivity: "medium" },
   { key: "institutionAdmins", sensitivity: "medium" },
   { key: "auditLog", sensitivity: "medium" },
   { key: "edorasUsage", sensitivity: "low" },

@@ -17,6 +17,11 @@ export interface CrmRecord {
   convertedAt: string | null;
   /** Adres + (TC veya Vergi No) kayıtlı mı. Ayrıntıyı görmeyen rol de bunu görür. */
   billingComplete: boolean;
+  /**
+   * Fatura profili tam mı (unvan, il/ilçe, fatura e-postası, vergi dairesi…): fatura talebi için gerekir.
+   * `billingComplete`'ten katı; ayrıntıyı görmeyen rol de yalnız bu bilgiyi görür.
+   */
+  billingProfileComplete: boolean;
 }
 
 export interface InstitutionListItem {
@@ -40,6 +45,27 @@ export interface Billing {
   address: string | null;
   tcNo: string | null;
   taxNo: string | null;
+}
+
+/** DeepSport BillingProfile karşılığı: INDIVIDUAL → TC Kimlik No, COMPANY → Vergi No + vergi dairesi. */
+export type BillingType = "INDIVIDUAL" | "COMPANY";
+
+/**
+ * Kurumun fatura profili = adres + kimlik (`Billing`) + genişletilmiş alanlar. Eski kayıtlarda `billingType` null'dır
+ * (adres + TC/VKN geçerli, profil tamamlanmamış); ekran türü TC/VKN'den çıkarır (`effectiveBillingType`).
+ */
+export interface BillingProfile extends Billing {
+  billingType: BillingType | null;
+  /** Şirket unvanı ya da bireyselde ad soyad. */
+  legalName: string | null;
+  taxOffice: string | null;
+  city: string | null;
+  district: string | null;
+  postalCode: string | null;
+  /** Faturanın gideceği e-posta. */
+  email: string | null;
+  /** GİB e-Fatura mükellefi mi; yalnız sağlayıcı entegrasyonu doldurur (panel yazmaz), null = bilinmiyor. */
+  eInvoiceRegistered: boolean | null;
 }
 
 export interface License {
@@ -77,7 +103,7 @@ export interface InstitutionUsage {
 
 export interface InstitutionDetail extends InstitutionListItem {
   /** Finansal yetkisi olmayan rol için null (TC, Vergi No ve adres gösterilmez). */
-  billing: Billing | null;
+  billing: BillingProfile | null;
   licenses: License[];
   /** Finansal yetkisi olmayan rol için null. */
   payments: Payment[] | null;

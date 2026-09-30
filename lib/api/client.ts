@@ -28,9 +28,15 @@ function handleUnauthorized() {
 
 export async function apiRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; signal?: AbortSignal } = {}
+  options: {
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    body?: unknown;
+    signal?: AbortSignal;
+    /** Ek başlıklar (ör. `Idempotency-Key`). */
+    headers?: Record<string, string>;
+  } = {}
 ): Promise<T> {
-  const { method = "GET", body, signal } = options;
+  const { method = "GET", body, signal, headers } = options;
   let res: Response;
   try {
     res = await fetch(path, {
@@ -38,7 +44,7 @@ export async function apiRequest<T>(
       signal,
       credentials: "same-origin",
       cache: "no-store",
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+      headers: body === undefined && !headers ? undefined : { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...headers },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (err) {

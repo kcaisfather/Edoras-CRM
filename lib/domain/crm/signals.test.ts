@@ -43,6 +43,7 @@ function institution(crm: Partial<NonNullable<InstitutionListItem["crm"]>> | nul
           demoEndsAt: null,
           convertedAt: null,
           billingComplete: false,
+          billingProfileComplete: false,
           ...crm,
         }
       : null,

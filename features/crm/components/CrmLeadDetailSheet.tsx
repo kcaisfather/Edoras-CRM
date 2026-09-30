@@ -17,7 +17,7 @@ import { StatusBadge } from "./CrmBadges";
 import { CrmCollectionHistory } from "./CrmCollectionHistory";
 import { CrmContactMenu, contactTargetFor } from "./CrmContactMenu";
 import { CrmLeadInstitution } from "./CrmLeadInstitution";
-import { SendSurveyButton } from "./CrmTable";
+import { IssueInvoiceButton, SendSurveyButton } from "./CrmTable";
 
 const NOTE_LIMIT = 8;
 
@@ -165,12 +165,15 @@ function DetailBody({ lead, onOpenChange, actions }: { lead: CrmLead; onOpenChan
             />
           </dl>
           <CrmCollectionHistory lead={lead} />
-          {actions.onAddCollection && (
-            <Button size="sm" variant="outline" onClick={run(actions.onAddCollection)}>
-              <HandCoins />
-              {tList("addCollection")}
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {actions.onAddCollection && (
+              <Button size="sm" variant="outline" onClick={run(actions.onAddCollection)}>
+                <HandCoins />
+                {tList("addCollection")}
+              </Button>
+            )}
+            <IssueInvoiceButton lead={lead} actions={actions} onClick={run(actions.onIssueInvoice)} showLabel />
+          </div>
         </Section>
       </FinancialOnly>
 

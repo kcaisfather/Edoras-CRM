@@ -14,6 +14,7 @@ function crm(patch: Partial<CrmRecord>): CrmRecord {
     demoEndsAt: "2026-10-04",
     convertedAt: null,
     billingComplete: false,
+    billingProfileComplete: false,
     ...patch,
   };
 }

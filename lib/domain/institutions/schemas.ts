@@ -14,7 +14,8 @@ import {
   isValidTckn,
   isValidVkn,
 } from "./rules";
-import { PAYMENT_METHODS, type Billing, type PaymentMethod } from "./types";
+import { effectiveBillingType } from "./billing-profile";
+import { PAYMENT_METHODS, type Billing, type BillingProfile, type BillingType, type PaymentMethod } from "./types";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -29,6 +30,12 @@ const MSG = {
   address: `Açık adres zorunlu (en az ${ADDRESS_MIN_LENGTH} karakter)`,
   tcInvalid: "Geçerli bir TC Kimlik No girin (11 hane)",
   vknInvalid: "Geçerli bir Vergi No girin (10 hane)",
+  legalName: "Unvan / ad soyad zorunlu (en az 2 karakter)",
+  taxOffice: "Kurumsal (Vergi No) fatura için vergi dairesi zorunlu",
+  city: "İl zorunlu",
+  district: "İlçe zorunlu",
+  postalCode: "Posta kodu 5 haneli olmalı",
+  billingEmail: "Faturanın gideceği geçerli bir e-posta girin",
   date: "Geçerli bir tarih seçin",
   priceInvalid: "Geçerli bir tutar girin (ör. 45.000)",
   amountInvalid: "Sıfırdan büyük bir tutar girin",
@@ -53,6 +60,16 @@ const billingShape = {
   idNumber: z.string().trim(),
 };
 
+/** Fatura profili alanları (adres + kimlik `billingShape`'te). Kurumsal = Vergi No, bireysel = TC Kimlik No. */
+const profileShape = {
+  legalName: z.string().trim().max(200),
+  taxOffice: z.string().trim().max(100),
+  city: z.string().trim().max(100),
+  district: z.string().trim().max(100),
+  postalCode: z.string().trim(),
+  email: z.string().trim(),
+};
+
 const licenseShape = {
   licenseStartsOn: z.string(),
   licensePrice: z.string(),
@@ -71,6 +88,18 @@ function checkBilling(v: { address: string; idType: "TC" | "VKN"; idNumber: stri
   const digits = digitsOnly(v.idNumber);
   if (v.idType === "TC" && !isValidTckn(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.tcInvalid });
   if (v.idType === "VKN" && !isValidVkn(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.vknInvalid });
+}
+
+function checkProfile(
+  v: { idType: "TC" | "VKN"; legalName: string; taxOffice: string; city: string; district: string; postalCode: string; email: string },
+  ctx: Ctx
+) {
+  if (v.legalName.length < 2) ctx.addIssue({ code: "custom", path: ["legalName"], message: MSG.legalName });
+  if (v.idType === "VKN" && v.taxOffice.length < 2) ctx.addIssue({ code: "custom", path: ["taxOffice"], message: MSG.taxOffice });
+  if (v.city.length < 2) ctx.addIssue({ code: "custom", path: ["city"], message: MSG.city });
+  if (v.district.length < 2) ctx.addIssue({ code: "custom", path: ["district"], message: MSG.district });
+  if (v.postalCode !== "" && !/^[0-9]{5}$/.test(v.postalCode)) ctx.addIssue({ code: "custom", path: ["postalCode"], message: MSG.postalCode });
+  if (!EMAIL.test(v.email)) ctx.addIssue({ code: "custom", path: ["email"], message: MSG.billingEmail });
 }
 
 function checkLicense(v: { licenseStartsOn: string; licensePrice: string }, ctx: Ctx) {
@@ -100,9 +129,22 @@ export type NewDemoInput = z.input<typeof newDemoSchema>;
 export const contactSchema = z.object(contactShape);
 export type ContactInput = z.input<typeof contactSchema>;
 
-/** Fatura bilgisi: adres + (TC veya Vergi No). Ücretli hesap ve ödeme bunu şart koşar. */
-export const billingSchema = z.object(billingShape).superRefine(checkBilling);
+/**
+ * Fatura profili (kurum ayrıntısı → "Fatura bilgileri", PUT /api/institutions/{id}/billing): adres + (TC veya Vergi No)
+ * — ücretli hesap ve ödeme bunu şart koşar — ile birlikte unvan, il, ilçe ve fatura e-postası; Vergi No'da vergi dairesi.
+ * TC ⇔ bireysel, Vergi No ⇔ kurumsal (SQL: crm_institutions_billing_profile_check).
+ */
+export const billingSchema = z
+  .object({ ...billingShape, ...profileShape })
+  .superRefine((v, ctx) => {
+    checkBilling(v, ctx);
+    checkProfile(v, ctx);
+  });
 export type BillingInput = z.input<typeof billingSchema>;
+
+/** Yalnız adres + kimlik (ücretliye geçiş ve kayda alma formlarının fatura kısmı; profil sonradan tamamlanır). */
+export const billingCoreSchema = z.object(billingShape).superRefine(checkBilling);
+export type BillingCoreInput = z.input<typeof billingCoreSchema>;
 
 /** Demo → ücretli: fatura + ilk lisans (1 yıl) + isteğe bağlı ilk ödeme. */
 export const convertSchema = z
@@ -157,7 +199,7 @@ export function toContact(v: ContactInput) {
   };
 }
 
-export function toBilling(v: BillingInput): Billing {
+export function toBilling(v: BillingCoreInput): Billing {
   const digits = digitsOnly(v.idNumber);
   return {
     address: v.address.trim(),
@@ -174,9 +216,57 @@ export function toPayment(v: { payAmount: string; payMethod: string; paidOn: str
   return { amount: parseAmount(v.payAmount) as number, method: v.payMethod as PaymentMethod, paidOn: v.paidOn };
 }
 
-/** Kayıtlı fatura bilgisinden form başlangıç değerleri. */
-export function billingFormValues(billing: Billing | null): BillingInput {
+/** Fatura profili yazımı (crm_institutions sütunlarına): tür kimlikten türetilir, vergi dairesi yalnız Vergi No ile. */
+export interface BillingProfileWrite extends Billing {
+  billingType: BillingType;
+  legalName: string;
+  taxOffice: string | null;
+  city: string;
+  district: string;
+  postalCode: string | null;
+  email: string;
+}
+
+export function toBillingProfile(v: BillingInput): BillingProfileWrite {
+  const core = toBilling(v);
+  const company = v.idType === "VKN";
+  return {
+    ...core,
+    billingType: company ? "COMPANY" : "INDIVIDUAL",
+    legalName: v.legalName.trim().replace(/\s+/g, " "),
+    taxOffice: company ? v.taxOffice.trim().replace(/\s+/g, " ") : null,
+    city: v.city.trim().replace(/\s+/g, " "),
+    district: v.district.trim().replace(/\s+/g, " "),
+    postalCode: v.postalCode.trim() || null,
+    email: v.email.trim().toLowerCase(),
+  };
+}
+
+/** Kayıtlı fatura bilgisinden adres + kimlik form başlangıç değerleri (ücretliye geçiş / kayda alma formları). */
+export function billingFormValues(billing: Billing | null): BillingCoreInput {
   if (billing?.taxNo) return { address: billing.address ?? "", idType: "VKN", idNumber: billing.taxNo };
   return { address: billing?.address ?? "", idType: "TC", idNumber: billing?.tcNo ?? "" };
+}
+
+/**
+ * Fatura profili formunun başlangıç değerleri. Kayıt yoksa `defaults` (ör. unvan = kurum adı, e-posta = yetkili
+ * e-postası) kullanılır; eski kayıtta (tür null) tür kimlikten çıkarılır.
+ */
+export function billingProfileFormValues(
+  billing: BillingProfile | null,
+  defaults: { legalName?: string; email?: string } = {}
+): BillingInput {
+  const idType = billing ? (effectiveBillingType(billing) === "COMPANY" ? "VKN" : "TC") : "TC";
+  return {
+    address: billing?.address ?? "",
+    idType,
+    idNumber: (idType === "VKN" ? billing?.taxNo : billing?.tcNo) ?? "",
+    legalName: billing?.legalName ?? defaults.legalName ?? "",
+    taxOffice: billing?.taxOffice ?? "",
+    city: billing?.city ?? "",
+    district: billing?.district ?? "",
+    postalCode: billing?.postalCode ?? "",
+    email: billing?.email ?? defaults.email ?? "",
+  };
 }
 

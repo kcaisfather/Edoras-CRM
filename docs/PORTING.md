@@ -32,7 +32,7 @@ EdorasCRM'de:
 | Ödeme kaydı (`product-logs`) | `crm_payments` |
 | Kanal (clinic / atletik / trainer) | Yok (kaldırın) |
 | Test sayısı, son test | Edoras kullanımı (öğrenci/öğretmen/sınıf sayısı; ileride deneme/ödev) |
-| AWS SES e-posta | Resend REST (`lib/server/mail.ts`, `RESEND_API_KEY` + `EMAIL_FROM` isteğe bağlı; yoksa e-posta kanalı kapalı, 503 `MAIL_NOT_CONFIGURED`). Demo giriş bilgisi gibi tek seferlik bilgiler yine ekranda gösterilir |
+| AWS SES e-posta | Resend REST (`lib/server/mail.ts`, `RESEND_API_KEY` + `EMAIL_FROM` isteğe bağlı; yoksa e-posta kanalı kapalı, 503 `MAIL_NOT_CONFIGURED`; fatura talebi ayrıca `ACCOUNTANT_EMAIL` ister). Demo giriş bilgisi gibi tek seferlik bilgiler yine ekranda gösterilir |
 | Herkese açık sayfa (`/[locale]/s/...`, `PUBLIC_PATH_PREFIXES`) | `/s/...` + `/api/public/*` (`lib/permissions.ts` → `CUSTOMER_PUBLIC_PATHS`): proxy oturuma dokunmaz, kabuk yok, uçlar token'la korunur ve oran sınırlıdır (`lib/server/rate-limit.ts`) |
 
 ## 3. Katmanlar ve dosya yerleri

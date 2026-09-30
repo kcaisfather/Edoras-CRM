@@ -205,6 +205,7 @@ describe("existing", () => {
           demoEndsAt: null,
           convertedAt: null,
           billingComplete: false,
+          billingProfileComplete: false,
         },
       })
     ).toMatchObject({ source: "institution", id: "I1", name: "Ayşe Demir", organization: "Işık Koleji", phone: "+905320000010" });

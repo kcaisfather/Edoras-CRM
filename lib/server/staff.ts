@@ -172,3 +172,12 @@ export async function resetStaffPassword(id: string, actor: StaffContext): Promi
   await recordAudit(actor, { action: "STAFF_PASSWORD_RESET", entityType: "staff", entityId: id, entityLabel: displayName(target) });
   return { temporaryPassword };
 }
+
+/** crm_staff adları (user_id → ad): kaydı açan personelin gösterimi (satış / fatura listeleri). Adı boş olanlar yok. */
+export async function staffNameMap(): Promise<Map<string, string>> {
+  const { data, error } = await getSupabaseAdminClient().from("crm_staff").select("user_id, full_name");
+  if (error) throw dbError(error);
+  const out = new Map<string, string>();
+  for (const r of (data ?? []) as { user_id: string; full_name: string | null }[]) if (r.full_name) out.set(r.user_id, r.full_name);
+  return out;
+}

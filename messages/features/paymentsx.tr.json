@@ -1,0 +1,41 @@
+{
+  "title": "Ödeme Geçmişi",
+  "description": "Tüm kurumların ödeme kayıtları (havale, kart, nakit). Kayıt, kurum sayfasındaki ödeme ya da adaydaki \"Tahsilat ekle\" ile açılır.",
+  "table": {
+    "institution": "Kurum",
+    "transactionDetails": "İşlem detayı",
+    "invoice": "Fatura",
+    "amountTime": "Tutar / tarih"
+  },
+  "seller": "Kaydeden: {name}",
+  "noInvoice": "Fatura yok",
+  "pageTotal": "Bu sayfa toplamı ({count} işlem):",
+  "grandTotal": "Süzgece uyan tüm kayıtların toplamı ({count} işlem):",
+  "filters": {
+    "search": "Kurum adı ara",
+    "method": "Yöntem",
+    "allMethods": "Tüm yöntemler",
+    "from": "Başlangıç",
+    "to": "Bitiş",
+    "clear": "Süzgeçleri temizle"
+  },
+  "pagination": {
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "pageSize": "Sayfa boyutu",
+    "showingMiddle": " / ",
+    "unit": "işlem"
+  },
+  "empty": {
+    "title": "Ödeme kaydı bulunamadı",
+    "description": "Bu süzgeçle eşleşen ödeme yok."
+  },
+  "error": {
+    "message": "Ödeme geçmişi yüklenirken bir hata oluştu",
+    "retry": "Yeniden dene"
+  },
+  "gate": {
+    "title": "Bu bölüm yetkinize kapalı",
+    "description": "Ödeme geçmişi tutar bilgisi içerir; yalnızca yönetici hesapları görebilir."
+  }
+}

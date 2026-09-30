@@ -21,10 +21,15 @@ export interface CrmTableActions {
   renderSatisfaction?: (lead: CrmLead) => ReactNode;
   /** "Anket gönder" (anketler modülünün penceresi; DeepSport onSendSurvey). */
   onSendSurvey?: (lead: CrmLead) => void;
+  /**
+   * "Fatura kes" (faturalar modülünün penceresi; DeepSport setInvoiceLead). Yalnız finans yetkisiyle ve ücretli kuruma
+   * bağlı adayda çizilir (fatura, kurumun lisansı / ödemesi için kesilir).
+   */
+  onIssueInvoice?: (lead: CrmLead) => void;
 }
 
 /** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, memnuniyet rozeti, Anket gönder). */
-export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction" | "onSendSurvey">;
+export type CrmRowSlots = Pick<CrmTableActions, "renderAssignTask" | "renderSatisfaction" | "onSendSurvey" | "onIssueInvoice">;
 
 /**
  * Ekranı kuran bileşenin verdiği parçalar: satır parçaları + üst satırdaki "İçe aktar (Excel/CSV)" düğmesi

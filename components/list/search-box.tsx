@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const t = useTranslations("list");
   const [input, setInput] = useState(value);
   const [synced, setSynced] = useState(value);
@@ -26,8 +26,8 @@ export function SearchBox({ value, onChange }: { value: string; onChange: (v: st
       <Input
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={t("search")}
-        aria-label={t("search")}
+        placeholder={placeholder ?? t("search")}
+        aria-label={placeholder ?? t("search")}
         className="pl-10 h-9"
       />
     </div>

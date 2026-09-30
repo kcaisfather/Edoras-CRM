@@ -11,7 +11,7 @@ import { usePermissions } from "@/features/auth";
 import { apiErrorKind } from "@/lib/api/errors";
 import { institutionStatus } from "@/lib/domain/institutions/status";
 import { todayIso } from "@/lib/domain/institutions/rules";
-import type { InstitutionDetail } from "@/lib/domain/institutions/types";
+import type { InstitutionDetail, Payment } from "@/lib/domain/institutions/types";
 import { useInstitution } from "../queries";
 import { formatDate, programLabel } from "../format";
 import { InstitutionStatusBadge } from "./InstitutionStatusBadge";
@@ -22,8 +22,17 @@ import { EnrollDialog } from "./EnrollDialog";
 /**
  * Kurum ayrıntısı. `aside`: sağ sütunun başına eklenen parça — başka modüllerin kartları (ör. CRM adayı)
  * route dosyasında verilir; kurumlar modülü onları import etmez (feature bağımlılığı tek yönlü kalır).
+ * `renderPaymentAction`: ödeme satırlarına eklenen parça (ör. faturalar modülünün "Fatura kes"i) — aynı ilke.
  */
-export function InstitutionDetailPage({ id, aside }: { id: string; aside?: React.ReactNode }) {
+export function InstitutionDetailPage({
+  id,
+  aside,
+  renderPaymentAction,
+}: {
+  id: string;
+  aside?: React.ReactNode;
+  renderPaymentAction?: (payment: Payment, institution: InstitutionDetail) => React.ReactNode;
+}) {
   const t = useTranslations("institutions.detail");
   const query = useInstitution(id);
 
@@ -54,7 +63,7 @@ export function InstitutionDetailPage({ id, aside }: { id: string; aside?: React
         <div className="space-y-6 lg:col-span-2">
           {institution.crm ? <ContactCard institution={institution} /> : <UnregisteredCard />}
           <LicensesCard institution={institution} />
-          <PaymentsCard institution={institution} />
+          <PaymentsCard institution={institution} renderPaymentAction={renderPaymentAction} />
         </div>
         <div className="space-y-6">
           {aside}

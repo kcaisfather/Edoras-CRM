@@ -188,7 +188,11 @@
     "paymentHistoryDescription": "Tüm kurumların ödeme kayıtları",
     "salesInvoices": "Faturalar",
     "salesInvoicesDescription": "Kesilen ve bekleyen faturaların durumu",
-    "sidebarSales": "Satış & Fatura"
+    "sidebarSales": "Satış & Fatura",
+    "growthCustomers": "Müşteri Takibi",
+    "growthCustomersDescription": "Kullanım, süresi dolacaklar, en aktif kurumlar ve segment görünümleri",
+    "growthAnalytics": "Müşteri Analizleri",
+    "growthAnalyticsDescription": "Kurum, öğrenci ve etkinlik toplamları, kullanım, gelir sızıntısı, retention ve birim ekonomisi"
   },
   "shell": {
     "infoTip": {

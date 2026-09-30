@@ -1,0 +1,379 @@
+{
+  "common": {
+    "never": "Hiç",
+    "today": "Bugün",
+    "daysAgo": "{days} gün önce",
+    "using": "Kullanıyor",
+    "notUsing": "Kullanmıyor",
+    "usingHint": "Son {days} günde en az bir etkinlik",
+    "whatsapp": "{name} için WhatsApp",
+    "call": "{name} kurumunu ara",
+    "mail": "{name} kurumuna e-posta",
+    "csv": {
+      "name": "Kurum",
+      "status": "Durum",
+      "endsOn": "Bitiş",
+      "students": "Öğrenci",
+      "teachers": "Öğretmen",
+      "activeTeachers": "Aktif öğretmen",
+      "activity": "Etkinlik (son {days} gün)",
+      "lastActivity": "Son etkinlik",
+      "contact": "Yetkili",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "balance": "Bakiye"
+    }
+  },
+  "sources": {
+    "attendance": "Yoklama",
+    "lessonTopics": "Konu işleme",
+    "assignments": "Ödev",
+    "exams": "Deneme",
+    "announcements": "Duyuru",
+    "sms": "Elle SMS"
+  },
+  "customers": {
+    "title": "Müşteri Takibi",
+    "description": "Kurumların Edoras kullanımı, yenilemeleri ve segmentleri. Kullanım, öğretmenlerin yoklama, ödev, deneme, konu işleme, duyuru ve elle SMS etkinliğinden çıkar.",
+    "windowLabel": "Sayı penceresi",
+    "windowOption": "Son {days} gün",
+    "tabsLabel": "Müşteri görünümleri",
+    "tabs": {
+      "all": "Hepsi",
+      "using": "Kullanıyor",
+      "notUsing": "Kullanmıyor",
+      "renewals": "Süresi Dolacaklar",
+      "loyal": "Sadık",
+      "inactive14": "14+ gün etkinliği yok",
+      "noActivity30": "30+ gün etkinliği yok",
+      "neverActivated": "Hiç aktive olmamış",
+      "noStudents": "Öğrenci eklememiş",
+      "noTeachers": "Öğretmeni yok",
+      "dormantPayers": "90+ gün girmeyen ödeyenler"
+    },
+    "tabInfoLabel": "“{tab}” tanımı",
+    "tabInfo": {
+      "all": "Edoras'taki tüm kurumlar (iç / sunum kurumları ve Edoras'ta silinmiş kurumlar hariç): ücretli, demo ve CRM kaydı olmayanlar.",
+      "using": "Son {days} günde en az bir etkinliği (yoklama, ödev, deneme, konu işleme, duyuru, elle SMS) olan kurumlar.",
+      "notUsing": "Son {days} günde hiç etkinliği olmayan kurumlar (hiç etkinliği olmayanlar dahil).",
+      "renewals": "Lisansı (demoda demosu) {days} gün içinde bitecek, son {lookback} günde bitmiş kurumlar; kalan güne göre kovalarda. “Süresi bitmiş ama kullanan”: bitişe rağmen son {active} günde etkinliği olan kurum.",
+      "loyal": "Seçili penceredeki toplam etkinliğine göre en aktif {limit} kurum. Kampanya düğmesiyle alıcı listesi açılır.",
+      "inactive14": "Daha önce etkinliği olan ama {days}+ gündür etkinliği olmayan kurumlar (hiç etkinliği olmayanlar “Hiç aktive olmamış”ta).",
+      "noActivity30": "{days}+ gündür etkinliği olmayan kurumlar (hiç etkinliği olmayanlar dahil).",
+      "neverActivated": "Hiç etkinliği olmayan ve {days} günden eski kurumlar (DeepSport'taki “Dummy hesaplar” temizliğinin karşılığı; silme burada yok, Edoras'ta yapılır).",
+      "noStudents": "Kuruma hiç öğrenci eklenmemiş (Edoras `students` kaydı yok).",
+      "noTeachers": "Kurumda öğretmen rolünde hesap yok.",
+      "dormantPayers": "Lisansı süren (ücretli) ama {days}+ gündür etkinliği olmayan kurumlar; tutar gösterilmez."
+    },
+    "unreadable": "{count} kurumun kullanımı okunamadı; bu kurumlar kullanım süzgeçlerinde görünmez."
+  },
+  "active": {
+    "kindLabel": "Kurum türü",
+    "kinds": {
+      "all": "Hepsi",
+      "paid": "Ücretli",
+      "demo": "Demo",
+      "unregistered": "Kayıtsız"
+    },
+    "cols": {
+      "customer": "Kurum",
+      "status": "Durum",
+      "students": "Öğrenci",
+      "teachers": "Aktif / öğretmen",
+      "activity": "Etkinlik ({days} g)",
+      "lastActivity": "Son etkinlik",
+      "usage": "Kullanım",
+      "endsOn": "Bitiş",
+      "balance": "Bakiye",
+      "contact": "İletişim"
+    },
+    "teachersHint": "Pencerede yoklama alan öğretmen / kurumdaki öğretmen hesabı"
+  },
+  "renewals": {
+    "buckets": {
+      "expiredActive": "Süresi bitmiş ama kullanan",
+      "d1_7": "1–7 gün",
+      "d8_14": "8–14 gün",
+      "d15_30": "15–30 gün",
+      "d31_60": "31–60 gün",
+      "expired": "Süresi bitmiş"
+    },
+    "note": "Lisansı (demoda demosu) {window} gün içinde bitecek ve son {lookback} günde bitmiş kurumlar. “Kullanan” = bitişten sonra son {active} günde etkinlik. Kontenjan kavramı Edoras'ta yok.",
+    "le60": "≤ {days} gün",
+    "cols": {
+      "customer": "Kurum",
+      "type": "Tür",
+      "bucket": "Kova",
+      "endsOn": "Bitiş",
+      "days": "Kalan",
+      "lastActivity": "Son etkinlik",
+      "usage": "Kullanım",
+      "balance": "Bakiye",
+      "contact": "İletişim"
+    },
+    "csvContact": "Yetkili",
+    "csvPhone": "Telefon",
+    "csvEmail": "E-posta",
+    "demo": "Demo",
+    "paid": "Ücretli",
+    "daysLeft": "{days} gün kaldı",
+    "endedToday": "Bugün bitti",
+    "endedAgo": "{days} gün önce bitti"
+  },
+  "topUsers": {
+    "note": "Seçili penceredeki (son {days} gün) toplam etkinliğine göre en aktif {limit} kurum.",
+    "campaign": "Kampanya",
+    "cols": {
+      "rank": "Sıra",
+      "customer": "Kurum",
+      "activity": "Etkinlik ({days} g)",
+      "sources": "Özellik",
+      "lastActivity": "Son etkinlik",
+      "students": "Öğrenci",
+      "contact": "İletişim"
+    }
+  },
+  "campaign": {
+    "title": "Sadık kurum kampanyası",
+    "description": "Segment, şablon ve kanal seç. WhatsApp mesajları kişi başına hazır bağlantıdır; hiçbir şey otomatik gönderilmez.",
+    "segment": "Segment",
+    "template": "Şablon",
+    "channel": "Kanal",
+    "message": "Mesaj metni",
+    "placeholders": "'{name}' yetkili adıyla, '{organization}' kurum adıyla değişir.",
+    "segments": {
+      "all": "Tümü",
+      "atRisk": "Yavaşlayan",
+      "active": "Etkin",
+      "renewSoon": "Yenileme yaklaşan"
+    },
+    "templates": {
+      "earlyRenewal": {
+        "label": "Erken yenileme",
+        "text": "Merhaba {name}, {organization} olarak Edoras'ı birlikte kullanmaktan memnunuz. Lisansınız yakında sona eriyor; erken yenilemede size özel koşullar sunabiliriz. Uygun olduğunuzda konuşalım mı?"
+      },
+      "checkIn": {
+        "label": "Kullanım desteği",
+        "text": "Merhaba {name}, {organization} için Edoras kullanımınızı birlikte gözden geçirmek isteriz. Yoklama, ödev veya deneme tarafında destek gerekirse yardımcı olalım."
+      },
+      "thanks": {
+        "label": "Teşekkür",
+        "text": "Merhaba {name}, {organization} olarak Edoras'ı yoğun kullandığınız için teşekkür ederiz. Görüşleriniz bizim için çok değerli; her zaman yanınızdayız."
+      }
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "csv": "CSV"
+    },
+    "whatsappSummary": "{total} alıcıdan {withPhone} tanesinin telefonu geçerli.",
+    "copy": "Bağlantıları kopyala",
+    "copied": "{count} bağlantı kopyalandı",
+    "copyError": "Panoya kopyalanamadı",
+    "opened": "Açıldı",
+    "open": "WhatsApp'ta aç",
+    "noPhone": "Telefon yok",
+    "csvSummary": "{total} alıcı, kişiselleştirilmiş mesajla CSV'ye yazılır.",
+    "download": "CSV indir",
+    "note": "E-posta kanalı yok: toplu pazarlama e-postası için onay / çıkış kaydı ve gönderim geçmişi CRM'de tutulmuyor.",
+    "csv": {
+      "name": "Kurum",
+      "contact": "Yetkili",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "message": "Mesaj",
+      "whatsapp": "WhatsApp bağlantısı"
+    }
+  },
+  "usage": {
+    "metrics": {
+      "using": "Kullanan kurum (son {days} gün)",
+      "notUsing": "Kullanmayan kurum",
+      "never": "Hiç aktive olmamış ({days}+ gün)",
+      "activeTeachers": "Aktif öğretmen ({days} gün)",
+      "activeTeachersHint": "Yoklama alan öğretmen / tüm öğretmen hesabı",
+      "activity": "Etkinlik ({days} gün)",
+      "activityHint": "Kurum başına ortalama {avg}"
+    },
+    "distribution": {
+      "title": "Son etkinliğe göre dağılım",
+      "def": "Kurumun herhangi bir kaynaktaki en son etkinlik günü. “Hiç”: hiç etkinliği yok.",
+      "buckets": {
+        "d7": "0–7 gün",
+        "d14": "8–14 gün",
+        "d30": "15–30 gün",
+        "d90": "31–90 gün",
+        "older": "90+ gün",
+        "never": "Hiç"
+      }
+    },
+    "sources": {
+      "title": "Kaynak bazında etkinlik (son {days} gün)",
+      "def": "Yoklama ve konu işleme günlük kayıtlardır; ödev, deneme, duyuru ve elle SMS oluşturma zamanına göre sayılır. Öğrencinin ödev teslimi ve deneme sonucu sayılmaz (sonuç zamanı yeniden puanlamada değişir).",
+      "source": "Kaynak",
+      "records": "Kayıt",
+      "institutions": "Kurum",
+      "unavailable": "{count} kurumda okunamadı"
+    },
+    "caveats": "Edoras'ta “son giriş” alanı yok; kullanım öğretmen/yönetici etkinliğinden çıkarılır. Yalnız giriş yapıp işlem yapmayan kurum “kullanmıyor” görünür. Okuma salt okunurdur ve 5 dakika önbelleklidir.",
+    "weekly": {
+      "title": "Haftalık büyüme",
+      "cols": {
+        "week": "Hafta (Pzt)",
+        "active": "Etkin kurum",
+        "new": "İlk kez görünen",
+        "returning": "Geri dönen",
+        "lost": "Kaybedilen",
+        "total": "Etkinlik"
+      },
+      "currentWeek": "(bu hafta, eksik)",
+      "truncated": "Bazı kurumlarda satır sınırına takıldı: en eski haftalar eksik olabilir. “İlk kez görünen” serinin başından itibarendir.",
+      "note": "“Kaybedilen”: önceki hafta etkin olup bu hafta olmayan; “geri dönen”: daha önce etkin olup önceki hafta olmayan. Ağır sorgu: yalnız bölüm açılınca çalışır."
+    }
+  },
+  "usageCard": {
+    "title": "Kullanım",
+    "unavailable": "Kullanım okunamadı.",
+    "activity": "Etkinlik (son {days} gün)",
+    "never": "Hiç etkinlik yok",
+    "lastActivity": "Son etkinlik",
+    "lastActivityDays": "Son etkinlik · {days} gün önce",
+    "using": "Kullanıyor: son {days} günde etkinlik var.",
+    "notUsing": "Kullanmıyor: son {days} günde etkinlik yok.",
+    "sourceUnavailable": "okunamadı",
+    "activeTeachers": "Son {days} günde yoklama alan {active} öğretmen (toplam {total})."
+  },
+  "leakage": {
+    "buckets": {
+      "freeLicense": "Bedelsiz lisans",
+      "unpaid": "Eksik tahsilat"
+    },
+    "giftRatio": "Hediye oranı (son 1 yıl)",
+    "expiredActiveLink": "Süresi bitmiş ama kullananlar",
+    "note": "Bedelsiz lisans: son 1 yılda başlayan 0 ₺ lisans (tahmini kayıp = ücretli lisansların ortancası). Eksik tahsilat: başlamış ücretli lisans bedelinden az ödeme.",
+    "cols": {
+      "customer": "Kurum",
+      "bucket": "Neden",
+      "date": "Tarih",
+      "contact": "İletişim",
+      "phone": "Telefon",
+      "loss": "Tahmini kayıp"
+    }
+  },
+  "retentionChurn": {
+    "rangeLabel": "Churn dönemi",
+    "ranges": {
+      "all": "Tüm zamanlar",
+      "y1": "Son 12 ay",
+      "m6": "Son 6 ay",
+      "m3": "Son 3 ay"
+    },
+    "noPackages": "Henüz ücretli lisans kaydı yok; oranlar boş.",
+    "kpi": {
+      "churn": "Churn",
+      "renewal": "Yenileme",
+      "ongoing": "Aktif devam",
+      "revenueChurn": "Gelir churn'ü",
+      "pending": "{count} paket bekliyor",
+      "lowConfidence": "düşük güven (< {min})",
+      "snapshot": "anlık",
+      "lost": "kayıp"
+    },
+    "defs": {
+      "churn": "Seçili dönemde biten ücretli lisanslardan, bitişten sonra {grace} gün içinde yenilenmeyenlerin oranı. Grace süresi dolmamış paketler paydaya girmez.",
+      "renewal": "Seçili dönemde biten ücretli lisanslardan bitişten sonra {grace} gün içinde yenilenenlerin (erken yenileme dahil) oranı.",
+      "ongoing": "Lisansı süren ücretli kurumlardan son {days} günde etkinliği olanların oranı (bugünkü görüntü, dönemden bağımsız).",
+      "revenueChurn": "Sonuçlanan paketlerin lisans bedeli içinde yenilenmeyenlerin payı."
+    },
+    "trend": {
+      "title": "Aylık churn / yenileme (son {months} ay)",
+      "def": "Lisansın bittiği aya göre; her sütun o ay biten paketlerin yüzdesi. {grace} günlük yenileme süresi geçmemiş paketler dahil değil.",
+      "renewed": "Yenilendi",
+      "churned": "Churn",
+      "noData": "Bu aralıkta biten paket yok",
+      "counts": "{renewed} yenilendi, {churned} churn ({decided} sonuçlanan)",
+      "pending": "{count} paket bekliyor",
+      "lowConfidence": "Düşük güven (< {min})"
+    },
+    "cohort": {
+      "title": "İlk lisans kohortu (son {months} ay)",
+      "def": "Kurumlar ilk ücretli lisanslarının başladığı aya göre gruplanır. Mk = ilk lisanstan k ay sonra kesintisiz lisansı (yenileme {grace} gün içindeyse süreklilik korunur) olan kurumların yüzdesi. Lisans 1 yıllıktır: M12 yenileme sonucunu gösterir.",
+      "month": "Kohort",
+      "size": "Kurum",
+      "cellTitle": "M{k}: {count}/{of}",
+      "curveTitle": "Elde tutma eğrisi (kohortların ağırlıklı ortalaması)",
+      "noData": "Kohort için yeterli veri yok",
+      "lowConfidence": "düşük güven (< {min})"
+    },
+    "continuation": {
+      "title": "Anlık devam durumu",
+      "def": "Ücretli kurumların bugünkü durumu: son {days} günde bitmiş ve yenilenmemiş = Churn; ≤ {window} gün kalan = Yenileme yaklaşıyor; son {days} günde yenileyen = Yenilendi; kalanlar son 14 günde etkinliğine göre kullanıyor / kullanmıyor.",
+      "noData": "Ücretli kurum yok",
+      "statuses": {
+        "activeUsing": "Devam · kullanıyor",
+        "renewed": "Yenilendi",
+        "activeNotUsing": "Devam · kullanmıyor",
+        "expiring": "Yenileme yaklaşıyor",
+        "churned": "Süresi doldu"
+      },
+      "stillActive": "{count} kurum süresi dolmasına rağmen hâlâ kullanıyor"
+    }
+  },
+  "economics": {
+    "kpi": {
+      "arr": "Yıllık gelir (ARR)",
+      "arrHint": "{count} süren ücretli lisans",
+      "mrr": "Aylık gelir (MRR)",
+      "mrrHint": "ARR / 12",
+      "arpa": "Kurum başına gelir",
+      "arpaHint": "Süren lisans başına yıllık ortalama",
+      "collection": "Tahsilat oranı",
+      "atRisk": "Riskteki gelir",
+      "atRiskHint": "{count} kurum 14+ gündür etkinliksiz",
+      "free": "Bedelsiz lisans payı"
+    },
+    "note": "Gelir = ücretli lisans bedeli (12 aya eşit yayılır); tahsilat = ödeme kayıtları. AWS maliyeti, kur ve reklam harcaması (CAC / ROAS) CRM'de tutulmadığı için yok.",
+    "trend": {
+      "title": "Aylık gelir ve tahsilat (son 12 ay)",
+      "month": "Ay",
+      "recognized": "Tahakkuk",
+      "collected": "Tahsilat",
+      "bars": "Karşılaştırma",
+      "newCustomers": "Yeni kurum",
+      "newRevenue": "Yeni gelir"
+    },
+    "value": {
+      "title": "Kurum değeri ve kullanım",
+      "customer": "Kurum",
+      "annual": "Yıllık değer",
+      "paid": "Tahsil edilen",
+      "balance": "Bakiye",
+      "activity": "Etkinlik",
+      "lastActivity": "Son etkinlik",
+      "risk": "Riskli",
+      "yes": "Evet",
+      "endsOn": "Lisans bitişi",
+      "note": "Kırmızı satırlar: değeri süren ama 14+ gündür etkinliği olmayan kurumlar — yenileme riski."
+    }
+  },
+  "analytics": {
+    "title": "Müşteri Analizleri",
+    "description": "Kurum, öğrenci ve etkinlik toplamları, kullanım, gelir sızıntısı, retention ve birim ekonomisi.",
+    "windowLabel": "Sayı penceresi",
+    "windowOption": "Son {days} gün",
+    "kpi": {
+      "institutions": "Kurum",
+      "students": "Öğrenci",
+      "teachers": "Öğretmen",
+      "classes": "Sınıf",
+      "activity": "Etkinlik (son {days} gün)"
+    },
+    "kpiNote": "Toplamlar iç / sunum kurumları hariç, tüm zamanlardır; etkinlik seçili pencerededir. Öğrenci kişisel verisi CRM'e gelmez, yalnız sayılar.",
+    "usage": "Kullanım",
+    "sectionsLabel": "Analiz bölümleri",
+    "sections": {
+      "leakage": "Gelir sızıntısı",
+      "retention": "Retention & Churn",
+      "economics": "Birim ekonomisi"
+    }
+  }
+}

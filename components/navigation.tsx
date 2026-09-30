@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import {
   Building2,
   ChartNoAxesColumnIncreasing,
+  ChartPie,
   ClipboardList,
   CreditCard,
   FileText,
+  HeartHandshake,
   LayoutDashboard,
   ListTodo,
   MessageSquareHeart,
@@ -28,6 +30,8 @@ export type NavTranslationKey =
   | "crmSurveys"
   | "crmAnalytics"
   | "crmRules"
+  | "growthCustomers"
+  | "growthAnalytics"
   | "paymentHistory"
   | "salesInvoices";
 
@@ -72,7 +76,11 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "customers",
     labelKey: "sidebarCustomers",
-    items: [{ href: "/institutions", icon: Building2, translationKey: "institutions" }],
+    items: [
+      { href: "/institutions", icon: Building2, translationKey: "institutions" },
+      // Tek sayfa: kullanan / kullanmayan, Süresi Dolacaklar, Sadık (en aktif kurumlar) ve segmentler sekmelerde.
+      { href: "/growth/customers", icon: HeartHandshake, translationKey: "growthCustomers" },
+    ],
   },
   {
     // Satış & Fatura: tüm kurumların ödemeleri ve faturalar (tutar içerir → yalnız ADMIN; yollar CRM_AGENT_PATHS'te de yok).
@@ -90,6 +98,7 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: "sidebarAnalysis",
     items: [
       { href: "/crm/analytics", icon: ChartNoAxesColumnIncreasing, translationKey: "crmAnalytics" },
+      { href: "/growth/analytics", icon: ChartPie, translationKey: "growthAnalytics" },
       { href: "/crm/rules", icon: Workflow, translationKey: "crmRules" },
     ],
   },

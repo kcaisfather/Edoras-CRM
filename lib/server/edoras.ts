@@ -8,7 +8,7 @@ import type { InstitutionAdmin, InstitutionProgram, InstitutionUsage } from "@/l
 import type { Compensator } from "./compensation";
 
 /**
- * Edoras canlı veritabanına (edoras-admin + mobil) dokunan TEK dosya. Şema gerçeği edoras-admin'dedir
+ * Edoras canlı veritabanına (edoras-admin + mobil) dokunan iki dosyadan biri (diğeri: edoras-usage.ts, salt okunur kullanım sinyalleri). Şema gerçeği edoras-admin'dedir
  * (Desktop/YKS → docs/memory/YKS/data-model.md); buradaki kolon adları oradan. Edoras şemasında hiçbir
  * değişiklik yapılmaz — yalnız okuma ve demo kurum açma (edoras-admin'in scripts/seed-demo-presentation.mjs
  * ile aynı sıra: kurum → aktif yıl/dönem → auth kullanıcısı → profil → kurum üyeliği).

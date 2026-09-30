@@ -17,7 +17,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
-- Edoras'a dokunan kodun tamamı `lib/server/edoras.ts` içinde.
+- Edoras'a dokunan kodun tamamı `lib/server/edoras.ts` (kurumlar, demo açma) ve `lib/server/edoras-usage.ts` (salt okunur kullanım sinyalleri) içinde.
 - `crm_institutions.institution_id` Edoras kurumunun id'sidir (iki veritabanı arasında FK yok). Kurum adı kayıt
   anında saklanır. Edoras'ta silinen bir kurum CRM'den düşmez, "Edoras'ta yok" olarak görünür; lisans ve
   ödemeleri korunur.
@@ -105,7 +105,7 @@ Ortam değişkeni ya da migration eksikse panel açılır ama uçlar `CONFIG_MIS
 Tarayıcı (React Query) ──► /api/* (Next route handler)
                               │ requireStaff(): CRM oturumu + crm_staff kaydı
                               ├──► CRM projesi (service_role): crm_* tabloları, RPC'ler
-                              └──► Edoras (service_role, lib/server/edoras.ts): kurumlar, demo açma
+                              └──► Edoras (service_role, lib/server/edoras*.ts): kurumlar, demo açma, kullanım (salt okunur)
 ```
 
 - `proxy.ts` oturum çerezini tazeler, oturumsuz isteği `/login`'e yollar. Müşteriye açık anket yolları (`/s/*`,
@@ -198,6 +198,38 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
   `GET /api/sales/invoices/providers|options`. İşlem kaydı: `INVOICE_CREATED / _ISSUED / _FAILED / _RETRIED`, `BILLING_UPDATED`
   (tutar, yöntem, durum, satış referansı; e-posta, adres, TC/VKN, unvan yazılmaz).
 
+### Müşteri analizleri (Edoras kullanım sinyalleri)
+
+DeepSport'taki "Müşteriler" ve "Müşteri Analizleri" kurum düzeyinde taşındı. **Migration yok** — kalıcı yeni durum tutulmaz;
+her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. Edoras okuması `lib/server/edoras-usage.ts`'te
+(`edoras.ts` ile Edoras'a dokunan iki dosyadan biri).
+
+- **Kullanım = etkinlik.** Edoras'ta "son giriş" alanı yok; kurumun etkinliği: `attendance_sessions.date` (yoklama, en iyi günlük
+  sinyal), `lesson_topic_logs.date` (konu işleme), `assignments.created_at` (ödev), `exams.created_at` (deneme),
+  `announcements.created_at` (duyuru), `sms_logs.created_at` (yalnız elle; `send_type = 'auto'` hariç). **Kullanılmayanlar:**
+  `exam_results.created_at` (yeniden puanlamada değişir), `student_assignments` (öğrenci teslimi; `institution_id` yok),
+  `user_notifications.read_at` (2026-09-10 öncesi güvenilmez), `user_devices.last_seen_at` (yalnız push izinli cihaz),
+  `auth.users.last_sign_in_at` (yalnız açık girişte değişir). Tarihler Europe/Istanbul gününe çevrilir.
+- **Tanımlar** (`lib/domain/growth/usage.ts`): Kullanıyor = son 14 günde etkinlik; hazır süzgeçler 14+ / 30+ gün etkinlik yok;
+  "Hiç aktive olmamış" = hiç etkinlik yok + kurum 30 günden eski (DeepSport dummy hesap temizliğinin karşılığı, **silme eylemi yok**);
+  "Öğrenci eklememiş" (`students` sayısı 0) ve "Öğretmeni yok"; "90+ gün girmeyen ödeyenler" = lisansı süren ama 90+ gündür etkinliği
+  olmayan (tutar gösterilmez). Sayı penceresi 7 / 30 / 90 gün (sunucu ≤ 180 gün ile sınırlar).
+- **Sorgu maliyeti:** kurum başına ≈ 18 istek (`head:true` sayımlar ve `limit ≤ 1000` seçimler; tam tablo taraması yok); toplam
+  eşzamanlı istek 10 ile sınırlı (`lib/utils/limiter.ts`); sonuç kurum + pencere anahtarıyla **5 dakika bellekte** tutulur, eşzamanlı
+  istekler tek çalışmada birleşir. Okunamayan kaynak (izin / zaman aşımı) `unavailable` olarak işaretlenir, sayfayı düşürmez.
+  Haftalık büyüme tablosu ağırdır (kaynak başına ≤ 2 sayfa); yalnız bölüm açılınca çekilir.
+- **Uçlar** (hepsi `requireStaff`): `GET /api/growth/customers?window=` (kurum + lisans + kullanım; lisans bedeli ve ödemeler yalnız
+  ADMIN'e, CRM_AGENT için sunucuda boşaltılır — yalnız "bedelsiz mi" bilgisi kalır), `GET /api/growth/weekly?weeks=`,
+  `GET /api/growth/institutions/{id}/usage`.
+- **Ekranlar:** `/growth/customers` (Müşteri Takibi: Hepsi, Kullanıyor, Kullanmıyor, Süresi Dolacaklar, Sadık, hazır süzgeçler,
+  segmentler; Kampanya) — CRM_AGENT'a açık; `/growth/analytics` (Müşteri Analizleri: kartlar, Kullanım, Gelir sızıntısı,
+  Retention & Churn, Birim ekonomisi) — yalnız ADMIN yolu. Kurum ayrıntısında "Kullanım" kartı.
+- **Yenileme / retention** ücretli `crm_licenses` satırlarından KESİN hesaplanır (DeepSport'ta ödeme + ürün süresinden tahmindi):
+  her ücretli lisans bir paket; bitişten sonra 30 gün içinde yeni lisans başlarsa yenilendi, yoksa churn. Kohort ilk lisans ayına göredir.
+- **DeepSport'tan bırakılanlar:** Genişleme (kontenjan / koltuk kavramı Edoras'ta yok), "Açık şikâyet" ön ayarı (CRM notu kurum düzeyinde
+  değil), giriş logu / "Hiç giriş yapmamış" (yerine etkinlik), kanal sekmeleri (tek ürün), AWS maliyeti / kur / CAC-ROAS (veri yok),
+  kampanyada e-posta kanalı (onay / çıkış kaydı yok; WhatsApp bağlantıları ve CSV var), `/analytics` telemetri (Edoras'ta telemetri yok).
+
 ## Klasörler
 
 | Yol | İçerik |
@@ -206,7 +238,7 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | `features/<ad>/` | Ekran bileşenleri, sorgular (`queries.ts`), yazımlar (`mutations.ts`); dışarıya `index.ts` |
 | `lib/domain/` | Saf iş kuralları (framework'süz, testli) |
 | `lib/import/` | İçe aktarma: dosya okuma, sütun eşleme, normalleştirme, mükerrer önizlemesi ve sunucu ayıklaması (saf, testli) |
-| `lib/server/` | Sunucu veri erişimi (`server-only`); Edoras erişimi yalnız `edoras.ts` |
+| `lib/server/` | Sunucu veri erişimi (`server-only`); Edoras erişimi yalnız `edoras.ts` ve `edoras-usage.ts` |
 | `lib/api/` | İstemci ve sunucu API yardımcıları, hata kodları |
 | `components/` | Kabuk (menü, üst bar, komut paleti) ve UI kiti |
 | `messages/tr.json` | Tüm metinler |
@@ -226,13 +258,13 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 | Soğuk listeler + Excel/CSV içe aktarma (`/crm/cold-lists`, Adaylar → "İçe aktar"): liste seçici, sonuç süzgeci ve toplu sonuç kaydı, "Sıcağa taşı" (aday + not tek transaction), CSV, şablon; içe aktarma (sütun eşleme, önizleme, mükerrer çözümü, sunucu doğrulaması ve atlanan satırların nedenleri); Görevlerim'de "Soğuk liste araması" (kaynak süzgeci, sonuç gir); KVKK envanteri; `crm_prospect_lists`, `crm_prospects` | ✔ (Arama Kuyruğu / Süresi Dolacaklar / müşteri sekmelerindeki içe aktarma yok — ekranlar yok) |
 | Satış ve faturalar (`/payment-history`, `/sales/invoices`, yalnız ADMIN): Ödeme Geçmişi (tüm kurumların ödemeleri, süzgeç, sayfalama, toplam, fatura rozeti), Faturalar (durum sekmeleri, tarih, sayfalama, CSV, yeniden dene), "Fatura kes" (kurum ödeme satırı, aday satırı / detayı; e-posta talebi Resend + `ACCOUNTANT_EMAIL`, elle kayıt, Paraşüt arayüzü hazır — istemci yok), genişletilmiş fatura profili (`crm_institutions` sütunları, "Fatura bilgileri" formu), KVKK envanteri; `crm_invoices` | ✔ (Paraşüt entegrasyonu yok; e-Fatura mükellef sorgusu yok; iptal ucu DeepSport'ta da yok) |
 | Anketler (`/crm/surveys`, herkese açık `/s/[token]`): özet (NPS, dağılım, yanıt oranı, memnuniyet ort.), gönderimler (süzgeç, CSV, kopyala / WhatsApp hatırlatması / "Gönderdim" / e-postayı yeniden gönder), yanıtlar (süzgeç, CSV), anket tanımı ve önizleme; "Anket gönder" (Adaylar satırı, mobil kart, aday detayı; sayfadan toplu: adaylar + adayı olmayan kurumlar); memnuniyet rozeti (tablo, mobil kart, detay) ve kurum ayrıntısında memnuniyet kartı; Görevlerim'de "Anket araması" (`surveyNoResponse`) + WhatsApp hatırlatması; e-posta Resend ile (isteğe bağlı); KVKK envanteri; `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses` | ✔ (eleştirmen ticket'ı yok — DeepSport'ta da yok) |
+| Müşteri analizleri (`/growth/customers`, `/growth/analytics`): Müşteri Takibi (Hepsi / Kullanıyor / Kullanmıyor, Süresi Dolacaklar kovaları, Sadık top 50 + Kampanya (WhatsApp bağlantıları, CSV), hazır süzgeçler, segmentler; kurum türü süzgeci, arama, sıralama, CSV), Müşteri Analizleri (kartlar, kullanım dağılımı ve kaynak bazında etkinlik, haftalık büyüme, gelir sızıntısı, retention & churn + kohort, birim ekonomisi — ADMIN); kurum ayrıntısında "Kullanım" kartı; Edoras'tan salt okunur etkinlik sinyalleri, migration yok | ✔ (Genişleme, kanal, AWS maliyeti / CAC, e-posta kampanyası, telemetri yok — nedenleri yukarıda) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Müşteri analizleri (yenileme, kullanım, segmentler; içe aktarma düğmesi `ImportButton` ile eklenebilir)
-2. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-3. Raporlar (Resend — `lib/server/mail.ts` hazır)
-4. Aktivite geçmişi (`audit_logs`)
-5. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)
+1. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
+2. Raporlar (Resend — `lib/server/mail.ts` hazır)
+3. Aktivite geçmişi (`audit_logs`)
+4. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)

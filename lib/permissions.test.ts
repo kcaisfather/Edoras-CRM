@@ -34,6 +34,15 @@ describe("permissions", () => {
     expect(canAccessPathFor("ADMIN", "/crm/rules")).toBe(true);
   });
 
+  it("Müşteri Takibi CRM_AGENT'a açık, Müşteri Analizleri yalnız ADMIN'e", () => {
+    expect(canAccessPathFor("CRM_AGENT", "/growth/customers")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/growth/customers?tab=renewals&bucket=le60")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/growth/analytics")).toBe(false);
+    expect(canAccessPathFor("CRM_AGENT", "/growth")).toBe(false);
+    expect(canAccessPathFor("CRM_AGENT", "/growth/customersx")).toBe(false);
+    expect(canAccessPathFor("ADMIN", "/growth/analytics")).toBe(true);
+  });
+
   it("benzer önekleri eşlemez", () => {
     expect(canAccessPathFor("CRM_AGENT", "/institutionsx")).toBe(false);
   });

@@ -41,16 +41,8 @@ export function useStatusLabel() {
   };
 }
 
-export function InstitutionStatusBadge({
-  item,
-  today,
-  className,
-}: {
-  item: Pick<InstitutionListItem, "isActive" | "crm" | "licenseEndsOn" | "missingInEdoras">;
-  today?: string;
-  className?: string;
-}) {
-  const info = institutionStatus(item, today ?? todayIso());
+/** Hazır durum bilgisinden rozet (kurum satırı olmayan ekranlar için — ör. müşteri analizleri). */
+export function InstitutionInfoBadge({ info, className }: { info: InstitutionStatusInfo; className?: string }) {
   const label = useStatusLabel()(info);
   const tone = info.state === "UCRETLI" && info.licenseSoon ? TONE.UCRETLI_SOON : TONE[info.state];
   return (
@@ -64,4 +56,16 @@ export function InstitutionStatusBadge({
       {label}
     </span>
   );
+}
+
+export function InstitutionStatusBadge({
+  item,
+  today,
+  className,
+}: {
+  item: Pick<InstitutionListItem, "isActive" | "crm" | "licenseEndsOn" | "missingInEdoras">;
+  today?: string;
+  className?: string;
+}) {
+  return <InstitutionInfoBadge info={institutionStatus(item, today ?? todayIso())} className={className} />;
 }

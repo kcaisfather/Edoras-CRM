@@ -1,12 +1,13 @@
 import type { CurrentUser, PanelRole } from "@/lib/domain/auth/types";
 
 /**
- * CRM_AGENT'ın erişebildiği route önekleri. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar, Görevlerim, Soğuk
+ * CRM_AGENT'ın erişebildiği route önekleri. `/growth/customers` (Müşteri Takibi) açık — DeepSport'ta da CRM_AGENT yalnız bu
+ * sayfayı görüyordu; lisans bedeli ve ödeme sunucuda boşaltılır. `/growth/analytics` (sızıntı, retention, birim ekonomisi) kapalı. Yeni modül taşındıkça buraya eklenir. `/crm` (Adaylar, Görevlerim, Soğuk
  * listeler, Anketler ve Satış Analizleri) açık — DeepSport'ta da CRM_AGENT soğuk listelere ve anketlere giriyordu; liste
  * silme yalnız ADMIN (DELETE /api/crm/prospect-lists/{id} 403). Tutarlar sunucuda boşaltılır, arayüzde FinancialOnly
  * gizler. Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
  */
-export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/settings"] as const;
+export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/growth/customers", "/settings"] as const;
 
 /**
  * CRM_AGENT_PATHS altında olsa da CRM_AGENT'a kapalı yollar (DeepSport CRM_AGENT_DENIED_PATHS): kural motoru

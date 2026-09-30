@@ -7,7 +7,18 @@ import { createLimiter } from "@/lib/utils/limiter";
 import { ACTIVITY_SOURCES, type ActivitySource, type SourceCounts, type SourceDates, type UsageSignals } from "@/lib/domain/growth/types";
 import { emptyCounts, emptyDates, latestDate, MAX_WINDOW_DAYS, toDay, windowStart } from "@/lib/domain/growth/usage";
 import { bucketByWeek, weekStarts } from "@/lib/domain/growth/weekly";
-import { fetchAll } from "./edoras";
+import {
+  MAX_EVENT_ROWS,
+  istanbulRange,
+  mergeEventPage,
+  resolveEventWindow,
+  type EventActorRole,
+  type InstitutionEvent,
+  type InstitutionEventType,
+  type InstitutionEventsQuery,
+  type InstitutionEventsResponse,
+} from "@/lib/domain/activity/events";
+import { fetchAll, listEdorasInstitutions } from "./edoras";
 
 /**
  * Edoras KULLANIM sinyalleri (Müşteri analizleri). `edoras.ts` ile birlikte Edoras'a dokunan iki dosyadan biri; YALNIZ
@@ -332,4 +343,257 @@ export async function getWeeklyActivity(
   })().finally(() => weeklyInflight.delete(key));
   weeklyInflight.set(key, job);
   return { weeks: starts, ...(await job) };
+}
+
+// --- Kurum etkinliği zaman çizelgesi (Aktivite geçmişi) ---------------------------------------------
+
+/**
+ * Aktivite geçmişi → "Kurum etkinliği": yukarıdaki kaynakların (+ deneme sonucu yayını) TEK TEK OLAYLARI, birleşik ve sayfalı.
+ * YALNIZ OKUMA (select + head sayım). Öğrenci adı / kişisel veri okunmaz: satır başına zaman, kurum, tür, (yoklama / SMS için)
+ * sayı ve kişinin ROLÜ (institution_users.role — yalnız sayfadaki kişiler için tek `in` sorgusu; ad okunmaz).
+ * Sınırlar: pencere ≤ 90 gün; süzgeçler indeksli sütunlarda (institution_id + date / created_at); her kaynaktan en çok
+ * (sayfa + 1) × boyut ≤ 1000 satır (PostgREST sınırı → yalnız en yeni 1000 olay gezilebilir, toplam sayı tam gelir).
+ * Okunamayan kaynak (izin / zaman aşımı) `unavailable`'a düşer, diğerleri gösterilir.
+ * Yoklama ve konu işleme `date` (indeksli) sütunuyla süzülür, satır zamanı taken_at / created_at'tir; geç girilen kayıtta
+ * sıra günle sınırlıdır.
+ */
+interface EventSpec {
+  type: InstitutionEventType;
+  table: string;
+  /** Aralık süzgeci ve birincil sıra (indeksli). */
+  rangeColumn: string;
+  kind: "date" | "timestamp";
+  /** Satırın zaman damgası. */
+  timeColumn: string;
+  actorColumn: string;
+  countColumn?: string;
+  /** Yalnız bu sütunu dolu olanlar (deneme sonucu yayını). */
+  notNullColumn?: string;
+  /** Elle gönderim süzgeci (yalnız sms). */
+  manualOnly?: boolean;
+}
+
+const EVENT_SPECS: EventSpec[] = [
+  { type: "ATTENDANCE_TAKEN", table: "attendance_sessions", rangeColumn: "date", kind: "date", timeColumn: "taken_at", actorColumn: "teacher_id", countColumn: "student_count" },
+  { type: "LESSON_TOPIC_LOGGED", table: "lesson_topic_logs", rangeColumn: "date", kind: "date", timeColumn: "created_at", actorColumn: "recorded_by" },
+  { type: "ASSIGNMENT_CREATED", table: "assignments", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "teacher_id" },
+  { type: "EXAM_CREATED", table: "exams", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "creator_id" },
+  {
+    type: "EXAM_RESULTS_PUBLISHED",
+    table: "exams",
+    rangeColumn: "results_published_at",
+    kind: "timestamp",
+    timeColumn: "results_published_at",
+    actorColumn: "creator_id",
+    notNullColumn: "results_published_at",
+  },
+  { type: "ANNOUNCEMENT_CREATED", table: "announcements", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "created_by" },
+  { type: "SMS_SENT", table: "sms_logs", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "sent_by", countColumn: "recipient_count", manualOnly: true },
+];
+
+/** supabase-js'in genel tipleri koşullu süzgeçli zincirlerde çok derinleşir; yalnız kullanılan yöntemler. */
+interface EventChain extends PromiseLike<{ data: unknown[] | null; error: { code?: string; message?: string } | null; count: number | null }> {
+  eq(column: string, value: string): EventChain;
+  gte(column: string, value: string): EventChain;
+  lte(column: string, value: string): EventChain;
+  lt(column: string, value: string): EventChain;
+  not(column: string, operator: string, value: string | null): EventChain;
+  or(filter: string): EventChain;
+  order(column: string, options?: { ascending?: boolean; nullsFirst?: boolean }): EventChain;
+  limit(count: number): EventChain;
+}
+
+interface EventFilters {
+  institutionId?: string;
+  excludedInstitutionIds: readonly string[];
+  window: { from: string; to: string };
+}
+
+function eventQuery(db: SupabaseClient, spec: EventSpec, columns: string, head: boolean, f: EventFilters): EventChain {
+  const base = db.from(spec.table).select(columns, head ? { count: "exact", head: true } : undefined);
+  let q = base as unknown as EventChain;
+  if (f.institutionId) q = q.eq("institution_id", f.institutionId);
+  else if (f.excludedInstitutionIds.length > 0) q = q.not("institution_id", "in", `(${f.excludedInstitutionIds.join(",")})`);
+  if (spec.kind === "date") {
+    q = q.gte(spec.rangeColumn, f.window.from).lte(spec.rangeColumn, f.window.to);
+  } else {
+    const range = istanbulRange(f.window.from, f.window.to);
+    q = q.gte(spec.rangeColumn, range.start).lt(spec.rangeColumn, range.end);
+  }
+  if (spec.notNullColumn) q = q.not(spec.notNullColumn, "is", null);
+  if (spec.manualOnly) q = q.or("send_type.is.null,send_type.neq.auto");
+  return q;
+}
+
+interface RawEvent {
+  id: string;
+  at: string;
+  institutionId: string;
+  type: InstitutionEventType;
+  actorId: string | null;
+  count: number | null;
+}
+
+async function sourceEvents(db: SupabaseClient, spec: EventSpec, f: EventFilters, rows: number): Promise<RawEvent[]> {
+  const columns = ["id", "institution_id", spec.rangeColumn, spec.timeColumn, spec.actorColumn, spec.countColumn].filter((c, i, a): c is string => !!c && a.indexOf(c) === i).join(", ");
+  let q = eventQuery(db, spec, columns, false, f).order(spec.rangeColumn, { ascending: false });
+  if (spec.timeColumn !== spec.rangeColumn) q = q.order(spec.timeColumn, { ascending: false, nullsFirst: false });
+  const { data, error } = await limit(async () => q.limit(rows));
+  if (error) throw dbError(error);
+  const out: RawEvent[] = [];
+  for (const row of (data ?? []) as Record<string, unknown>[]) {
+    const time = row[spec.timeColumn] ?? row[spec.rangeColumn];
+    const institutionId = row.institution_id;
+    if (typeof time !== "string" || typeof institutionId !== "string") continue;
+    // `date` sütunu (YYYY-MM-DD) zaman damgası yoksa günün başlangıcına (Türkiye) oturtulur.
+    const at = /^\d{4}-\d{2}-\d{2}$/.test(time) ? `${time}T00:00:00+03:00` : time;
+    const actor = row[spec.actorColumn];
+    const count = spec.countColumn ? row[spec.countColumn] : null;
+    out.push({
+      id: `${spec.type}:${String(row.id)}`,
+      at: new Date(at).toISOString(),
+      institutionId,
+      type: spec.type,
+      actorId: typeof actor === "string" ? actor : null,
+      count: typeof count === "number" ? count : null,
+    });
+  }
+  return out;
+}
+
+/** Sayfadaki kişilerin kurumdaki rolü (ad okunmaz). Okunamazsa boş harita → rol "bilinmiyor". */
+async function actorRoles(db: SupabaseClient, events: readonly RawEvent[]): Promise<Map<string, EventActorRole>> {
+  const ids = [...new Set(events.map((e) => e.actorId).filter((v): v is string => !!v))];
+  const out = new Map<string, EventActorRole>();
+  if (ids.length === 0) return out;
+  try {
+    const { data, error } = await limit(async () => db.from("institution_users").select("user_id, institution_id, role").in("user_id", ids).limit(PAGE));
+    if (error) throw dbError(error);
+    for (const r of (data ?? []) as { user_id: string; institution_id: string; role: string | null }[]) {
+      if (r.role === "admin" || r.role === "teacher" || r.role === "student" || r.role === "parent") {
+        out.set(`${r.user_id}:${r.institution_id}`, r.role === "admin" ? "admin" : r.role === "teacher" ? "teacher" : "other");
+      }
+    }
+  } catch {
+    // rol bilinmiyor
+  }
+  return out;
+}
+
+export async function listInstitutionEvents(
+  query: InstitutionEventsQuery,
+  excludedInstitutionIds: readonly string[]
+): Promise<InstitutionEventsResponse> {
+  const db = getEdorasAdminClient();
+  const window = resolveEventWindow(query.from, query.to);
+  const filters: EventFilters = { institutionId: query.institutionId, excludedInstitutionIds, window };
+  const specs = query.types.length > 0 ? EVENT_SPECS.filter((s) => query.types.includes(s.type)) : EVENT_SPECS;
+  const rowsNeeded = Math.min(MAX_EVENT_ROWS, (query.page + 1) * query.size);
+
+  const results = await Promise.all(
+    specs.map(async (spec) => {
+      try {
+        const [count, rows] = await Promise.all([
+          limit(async () => eventQuery(db, spec, "id", true, filters)).then(({ count: c, error }) => {
+            if (error) throw dbError(error);
+            return c ?? 0;
+          }),
+          sourceEvents(db, spec, filters, rowsNeeded),
+        ]);
+        return { spec, count, rows, ok: true as const };
+      } catch {
+        return { spec, count: 0, rows: [] as RawEvent[], ok: false as const };
+      }
+    })
+  );
+
+  const countsByType: Partial<Record<InstitutionEventType, number>> = {};
+  const unavailable: InstitutionEventType[] = [];
+  let total = 0;
+  for (const r of results) {
+    if (!r.ok) unavailable.push(r.spec.type);
+    else {
+      countsByType[r.spec.type] = r.count;
+      total += r.count;
+    }
+  }
+
+  const pageRows = mergeEventPage(
+    results.map((r) => r.rows.map((e) => ({ ...e }))),
+    query.page * query.size,
+    query.size
+  );
+  const [institutions, roles] = await Promise.all([listEdorasInstitutions(), actorRoles(db, pageRows)]);
+  const names = new Map(institutions.map((i) => [i.id, i.name]));
+
+  const items: InstitutionEvent[] = pageRows.map((e) => ({
+    id: e.id,
+    at: e.at,
+    institutionId: e.institutionId,
+    institutionName: names.get(e.institutionId) ?? "—",
+    type: e.type,
+    actorRole: e.actorId ? (roles.get(`${e.actorId}:${e.institutionId}`) ?? null) : null,
+    count: e.count,
+  }));
+
+  return {
+    items,
+    total,
+    countsByType,
+    page: query.page,
+    size: query.size,
+    lastPage: Math.max(0, Math.min(query.lastPage, Math.ceil(total / query.size) - 1)),
+    window,
+    unavailable,
+    truncated: total > MAX_EVENT_ROWS,
+  };
+}
+
+// --- Tahmini SMS maliyeti girdisi (Maliyetler) ------------------------------------------------------
+
+const SMS_MAX_PAGES = 30;
+const smsCache = new Map<string, Cached<{ byInstitution: Map<string, number>; truncated: boolean }>>();
+
+/**
+ * Bir ayın SMS alıcı sayısı (kurum → sms_logs.recipient_count toplamı; otomatik + elle, çünkü ikisi de para tutar). YALNIZ OKUMA:
+ * `institution_id, recipient_count` sütunları, ayın created_at aralığı, 1000'erli sayfalarla en çok 30 sayfa (30.000 kayıt);
+ * aşarsa `truncated`. Okunamazsa null ("bilinmiyor" — tahmin gösterilmez). 5 dakika önbellekli.
+ */
+export async function getSmsRecipientsByInstitution(month: string): Promise<{ byInstitution: Map<string, number>; truncated: boolean } | null> {
+  const hit = smsCache.get(month);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
+  const db = getEdorasAdminClient();
+  const [year, mon] = month.split("-").map(Number);
+  const start = `${month}-01T00:00:00+03:00`;
+  const end = `${mon === 12 ? year + 1 : year}-${String(mon === 12 ? 1 : mon + 1).padStart(2, "0")}-01T00:00:00+03:00`;
+  const byInstitution = new Map<string, number>();
+  let truncated = false;
+  try {
+    for (let page = 0; ; page++) {
+      if (page >= SMS_MAX_PAGES) {
+        truncated = true;
+        break;
+      }
+      const { data, error } = await limit(async () =>
+        db
+          .from("sms_logs")
+          .select("institution_id, recipient_count")
+          .gte("created_at", start)
+          .lt("created_at", end)
+          .order("id")
+          .range(page * PAGE, page * PAGE + PAGE - 1)
+      );
+      if (error) throw dbError(error);
+      const rows = (data ?? []) as { institution_id: string | null; recipient_count: number | null }[];
+      for (const r of rows) {
+        if (r.institution_id) byInstitution.set(r.institution_id, (byInstitution.get(r.institution_id) ?? 0) + (r.recipient_count ?? 0));
+      }
+      if (rows.length < PAGE) break;
+    }
+  } catch {
+    return null;
+  }
+  const value = { byInstitution, truncated };
+  smsCache.set(month, { at: Date.now(), value });
+  return value;
 }

@@ -163,6 +163,22 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_invoices_state_check: [400, "VALIDATION"],
   crm_invoices_attempts_check: [400, "VALIDATION"],
   crm_invoices_text_check: [400, "VALIDATION"],
+  // 20260929220000_crm_costs
+  crm_cost_entries_service_check: [400, "VALIDATION"],
+  crm_cost_entries_period_check: [400, "VALIDATION"],
+  crm_cost_entries_amount_check: [400, "VALIDATION"],
+  crm_cost_entries_currency_check: [400, "VALIDATION"],
+  crm_cost_entries_fx_check: [400, "VALIDATION"],
+  crm_cost_entries_note_check: [400, "VALIDATION"],
+  crm_cost_entries_source_check: [400, "VALIDATION"],
+  crm_cost_budgets_scope_check: [400, "VALIDATION"],
+  crm_cost_budgets_service_check: [400, "VALIDATION"],
+  crm_cost_budgets_limit_check: [400, "VALIDATION"],
+  crm_cost_budgets_soft_check: [400, "VALIDATION"],
+  crm_cost_budgets_hard_check: [400, "VALIDATION"],
+  crm_cost_budgets_note_check: [400, "VALIDATION"],
+  crm_cost_budgets_active_scope_key: [409, "COST_BUDGET_EXISTS"],
+  crm_cost_settings_sms_price_check: [400, "VALIDATION"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

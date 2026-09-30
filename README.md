@@ -13,7 +13,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | | CRM projesi (`orishbqniebbgdanazrp`) | Edoras (`bmjkpxbrmwxuildwakly`) |
 | --- | --- | --- |
 | Ne | EdorasCRM'in kendi projesi | edoras-admin ve mobilin canlı veritabanı |
-| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses`, `crm_invoices`, `crm_audit_logs` | Kurumlar, kullanıcılar, öğrenciler… |
+| İçinde | CRM personel girişi (Auth), `crm_staff`, `crm_institutions`, `crm_licenses`, `crm_payments`, `crm_leads`, `crm_notes`, `crm_tasks`, `crm_rules`, `crm_prospect_lists`, `crm_prospects`, `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses`, `crm_invoices`, `crm_audit_logs`, `crm_cost_entries`, `crm_cost_budgets`, `crm_cost_settings` | Kurumlar, kullanıcılar, öğrenciler… |
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
@@ -80,7 +80,7 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
    `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
    `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri, `20260929190000_crm_surveys.sql` anketler, davetler
-   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar).
+   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -251,7 +251,7 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 | --- | --- |
 | Kurumlar, demo, lisans, ödeme | ✔ |
 | Ayarlar: Genel, Ekip (hesap aç, rol, erişim, şifre sıfırla), Veri kalitesi (iç kurumlar), Hata kaydı, KVKK | ✔ |
-| İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı Aktivite geçmişi ile gelecek) |
+| İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı: Aktivite geçmişi) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
 | Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati yok) |
@@ -259,12 +259,12 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 | Satış ve faturalar (`/payment-history`, `/sales/invoices`, yalnız ADMIN): Ödeme Geçmişi (tüm kurumların ödemeleri, süzgeç, sayfalama, toplam, fatura rozeti), Faturalar (durum sekmeleri, tarih, sayfalama, CSV, yeniden dene), "Fatura kes" (kurum ödeme satırı, aday satırı / detayı; e-posta talebi Resend + `ACCOUNTANT_EMAIL`, elle kayıt, Paraşüt arayüzü hazır — istemci yok), genişletilmiş fatura profili (`crm_institutions` sütunları, "Fatura bilgileri" formu), KVKK envanteri; `crm_invoices` | ✔ (Paraşüt entegrasyonu yok; e-Fatura mükellef sorgusu yok; iptal ucu DeepSport'ta da yok) |
 | Anketler (`/crm/surveys`, herkese açık `/s/[token]`): özet (NPS, dağılım, yanıt oranı, memnuniyet ort.), gönderimler (süzgeç, CSV, kopyala / WhatsApp hatırlatması / "Gönderdim" / e-postayı yeniden gönder), yanıtlar (süzgeç, CSV), anket tanımı ve önizleme; "Anket gönder" (Adaylar satırı, mobil kart, aday detayı; sayfadan toplu: adaylar + adayı olmayan kurumlar); memnuniyet rozeti (tablo, mobil kart, detay) ve kurum ayrıntısında memnuniyet kartı; Görevlerim'de "Anket araması" (`surveyNoResponse`) + WhatsApp hatırlatması; e-posta Resend ile (isteğe bağlı); KVKK envanteri; `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses` | ✔ (eleştirmen ticket'ı yok — DeepSport'ta da yok) |
 | Müşteri analizleri (`/growth/customers`, `/growth/analytics`): Müşteri Takibi (Hepsi / Kullanıyor / Kullanmıyor, Süresi Dolacaklar kovaları, Sadık top 50 + Kampanya (WhatsApp bağlantıları, CSV), hazır süzgeçler, segmentler; kurum türü süzgeci, arama, sıralama, CSV), Müşteri Analizleri (kartlar, kullanım dağılımı ve kaynak bazında etkinlik, haftalık büyüme, gelir sızıntısı, retention & churn + kohort, birim ekonomisi — ADMIN); kurum ayrıntısında "Kullanım" kartı; Edoras'tan salt okunur etkinlik sinyalleri, migration yok | ✔ (Genişleme, kanal, AWS maliyeti / CAC, e-posta kampanyası, telemetri yok — nedenleri yukarıda) |
+| Aktivite geçmişi (`/activity-history`, yalnız ADMIN, menü "Aktivite"): iki kapsam. **Kurum etkinliği**: Edoras'tan salt okunur, birleşik ve sayfalı zaman çizelgesi (yoklama, ödev, deneme oluşturma / sonuç yayını, konu işleme, duyuru, elle SMS); kurum + olay türü + tarih süzgeci, en çok 90 gün (varsayılan 7), en yeni 1000 olay gezilebilir; satırda yalnız zaman, kurum, tür, sayı ve kişinin rolü (ad / öğrenci verisi yok); iç kurumlar kurum seçilmeden listelenmez. **CRM işlem kaydı**: `crm_audit_logs` (kişi, eylem, kayıt türü, tarih süzgeci; `details` düz metin çipleri). Uçlar `/api/activity/*`, migration yok | ✔ |
+| Maliyetler (`/costs`, yalnız ADMIN, menü "Operasyon"): Genel bakış (bu ay, ay sonu tahmini, geçen ay, hizmet payı halkası, 12 aylık eğilim, uyarılar, Edoras'a göre tahmini SMS), Hizmetler (hizmet × 12 ay, ayrıntı, SMS birim fiyatı), Kayıtlar (elle ekle / düzenle / sil, CSV-Excel içe aktarma), Kurumlar (ortak maliyet aktif öğrenciyle + kurumun SMS'i, lisans gelirine göre marj), Bütçeler (CRUD), Uyarılar (okuma anında hesaplanır: yumuşak / sert eşik, aşım tahmini, aylık sıçrama), Dışa aktar (CSV). Uçlar `/api/costs/*`; `crm_cost_entries`, `crm_cost_budgets`, `crm_cost_settings` (migration `20260929220000_crm_costs.sql` — **CRM projesine uygulanmalı**) | ✔ (Microservices, Query, Reconcile, AWS CE/CUR yok — nedenleri raporda) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Maliyetler (Supabase, Vercel, SMS, OpenAI, Resend)
-2. Raporlar (Resend — `lib/server/mail.ts` hazır)
-3. Aktivite geçmişi (`audit_logs`)
-4. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)
+1. Raporlar (Resend — `lib/server/mail.ts` hazır)
+2. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)

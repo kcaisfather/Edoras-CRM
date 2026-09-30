@@ -8,8 +8,10 @@ import {
   ChartPie,
   ClipboardList,
   CreditCard,
+  DollarSign,
   FileText,
   HeartHandshake,
+  History,
   LayoutDashboard,
   ListTodo,
   MessageSquareHeart,
@@ -33,7 +35,9 @@ export type NavTranslationKey =
   | "growthCustomers"
   | "growthAnalytics"
   | "paymentHistory"
-  | "salesInvoices";
+  | "salesInvoices"
+  | "activityHistory"
+  | "costs";
 
 export interface NavItem {
   /** Sorgu dizesi içerebilir; aktiflik yalnız yol kısmına bakar. */
@@ -44,12 +48,12 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-export type NavGroupKey = "main" | "crm" | "customers" | "sales" | "analysis";
+export type NavGroupKey = "main" | "crm" | "customers" | "sales" | "analysis" | "activity" | "operations";
 
 export interface NavGroup {
   key: NavGroupKey;
   /** Bölüm başlığı; ana grupta başlık yok. */
-  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarSales" | "sidebarAnalysis";
+  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarSales" | "sidebarAnalysis" | "sidebarActivity" | "sidebarOperations";
   items: NavItem[];
 }
 
@@ -101,6 +105,18 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/growth/analytics", icon: ChartPie, translationKey: "growthAnalytics" },
       { href: "/crm/rules", icon: Workflow, translationKey: "crmRules" },
     ],
+  },
+  {
+    // Aktivite (DeepSport ile aynı grup): Kurum etkinliği + CRM işlem kaydı. Yalnız ADMIN (yol CRM_AGENT_PATHS'te yok).
+    key: "activity",
+    labelKey: "sidebarActivity",
+    items: [{ href: "/activity-history", icon: History, translationKey: "activityHistory", adminOnly: true }],
+  },
+  {
+    // Operasyon (DeepSport ile aynı grup): Maliyetler — finansal veri, yalnız ADMIN.
+    key: "operations",
+    labelKey: "sidebarOperations",
+    items: [{ href: "/costs", icon: DollarSign, translationKey: "costs", adminOnly: true }],
   },
 ];
 

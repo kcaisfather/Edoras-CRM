@@ -41,6 +41,9 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
     // Satış ve faturalar DeepSport'taki ad alanlarında: paymentHistory.* (Ödeme Geçmişi), sales.* (faturalar, fatura profili).
     paymentHistory: (await import("@/messages/features/paymentsx.tr.json")).default,
     sales: (await import("@/messages/features/sales.tr.json")).default,
+    // Aktivite geçmişi (Kurum etkinliği + CRM işlem kaydı) ve Maliyetler DeepSport'taki ad alanlarında: activityHistory.*, costs.*.
+    activityHistory: (await import("@/messages/features/activity.tr.json")).default,
+    costs: (await import("@/messages/features/costs.tr.json")).default,
   };
 }
 

@@ -1,0 +1,339 @@
+{
+  "title": "Maliyetler",
+  "description": "Hizmet maliyetleri, bütçeler, uyarılar ve kurum başına maliyet",
+  "sectionNavLabel": "Maliyet bölümleri",
+  "tabs": {
+    "overview": "Genel Bakış",
+    "services": "Hizmetler",
+    "entries": "Kayıtlar",
+    "institutions": "Kurumlar",
+    "budgets": "Bütçeler",
+    "alerts": "Uyarılar",
+    "exports": "Dışa Aktar"
+  },
+  "guard": {
+    "title": "Yalnız yöneticiler",
+    "adminRequired": "Maliyetler finansal veridir; yalnız yönetici (ADMIN) hesaplarına açıktır.",
+    "back": "Ana sayfaya dön"
+  },
+  "common": {
+    "noData": "Veri yok",
+    "month": "Ay",
+    "previousMonth": "Önceki ay",
+    "nextMonth": "Sonraki ay"
+  },
+  "errors": {
+    "fetchFailed": "Veriler yüklenemedi.",
+    "retry": "Yeniden dene",
+    "mutationFailed": "İşlem tamamlanamadı."
+  },
+  "charts": {
+    "trendSummary": "Son {months} ayın maliyet eğilimi; en yüksek ay {max}."
+  },
+  "kpi": {
+    "monthToDate": "Bu ay (girilen)",
+    "forecast": "Ay sonu tahmini",
+    "previousMonth": "Geçen ay",
+    "activeAlerts": "Aktif uyarı",
+    "totalSpend": "Toplam",
+    "vsPrevious": "Geçen aya göre",
+    "computedOnRead": "Her açılışta hesaplanır"
+  },
+  "overview": {
+    "emptyLedger": "Maliyet defteri henüz boş. Supabase, Vercel, SMS, OpenAI, Resend ve alan adı faturalarını girin ya da CSV ile içe aktarın.",
+    "goToEntries": "Kayıtlara git",
+    "trendTitle": "Aylık maliyet eğilimi",
+    "trendDescription": "Son 12 ay, hizmete göre (TL)",
+    "byServiceTitle": "Hizmete göre (bu ay)",
+    "byServiceEmpty": "Bu ay için kayıt yok.",
+    "topServicesTitle": "En yüksek hizmetler",
+    "topServicesEmpty": "Bu ay için kayıt yok.",
+    "activeAlertsTitle": "Aktif uyarılar",
+    "activeAlertsEmpty": "Aktif uyarı yok.",
+    "allAlerts": "Tümü",
+    "smsTitle": "SMS: Edoras'a göre tahmin",
+    "smsDescription": "Edoras sms_logs alıcı sayısı × birim fiyat. Yalnız okunur; deftere yazılmaz.",
+    "smsUnavailable": "Edoras SMS kayıtları okunamadı; tahmin gösterilemiyor.",
+    "smsRecipients": "Bu ay SMS alıcısı",
+    "smsEstimated": "Tahmini maliyet",
+    "smsLedger": "Defterdeki SMS",
+    "smsNoPrice": "Hizmetler sekmesinde SMS birim fiyatını girin.",
+    "smsTruncated": "Kayıt sayısı okuma sınırını aştı; alıcı sayısı eksik olabilir."
+  },
+  "services": {
+    "names": {
+      "SUPABASE": "Supabase",
+      "VERCEL": "Vercel",
+      "SMS": "SMS",
+      "OPENAI": "OpenAI",
+      "RESEND": "Resend (e-posta)",
+      "DOMAIN": "Alan adı",
+      "OTHER": "Diğer"
+    },
+    "title": "Hizmet bazında aylık maliyet",
+    "windowNote": "{month} ile biten son 12 ay (TL).",
+    "empty": "Bu aralıkta maliyet kaydı yok.",
+    "tableServiceName": "Hizmet",
+    "tableTotal": "Toplam",
+    "openDetail": "{service} ayrıntısını aç",
+    "detailTitle": "Hizmet ayrıntısı",
+    "detailTrend": "Aylık eğilim",
+    "detailEntries": "Defter satırları",
+    "sms": {
+      "title": "SMS tahmini: {month}",
+      "description": "Edoras'taki SMS kayıtları ile deftere girdiğiniz SMS faturası yan yana.",
+      "unavailable": "Edoras SMS kayıtları okunamadı; tahmin gösterilemiyor.",
+      "recipients": "Alıcı sayısı",
+      "estimated": "Tahmini (Edoras)",
+      "ledger": "Defter",
+      "delta": "Defter ile tahmin arasındaki fark: {delta}.",
+      "truncated": "Kayıt sayısı okuma sınırını aştı; alıcı sayısı eksik olabilir.",
+      "note": "Alıcı sayısı otomatik ve elle gönderilen tüm SMS'leri kapsar. Tahmin deftere yazılmaz.",
+      "unitPrice": "SMS birim fiyatı (₺ / alıcı)",
+      "unitPriceHelp": "MutluCell faturanızdaki alıcı başı fiyat; en çok 4 ondalık.",
+      "invalidPrice": "0 ile 1000 arasında, en çok 4 ondalıklı bir sayı girin.",
+      "save": "Kaydet",
+      "saved": "SMS birim fiyatı kaydedildi."
+    }
+  },
+  "entries": {
+    "add": "Satır ekle",
+    "summary": "{count} satır · toplam {total}",
+    "empty": "Bu süzgece uyan kayıt yok.",
+    "delete": "Sil",
+    "deleted": "Satır silindi.",
+    "deleteConfirmTitle": "Satır silinsin mi?",
+    "deleteConfirm": "{service} · {month} · {amount} satırı silinecek. Bu işlem geri alınamaz; işlem kaydına yazılır.",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "filters": {
+      "service": "Hizmet",
+      "allServices": "Tüm hizmetler",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "anyMonth": "Tüm aylar",
+      "clear": "Temizle"
+    },
+    "table": {
+      "month": "Ay",
+      "service": "Hizmet",
+      "amount": "Tutar",
+      "amountTry": "TL karşılığı",
+      "note": "Not",
+      "source": "Kaynak",
+      "actions": "İşlemler"
+    },
+    "source": {
+      "MANUAL": "Elle",
+      "IMPORT": "İçe aktarma"
+    },
+    "form": {
+      "createTitle": "Maliyet satırı ekle",
+      "editTitle": "Maliyet satırını düzenle",
+      "description": "Aynı hizmet ve ay için birden çok satır girebilirsiniz (ör. plan + ek kullanım).",
+      "service": "Hizmet",
+      "month": "Ay",
+      "currency": "Para birimi",
+      "currencyTRY": "TL",
+      "currencyUSD": "USD",
+      "amount": "Tutar",
+      "fxRate": "Kur (₺ / USD)",
+      "fxHelp": "Faturanın kesildiği günkü kur.",
+      "preview": "TL karşılığı",
+      "note": "Not",
+      "notePlaceholder": "Ör. Pro plan, ek işlem hacmi",
+      "amountInvalid": "0'dan büyük, en çok 2 ondalıklı bir tutar girin.",
+      "fxInvalid": "USD için 0'dan büyük bir kur girin (en çok 4 ondalık).",
+      "noteTooLong": "Not en çok 500 karakter olabilir.",
+      "created": "Maliyet satırı eklendi.",
+      "updated": "Maliyet satırı güncellendi.",
+      "save": "Kaydet",
+      "add": "Ekle"
+    },
+    "import": {
+      "open": "İçe aktar",
+      "title": "Maliyet satırlarını içe aktar",
+      "description": "CSV ya da Excel dosyası; dosya tarayıcıda okunur, yalnız geçerli satırlar gönderilir.",
+      "columnsHint": "Sütunlar: {columns}",
+      "chooseFile": "Dosya seç",
+      "template": "Şablonu indir",
+      "dedupeNote": "Aynı hizmet + ay + tutar + para birimi + not olan satır zaten varsa atlanır; aynı dosyayı iki kez yüklemek satır çoğaltmaz. En çok 5000 satır.",
+      "missingColumns": "Hizmet, Ay ve Tutar sütunları bulunamadı. Şablondaki başlıkları kullanın.",
+      "fileErrors": {
+        "xls": "Eski .xls biçimi desteklenmiyor; dosyayı .xlsx ya da CSV olarak kaydedin.",
+        "unsupported": "Desteklenmeyen dosya türü (.xlsx, .csv, .tsv, .txt).",
+        "empty": "Dosyada veri satırı yok.",
+        "read": "Dosya okunamadı.",
+        "tooMany": "Dosyada çok fazla satır var (en çok 5000)."
+      },
+      "summary": "{valid} geçerli, {invalid} hatalı satır",
+      "row": "Satır",
+      "service": "Hizmet",
+      "month": "Ay",
+      "amount": "Tutar",
+      "status": "Durum",
+      "ok": "Hazır",
+      "issues": {
+        "service": "Hizmet tanınmadı",
+        "month": "Ay okunamadı",
+        "amount": "Tutar geçersiz",
+        "currency": "Para birimi tanınmadı",
+        "fxRate": "Kur eksik / geçersiz"
+      },
+      "previewLimit": "İlk {count} satır gösteriliyor (toplam {total}); hatalı satırlar önce.",
+      "back": "Geri",
+      "submit": "{count} satırı içe aktar",
+      "close": "Kapat",
+      "created": "{count} satır eklendi.",
+      "result": "{created} satır eklendi, {duplicates} tekrar atlandı, {invalid} satır reddedildi.",
+      "duplicateRows": "Atlanan (zaten var) satırlar: {rows}",
+      "invalidRows": "Reddedilen satırlar: {rows}"
+    }
+  },
+  "institutions": {
+    "filterLabel": "Kurum durumu",
+    "filters": {
+      "ALL": "Tümü",
+      "PAID": "Ücretli",
+      "DEMO": "Demo",
+      "OTHER": "Diğer"
+    },
+    "status": {
+      "PAID": "Ücretli",
+      "DEMO": "Demo",
+      "OTHER": "Kayıtsız"
+    },
+    "kpi": {
+      "sharedPool": "Ortak maliyet",
+      "sharedPoolHelp": "SMS hariç; aktif öğrenci sayısıyla paylaşılır",
+      "sms": "SMS",
+      "totalCost": "Kurumlara yazılan",
+      "revenue": "Aylık lisans geliri",
+      "revenueHelp": "Lisans bedeli / 12"
+    },
+    "smsMode": {
+      "LEDGER": "Defterdeki tutar, alıcı payıyla",
+      "ESTIMATE": "Tahmin: alıcı × birim fiyat",
+      "NONE": "Kuruma yazılan SMS yok"
+    },
+    "smsUnavailable": "Edoras SMS kayıtları okunamadı; SMS kurumlara yazılamadı (varsa defterdeki SMS tutarı ortak maliyete katıldı).",
+    "unallocated": "{amount} ortak maliyet dağıtılamadı: kayıtlı öğrencisi olan kurum yok.",
+    "title": "Kurum başına maliyet: {month}",
+    "description": "Ortak maliyet aktif öğrenci sayısıyla paylaştırılır, SMS kurumun kendi alıcılarına yazılır. Gelir, o aya düşen lisans bedelidir.",
+    "empty": "Bu süzgeçte kurum yok.",
+    "table": {
+      "institution": "Kurum",
+      "students": "Öğrenci",
+      "shared": "Ortak pay",
+      "sms": "SMS",
+      "totalCost": "Toplam maliyet",
+      "revenue": "Gelir",
+      "margin": "Marj",
+      "perStudent": "Öğrenci başı",
+      "state": "Durum"
+    },
+    "margin": {
+      "HEALTHY": "Sağlıklı",
+      "TIGHT": "Sınırda",
+      "LOSS": "Zarar",
+      "NO_REVENUE": "Gelirsiz"
+    }
+  },
+  "budgets": {
+    "monthNote": "Durumlar {month} için hesaplandı.",
+    "createNew": "Yeni bütçe",
+    "empty": "Henüz bütçe yok. Aylık bir TL limiti tanımlayın; eşiklere yaklaşınca Uyarılar'da görünür.",
+    "tableScope": "Kapsam",
+    "tableLimit": "Aylık limit",
+    "tableUsage": "Bu ay kullanım",
+    "tableState": "Durum",
+    "tableActions": "İşlemler",
+    "inactive": "Pasif",
+    "deleteAction": "Sil",
+    "deleteSuccess": "Bütçe silindi.",
+    "deleteConfirmTitle": "Bütçe silinsin mi?",
+    "deleteConfirm": "Bütçe silinir; işlem kaydına yazılır. Bu işlem geri alınamaz.",
+    "scope": {
+      "GLOBAL": "Tüm hizmetler",
+      "SERVICE": "Tek hizmet"
+    },
+    "state": {
+      "OK": "Normal",
+      "PROJECTED_OVERRUN": "Aşım bekleniyor",
+      "SOFT_BREACH": "Yumuşak eşik",
+      "HARD_BREACH": "Sert eşik aşıldı"
+    },
+    "statusTitle": "Bütçe durumu",
+    "statusCurrentSpend": "Bu ay harcama",
+    "statusProjectedSpend": "Ay sonu tahmini",
+    "statusProjectedOverrun": "Beklenen aşım",
+    "statusSoftThreshold": "Yumuşak eşik",
+    "statusHardThreshold": "Sert eşik",
+    "form": {
+      "createTitle": "Bütçe ekle",
+      "editTitle": "Bütçeyi düzenle",
+      "description": "Kapsam başına en çok bir aktif bütçe olur.",
+      "scope": "Kapsam",
+      "service": "Hizmet",
+      "limit": "Aylık limit (₺)",
+      "softPct": "Yumuşak eşik (%)",
+      "hardPct": "Sert eşik (%)",
+      "thresholdHelp": "Harcama yumuşak eşiğe ulaşınca uyarı, sert eşiğe ulaşınca kritik uyarı çıkar.",
+      "note": "Not",
+      "active": "Aktif",
+      "created": "Bütçe eklendi.",
+      "updated": "Bütçe güncellendi.",
+      "save": "Kaydet",
+      "add": "Ekle",
+      "limitPositive": "0'dan büyük bir limit girin.",
+      "softRange": "Yumuşak eşik 1 ile 100 arasında tam sayı olmalı.",
+      "hardRange": "Sert eşik 2 ile 200 arasında tam sayı olmalı.",
+      "hardAboveSoft": "Sert eşik yumuşak eşikten büyük olmalı."
+    }
+  },
+  "alerts": {
+    "computedNote": "{month} için bütçelerden ve defterden hesaplandı. Uyarılar saklanmaz; koşul ortadan kalkınca kaybolur.",
+    "computedNoteShort": "Uyarılar bütçelerden ve defterden her açılışta hesaplanır; saklanmaz.",
+    "empty": "Aktif uyarı yok.",
+    "allServices": "Tüm hizmetler",
+    "tableType": "Tür",
+    "tableSeverity": "Önem",
+    "tableMessage": "Mesaj",
+    "tableService": "Hizmet",
+    "tableCurrent": "Değer",
+    "tableThreshold": "Eşik / geçen ay",
+    "severity": {
+      "WARN": "Uyarı",
+      "CRITICAL": "Kritik"
+    },
+    "type": {
+      "BUDGET_SOFT": "Yumuşak eşik",
+      "BUDGET_HARD": "Sert eşik",
+      "BUDGET_PROJECTED": "Aşım tahmini",
+      "SPIKE": "Ani artış"
+    },
+    "messages": {
+      "BUDGET_HARD": "{scope} bütçesinin sert eşiği aşıldı: {current} harcandı (limit {threshold}, kullanım {pct}).",
+      "BUDGET_SOFT": "{scope} bütçesi yumuşak eşiğe ulaştı: {current} harcandı (limit {threshold}, kullanım {pct}).",
+      "BUDGET_PROJECTED": "{scope} için ay sonu tahmini {current}; aylık limit {threshold} aşılacak görünüyor ({pct}).",
+      "SPIKE": "{scope} maliyeti geçen aya göre yükseldi: ay sonu tahmini {current} (geçen ay {threshold}, artış {pct})."
+    }
+  },
+  "exports": {
+    "monthNote": "Seçili ay: {month}",
+    "usesMonth": "Seçili ay ile biten son 12 ay ya da o ay.",
+    "allMonths": "Tüm aylar.",
+    "download": "CSV indir",
+    "downloading": "İndiriliyor…",
+    "downloadSuccess": "CSV indirildi.",
+    "downloadFailed": "CSV indirilemedi.",
+    "entriesTitle": "Maliyet defteri",
+    "entriesDescription": "Tüm satırlar: ay, hizmet, tutar, para birimi, kur, TL karşılığı, kaynak, not.",
+    "servicesTitle": "Hizmet × ay",
+    "servicesDescription": "Hizmet bazında son 12 ayın TL toplamları.",
+    "trendTitle": "Aylık eğilim",
+    "trendDescription": "Her ay için hizmet kırılımı ve toplam.",
+    "institutionsTitle": "Kurum maliyetleri",
+    "institutionsDescription": "Seçili ay için kurum başına maliyet, gelir ve marj (lisans bedeli içerir)."
+  }
+}

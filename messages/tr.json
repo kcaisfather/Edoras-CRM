@@ -65,6 +65,7 @@
         "MAIL_NOT_CONFIGURED": "E-posta gönderimi ayarlanmamış (RESEND_API_KEY ve EMAIL_FROM; fatura talebi için ayrıca ACCOUNTANT_EMAIL). Anketlerde WhatsApp, SMS ya da link kanalını; faturada \"Elle kayıt\" yöntemini kullanın.",
         "MAIL_SEND_FAILED": "E-posta gönderilemedi. Davet listede \"Başarısız\" olarak duruyor; daha sonra yeniden gönderebilirsiniz.",
         "RATE_LIMITED": "Çok fazla istek. Lütfen biraz sonra tekrar deneyin.",
+        "COST_BUDGET_EXISTS": "Bu kapsam için zaten aktif bir bütçe var. Önce onu pasife alın ya da düzenleyin.",
         "PROVIDER_NOT_CONFIGURED": "Fatura platformunun (Paraşüt) API anahtarları tanımlı değil.",
         "INVOICE_NOT_RETRYABLE": "Yalnız başarısız e-posta ya da platform faturası yeniden denenebilir.",
         "BILLING_PROFILE_INCOMPLETE": "Fatura profili eksik: unvan, il, ilçe, fatura e-postası (kurumsalda vergi dairesi) kurum sayfasından tamamlanmalı."
@@ -192,7 +193,19 @@
     "growthCustomers": "Müşteri Takibi",
     "growthCustomersDescription": "Kullanım, süresi dolacaklar, en aktif kurumlar ve segment görünümleri",
     "growthAnalytics": "Müşteri Analizleri",
-    "growthAnalyticsDescription": "Kurum, öğrenci ve etkinlik toplamları, kullanım, gelir sızıntısı, retention ve birim ekonomisi"
+    "growthAnalyticsDescription": "Kurum, öğrenci ve etkinlik toplamları, kullanım, gelir sızıntısı, retention ve birim ekonomisi",
+    "sidebarActivity": "Aktivite",
+    "sidebarOperations": "Operasyon",
+    "activityHistory": "Aktivite Geçmişi",
+    "activityHistoryDescription": "Kurum etkinlikleri ve CRM işlem kaydı",
+    "costs": "Maliyet",
+    "costsDescription": "Hizmet maliyetleri, bütçeler, uyarılar ve kurum başına maliyet",
+    "costsServices": "Maliyet · Hizmetler",
+    "costsEntries": "Maliyet · Kayıtlar",
+    "costsInstitutions": "Maliyet · Kurumlar",
+    "costsBudgets": "Maliyet · Bütçeler",
+    "costsAlerts": "Maliyet · Uyarılar",
+    "costsExports": "Maliyet · Dışa aktar"
   },
   "shell": {
     "infoTip": {

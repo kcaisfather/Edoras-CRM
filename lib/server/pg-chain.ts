@@ -15,6 +15,7 @@ export interface PgChain extends PromiseLike<PgResult> {
   eq(column: string, value: string): PgChain;
   gte(column: string, value: string): PgChain;
   lte(column: string, value: string): PgChain;
+  lt(column: string, value: string): PgChain;
   ilike(column: string, pattern: string): PgChain;
   order(column: string, options?: { ascending?: boolean }): PgChain;
   range(from: number, to: number): PgChain;

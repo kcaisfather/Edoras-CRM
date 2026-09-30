@@ -2,6 +2,7 @@ import "server-only";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type { StaffContext } from "@/lib/api/server";
+import type { AuditAction, AuditEntityType } from "@/lib/domain/activity/audit-actions";
 
 /**
  * CRM işlem kaydı (crm_audit_logs — yalnız eklenir, değiştirilemez). Her yazma işlemi başarıdan sonra
@@ -11,63 +12,7 @@ import type { StaffContext } from "@/lib/api/server";
  * tutar gibi kısa özetler yeter. Kayıt yazılamazsa asıl işlem geri alınmaz (yapılmış bir işlemi, günlüğü
  * tutulamadı diye bozmak daha kötü); hata sunucu loguna düşer.
  */
-export type AuditAction =
-  | "DEMO_CREATED"
-  | "INSTITUTION_ENROLLED"
-  | "CONVERTED_TO_PAID"
-  | "LICENSE_RENEWED"
-  | "CONTACT_UPDATED"
-  | "BILLING_UPDATED"
-  | "PAYMENT_RECORDED"
-  | "STAFF_CREATED"
-  | "STAFF_ROLE_CHANGED"
-  | "STAFF_DISABLED"
-  | "STAFF_ENABLED"
-  | "STAFF_PASSWORD_RESET"
-  | "INTERNAL_MARKED"
-  | "INTERNAL_UNMARKED"
-  | "LEAD_CREATED"
-  | "LEAD_UPDATED"
-  | "LEAD_STATUS_CHANGED"
-  | "LEAD_DELETED"
-  | "LEAD_LINKED"
-  | "LEAD_UNLINKED"
-  | "NOTE_CREATED"
-  | "NOTE_UPDATED"
-  | "NOTE_DELETED"
-  | "TASK_ASSIGNED"
-  | "TASK_COMPLETED"
-  | "TASK_REOPENED"
-  | "RULES_UPDATED"
-  | "PROSPECT_LIST_CREATED"
-  | "PROSPECT_LIST_DELETED"
-  | "PROSPECTS_IMPORTED"
-  | "PROSPECT_UPDATED"
-  | "PROSPECT_DELETED"
-  | "PROSPECT_CONVERTED"
-  | "LEADS_IMPORTED"
-  // Anketler: e-posta / telefon / yorum yazılmaz; kanal ve bağlı aday / kurum kimliği yeter. Müşterinin (herkese açık
-  // sayfadan) yanıtı işlem kaydına yazılmaz — personel işlemi değildir ve kişisel veri taşır.
-  | "SURVEY_INVITATION_CREATED"
-  | "SURVEY_INVITATION_SENT"
-  | "SURVEY_INVITATION_RESENT"
-  // Faturalar: tutar, yöntem, durum ve satış referansı yazılır; alıcı e-postası, adres, TC/VKN, unvan yazılmaz.
-  | "INVOICE_CREATED"
-  | "INVOICE_ISSUED"
-  | "INVOICE_FAILED"
-  | "INVOICE_RETRIED";
-
-export type AuditEntityType =
-  | "institution"
-  | "staff"
-  | "lead"
-  | "note"
-  | "task"
-  | "rules"
-  | "prospect_list"
-  | "prospect"
-  | "survey_invitation"
-  | "invoice";
+export type { AuditAction, AuditEntityType } from "@/lib/domain/activity/audit-actions";
 
 export interface AuditEntry {
   action: AuditAction;

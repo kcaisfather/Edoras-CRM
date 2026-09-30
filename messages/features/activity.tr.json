@@ -1,0 +1,208 @@
+{
+  "title": "Aktivite Geçmişi",
+  "today": "Bugün",
+  "access": {
+    "title": "Yalnız yöneticiler",
+    "body": "Aktivite geçmişi yalnız yönetici (ADMIN) hesaplarına açıktır.",
+    "back": "Ana sayfaya dön"
+  },
+  "table": {
+    "timestamp": "Zaman"
+  },
+  "filters": {
+    "scope": {
+      "label": "Kapsam",
+      "events": "Kurum etkinliği",
+      "audit": "CRM işlem kaydı"
+    },
+    "logType": {
+      "label": "Olay",
+      "all": "Tüm olaylar"
+    },
+    "from": "Başlangıç",
+    "to": "Bitiş",
+    "clear": "Süzgeçleri temizle"
+  },
+  "pagination": {
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "pageSize": "Sayfa Boyutu",
+    "showingMiddle": " / ",
+    "unit": "kayıt"
+  },
+  "empty": {
+    "title": "Aktivite kaydı bulunamadı"
+  },
+  "error": {
+    "message": "Aktivite geçmişi yüklenirken bir hata oluştu",
+    "retry": "Yeniden Dene"
+  },
+  "events": {
+    "table": {
+      "institution": "Kurum",
+      "event": "Etkinlik",
+      "actor": "Kişi (rol)"
+    },
+    "types": {
+      "ATTENDANCE_TAKEN": "Yoklama alındı",
+      "ASSIGNMENT_CREATED": "Ödev oluşturuldu",
+      "EXAM_CREATED": "Deneme oluşturuldu",
+      "EXAM_RESULTS_PUBLISHED": "Deneme sonuçları yayınlandı",
+      "LESSON_TOPIC_LOGGED": "Konu işlendi",
+      "ANNOUNCEMENT_CREATED": "Duyuru yayınlandı",
+      "SMS_SENT": "SMS gönderildi (elle)"
+    },
+    "roles": {
+      "admin": "Kurum yöneticisi",
+      "teacher": "Öğretmen",
+      "other": "Diğer"
+    },
+    "roleUnknown": "—",
+    "countStudents": "{count} öğrenci işaretlendi",
+    "countRecipients": "{count} alıcı",
+    "filters": {
+      "institution": "Kurum",
+      "allInstitutions": "Tüm kurumlar",
+      "presets": "Hızlı aralık",
+      "lastDays": "Son {days} gün"
+    },
+    "window": "Gösterilen aralık: {from} – {to}",
+    "scopeNote": "Yalnız Edoras'ta kayıtlı öğretmen ve yönetici etkinlikleri; öğrenci adı ya da kişisel veri gösterilmez. İç / sunum kurumları kurum seçilmediğinde listelenmez.",
+    "clamped": "İstenen aralık en çok {days} gündür; en yeni {days} gün gösteriliyor.",
+    "truncated": "Aralıkta çok kayıt var; yalnız en yeni {max} olay gezilebilir. Daha eskisi için aralığı daraltın.",
+    "unavailable": "Şu kaynaklar okunamadı, toplama dahil değil: {sources}."
+  },
+  "audit": {
+    "table": {
+      "actor": "Kişi",
+      "action": "İşlem"
+    },
+    "filters": {
+      "actor": "Kişi",
+      "allActors": "Tüm kişiler",
+      "action": "İşlem",
+      "entity": "Kayıt türü",
+      "allEntities": "Tüm kayıtlar"
+    },
+    "unknownActor": "Bilinmiyor",
+    "yes": "Evet",
+    "no": "Hayır",
+    "entities": {
+      "institution": "Kurum",
+      "staff": "Ekip üyesi",
+      "lead": "Aday",
+      "note": "Not",
+      "task": "Görev",
+      "rules": "Takip kuralları",
+      "prospect_list": "Soğuk liste",
+      "prospect": "Soğuk liste kişisi",
+      "survey_invitation": "Anket daveti",
+      "invoice": "Fatura",
+      "cost_entry": "Maliyet satırı",
+      "cost_budget": "Maliyet bütçesi",
+      "cost_settings": "Maliyet ayarı"
+    },
+    "actions": {
+      "DEMO_CREATED": "Demo kurum açıldı",
+      "INSTITUTION_ENROLLED": "Kurum CRM'e eklendi",
+      "CONVERTED_TO_PAID": "Ücretli hesaba geçirildi",
+      "LICENSE_RENEWED": "Lisans yenilendi",
+      "CONTACT_UPDATED": "Yetkili bilgisi güncellendi",
+      "BILLING_UPDATED": "Fatura bilgisi güncellendi",
+      "PAYMENT_RECORDED": "Ödeme alındı",
+      "STAFF_CREATED": "Ekip üyesi eklendi",
+      "STAFF_ROLE_CHANGED": "Ekip üyesinin rolü değişti",
+      "STAFF_DISABLED": "Ekip üyesi pasife alındı",
+      "STAFF_ENABLED": "Ekip üyesi yeniden aktifleştirildi",
+      "STAFF_PASSWORD_RESET": "Ekip üyesinin şifresi sıfırlandı",
+      "INTERNAL_MARKED": "İç kurum olarak işaretlendi",
+      "INTERNAL_UNMARKED": "İç kurum işareti kaldırıldı",
+      "LEAD_CREATED": "Aday eklendi",
+      "LEAD_UPDATED": "Aday güncellendi",
+      "LEAD_STATUS_CHANGED": "Adayın durumu değişti",
+      "LEAD_DELETED": "Aday silindi",
+      "LEAD_LINKED": "Aday kuruma bağlandı",
+      "LEAD_UNLINKED": "Adayın kurum bağı kaldırıldı",
+      "NOTE_CREATED": "Not eklendi",
+      "NOTE_UPDATED": "Not düzenlendi",
+      "NOTE_DELETED": "Not silindi",
+      "TASK_ASSIGNED": "Görev atandı",
+      "TASK_COMPLETED": "Görev tamamlandı",
+      "TASK_REOPENED": "Görev yeniden açıldı",
+      "RULES_UPDATED": "Takip kuralları güncellendi",
+      "PROSPECT_LIST_CREATED": "Soğuk liste oluşturuldu",
+      "PROSPECT_LIST_DELETED": "Soğuk liste silindi",
+      "PROSPECTS_IMPORTED": "Soğuk listeye kişi aktarıldı",
+      "PROSPECT_UPDATED": "Soğuk liste kişisi güncellendi",
+      "PROSPECT_DELETED": "Soğuk liste kişisi silindi",
+      "PROSPECT_CONVERTED": "Kişi sıcak adaya taşındı",
+      "LEADS_IMPORTED": "Adaylar içe aktarıldı",
+      "SURVEY_INVITATION_CREATED": "Anket daveti oluşturuldu",
+      "SURVEY_INVITATION_SENT": "Anket daveti gönderildi",
+      "SURVEY_INVITATION_RESENT": "Anket daveti yeniden gönderildi",
+      "INVOICE_CREATED": "Fatura kaydı açıldı",
+      "INVOICE_ISSUED": "Fatura kesildi",
+      "INVOICE_FAILED": "Fatura kesilemedi",
+      "INVOICE_RETRIED": "Fatura yeniden denendi",
+      "COST_ENTRY_CREATED": "Maliyet satırı eklendi",
+      "COST_ENTRY_UPDATED": "Maliyet satırı güncellendi",
+      "COST_ENTRY_DELETED": "Maliyet satırı silindi",
+      "COST_ENTRIES_IMPORTED": "Maliyet satırları içe aktarıldı",
+      "COST_BUDGET_CREATED": "Maliyet bütçesi eklendi",
+      "COST_BUDGET_UPDATED": "Maliyet bütçesi güncellendi",
+      "COST_BUDGET_DELETED": "Maliyet bütçesi silindi",
+      "COST_SETTINGS_UPDATED": "Maliyet ayarı güncellendi"
+    },
+    "detailKeys": {
+      "amount": "Tutar",
+      "amountTry": "TL karşılığı",
+      "price": "Bedel",
+      "firstPayment": "İlk ödeme",
+      "method": "Yöntem",
+      "paidOn": "Ödeme günü",
+      "status": "Durum",
+      "from": "Önceki",
+      "to": "Yeni",
+      "role": "Rol",
+      "program": "Program",
+      "billingType": "Fatura türü",
+      "changes": "Değişen alanlar",
+      "fields": "Alanlar",
+      "created": "Eklenen",
+      "skipped": "Atlanan",
+      "invalid": "Geçersiz",
+      "duplicates": "Tekrar",
+      "institutionId": "Kurum",
+      "leadId": "Aday",
+      "surveyId": "Anket",
+      "listId": "Liste",
+      "assigneeId": "Atanan",
+      "channel": "Kanal",
+      "via": "Yol",
+      "kind": "Tür",
+      "type": "Tür",
+      "key": "Anahtar",
+      "dueDate": "Vade",
+      "nextFollowUpAt": "Sonraki takip",
+      "lostReason": "Kayıp nedeni",
+      "demoEndsAt": "Demo bitişi",
+      "licenseStartsOn": "Lisans başlangıcı",
+      "outcome": "Sonuç",
+      "mode": "Mod",
+      "attempts": "Deneme",
+      "prospects": "Kişi",
+      "source": "Kaynak",
+      "withNote": "Notlu",
+      "fromFile": "Dosyadan",
+      "service": "Hizmet",
+      "month": "Ay",
+      "currency": "Para birimi",
+      "scope": "Kapsam",
+      "monthlyLimitTry": "Aylık limit (TL)",
+      "softPct": "Yumuşak eşik (%)",
+      "hardPct": "Sert eşik (%)",
+      "active": "Aktif",
+      "smsUnitPriceTry": "SMS birim fiyatı (TL)"
+    }
+  }
+}

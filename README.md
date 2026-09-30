@@ -59,6 +59,8 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Davet token'ı ≥ 43 karakter base64url ve benzersiz (sunucuda 32 bayt rastgele); e-posta kanalında e-posta, WhatsApp / SMS'te telefon (E.164) | `crm_survey_invitations_token_check` / `_token_key`, `_contact_check`, `_phone_check`, `_email_check` |
 | Davet durumu ↔ anları tutarlı; davet açılırken aday ya da kurum zorunlu; token ve anket değişmez; RESPONDED geri dönmez | `crm_survey_invitations_state_check`, `crm_survey_invitations_guard` |
 | Aynı alıcıya 7 gün içinde yanıtsız, süresi dolmamış davet varsa yenisi açılmaz (alıcı başına kilit) | `crm_create_survey_invitation` |
+| Rapor aboneliği: saat `HH:MM`; haftalıkta gün 1–7, aylıkta ayın günü 1–28, diğer sıklıkta ilgili alan boş; bölümler bilinen altı değerden en az biri; alıcı 1–50 kişi, tekrarsız ve AKTİF CRM personeli (`crm_staff`; serbest e-posta adresi yok); zaman dilimi Europe/Istanbul | `crm_report_subscriptions_*_check`, `crm_report_subscriptions_guard` (`CRM_REPORT_RECIPIENT_INVALID`) |
+| Rapor gönderim kaydı: durum SENT / FAILED / SKIPPED; SENT en az bir alıcı, FAILED kısa hata kodu ister (alıcı adresi yazılmaz) | `crm_report_runs_*_check` |
 | Davet başına bir yanıt; NPS 0–10, memnuniyet 1–5, yorum ≤ 2000; zorunlu sorular; süresi dolmuş link yanıt almaz (tek transaction) | `crm_survey_responses_invitation_key`, `crm_survey_submit` (`CRM_SURVEY_EXPIRED` / `_ANSWERED` / `_ANSWER_INVALID`) |
 
 TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tckn/vkn`) ve TypeScript'te
@@ -73,6 +75,8 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    - Anketler: `NEXT_PUBLIC_APP_URL` (anket linklerinin kökü, ör. `https://crm.edorasapp.ai`; boşsa isteğin / tarayıcının
      adresi — üretimde tanımlayın). İsteğe bağlı e-posta: `RESEND_API_KEY` + `EMAIL_FROM` (ikisi de doluysa "E-posta"
      kanalı açılır; yoksa kanal kapalı, WhatsApp / SMS / Link sağlayıcısız çalışır)
+   - Raporlar: `CRON_SECRET` (dağıtıcı `POST /api/cron/reports`'un Bearer anahtarı; **tanımsızsa uç 503 verir**, `openssl rand -hex 32`
+     ile üretin) + e-posta için `RESEND_API_KEY` + `EMAIL_FROM` (yoksa "Şimdi gönder" ve dağıtıcı 503 `MAIL_NOT_CONFIGURED`)
    - Faturalar: isteğe bağlı `ACCOUNTANT_EMAIL` (fatura talebinin gideceği muhasebeci adresi; `RESEND_API_KEY` +
      `EMAIL_FROM` ile birlikte doluysa "E-posta ile talep" açılır, yoksa 503 `MAIL_NOT_CONFIGURED` ve ekran "Elle kayıt"ı
      önerir). İsteğe bağlı `PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`,
@@ -80,7 +84,7 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
    `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
    `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri, `20260929190000_crm_surveys.sql` anketler, davetler
-   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar).
+   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar, `20260929230000_crm_reports.sql` rapor abonelikleri ve gönderim kaydı — **henüz uygulanmadı**).
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -168,6 +172,48 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
   liste rozetleri tek istekle (`GET /api/crm/surveys/satisfaction`). Eleştirmen yanıtında otomatik ticket / görev yok
   (DeepSport ile aynı): şikâyet kaydı adayın notlarından elle (`SIKAYET`).
 
+### Raporlar (Ayarlar → Raporlar, yalnız ADMIN)
+
+Zamanlanmış rapor e-postaları (DeepSport Madde 10 · REPORTS). Abonelikler `crm_report_subscriptions`'ta (tarayıcı taslağı yok),
+gönderim kaydı `crm_report_runs`'ta.
+
+- **Alıcılar yalnız aktif CRM personeli** (`recipient_ids` = `crm_staff.user_id`); serbest e-posta adresi yoktur, rapor verisi ekip
+  dışına çıkamaz. Adres gönderim anında Auth'tan çözülür; kapatılan personele gönderilmez (veritabanı da yeni alıcıyı denetler).
+- **Bölümler** sunucuda CRM verisinden üretilir (`lib/domain/reports/build.ts`): Bugünün görevleri (gecikmiş + bugünkü açık
+  görevler), Biten / bitecek demolar (dönem içinde bitmiş ya da 3 gün içinde bitecek), 60 gün içinde bitecek paketler,
+  Takipteki teklifler, Yeni kayıtlar (Edoras'ta açılıp CRM kaydı olmayan kurumlar; iç / silinmiş hariç), Satış toplamı (dönem
+  içindeki **tahsilatlar**, `crm_payments`). Dönem: günlük 1, haftalık 7, aylık 30 gün.
+- **Rol süzmesi alıcı başına** (her alıcıya AYRI e-posta): CRM_AGENT'a `salesTotal` hiç gitmez, `openOffers` yalnız adet ve adla
+  gider (tutar / toplam yok), görevlerde yalnız kendisine atananlar (ve havuz) gelir. Süzme saf işlevde (`buildReportSections`)
+  yapılır; aynı işlev önizlemede çağıranın rolüyle çalışır. Test, agent çıktısında tutar bulunmadığını doğrular.
+- **Uçlar:** `GET/POST /api/reports/subscriptions`, `PUT/DELETE /api/reports/subscriptions/{id}`,
+  `POST /api/reports/subscriptions/{id}/send-now` (→ `{ sentTo, failed, sentAt }` adet; adres yok; aynı abonelik için 60 sn
+  içinde ikinci istek 429; e-posta ayarsızsa 503 `MAIL_NOT_CONFIGURED`; hepsi yalnız ADMIN), `GET /api/reports/preview`
+  (herhangi bir personel, kendi rolüne göre). İşlem kaydı: `REPORT_SUBSCRIPTION_CREATED/UPDATED/DELETED`, `REPORT_SENT` (yalnız sayılar).
+- **Zamanlama** (`lib/domain/reports/schedule.ts`): sonraki çalışma `Intl` ile Europe/Istanbul duvar saatinden hesaplanır (yaz
+  saatinde de doğru; testte America/New_York ile denenir). Haftalık ISO gün 1–7, aylık 1–28.
+
+#### Zamanlayıcı (dağıtıcı) kurulumu
+
+Uygulamanın içinde cron yoktur. `POST /api/cron/reports` (Vercel Cron için `GET` de aynı işi yapar) çalışma zamanı gelmiş
+(`next_run_at ≤ şimdi`) aktif abonelikleri gönderir; **bir dış zamanlayıcı bu adresi çağırmalıdır** (bu depo hiçbirini kurmaz):
+
+| Seçenek | Not |
+| --- | --- |
+| **Vercel Cron** — `vercel.json` içinde hazır (`0 5 * * *` = 08:00 İstanbul) | Vercel'de `CRON_SECRET` tanımlıyken Bearer başlığını kendisi ekler. **Hobby planında cron günde en çok bir kez** çalışır; bu yüzden gönderim, abonelik saatinden sonraki ilk tetiklemede olur (ör. 08:30 aboneliği ertesi 08:00'de gider, içerik gönderim anında üretilir). Saatinde göndermek için Pro plan ve `*/15 * * * *` gibi bir ifade gerekir |
+| **Harici zamanlayıcı** (GitHub Actions `schedule`, cron-job.org, sunucu crontab) | `curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://<panel>/api/cron/reports` — 5–15 dakikada bir |
+| **Supabase pg_cron + pg_net** | `select cron.schedule('crm-reports', '*/15 * * * *', $select net.http_post(url := 'https://<panel>/api/cron/reports', headers := jsonb_build_object('Authorization', 'Bearer ' || '<CRON_SECRET>'))$);` — secret'ı SQL'e düz yazmak yerine Supabase Vault'tan okuyun |
+
+Sık tetikleme zararsızdır: çalışma zamanı gelmemiş abonelik atlanır.
+
+**Dağıtıcı güvenliği ve idempotens:** oturum yoktur (`proxy.ts` → `isCronPath`, çerez okunmaz); tek yetki `Authorization: Bearer
+${CRON_SECRET}`, karşılaştırma sabit zamanlı (SHA-256 + `timingSafeEqual`). `CRON_SECRET` tanımsızsa uç 503 `CONFIG_MISSING`
+verir (secret yoksa "herkese açık" olmaz). Her abonelik gönderimden ÖNCE "talep edilir": `UPDATE … SET next_run_at = yeni WHERE id
+AND active AND next_run_at = eski` — yalnız satırı güncelleyen çağrı gönderir, eşzamanlı ikinci dağıtıcı 0 satır görür ve atlar
+(ayrıca Resend `Idempotency-Key` = abonelik + çalışma zamanı + alıcı). Bedeli: talepten sonra süreç çökerse o çalışma
+kaybolur ama iki kez gitmez (en fazla bir kez); tümü başarısızsa `crm_report_runs` FAILED yazar, bir sonraki çalışma normal
+zamanında olur. Kesinti sonrası kaçırılan çalışmalar birikmez (tek e-posta). Her çağrı en çok 50 abonelik ve ~40 sn işler.
+
 ### Satış ve faturalar (yalnız ADMIN)
 
 - **Ödeme Geçmişi** (`/payment-history`, DeepSport `/log-products` karşılığı): tüm kurumların `crm_payments`'ı — kurum adı
@@ -250,7 +296,8 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 | Modül | Durum |
 | --- | --- |
 | Kurumlar, demo, lisans, ödeme | ✔ |
-| Ayarlar: Genel, Ekip (hesap aç, rol, erişim, şifre sıfırla), Veri kalitesi (iç kurumlar), Hata kaydı, KVKK | ✔ |
+| Ayarlar: Genel, Ekip (hesap aç, rol, erişim, şifre sıfırla), Kurallar, Raporlar, Veri kalitesi (iç kurumlar), Hata kaydı, KVKK | ✔ |
+| Raporlar (Ayarlar → Raporlar, yalnız ADMIN): zamanlanmış rapor e-postaları — abonelik listesi ve düzenleyici (ad, alıcılar = aktif CRM personeli, sıklık, saat, gün, 6 bölüm, aktif), sunucuda üretilen ve role göre süzülen önizleme, metni kopyala, "Şimdi gönder" (onaylı), silme; dağıtıcı `POST /api/cron/reports` (CRON_SECRET), `vercel.json` cron. Uçlar `/api/reports/*`; `crm_report_subscriptions`, `crm_report_runs` (migration `20260929230000_crm_reports.sql` — **CRM projesine uygulanmalı**) | ✔ (alıcı serbest e-posta değil personel; localStorage taslağı yok — nedenleri raporda) |
 | İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı: Aktivite geçmişi) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
@@ -266,5 +313,4 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Raporlar (Resend — `lib/server/mail.ts` hazır)
-2. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)
+1. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)

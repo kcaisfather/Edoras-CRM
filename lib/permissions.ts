@@ -22,6 +22,13 @@ export const CRM_AGENT_DENIED_PATHS = ["/crm/rules"] as const;
  */
 export const CUSTOMER_PUBLIC_PATHS = ["/s", "/api/public"] as const;
 
+/**
+ * Zamanlayıcı yolları (/api/cron/*): oturum çerezi değil `Authorization: Bearer ${CRON_SECRET}` ile yetkilenir
+ * (lib/server/cron-auth.ts). proxy.ts oturuma hiç dokunmaz; ucun kendisi secret'ı denetler. Müşteriye açık DEĞİLDİR
+ * (isCustomerPublicPath false) ve isPublicPath listesinde değildir — sayfa yolu olarak oturum kuralı aynen geçerli.
+ */
+export const CRON_PATHS = ["/api/cron"] as const;
+
 /** Oturum gerektirmeyen yollar: giriş sayfası + müşteriye açık anket yolları. */
 export const PUBLIC_PATHS = ["/login", ...CUSTOMER_PUBLIC_PATHS] as const;
 
@@ -38,6 +45,12 @@ export function isPublicPath(pathname: string | null | undefined): boolean {
 export function isCustomerPublicPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   return CUSTOMER_PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p));
+}
+
+/** Zamanlayıcı yolu mu (proxy.ts oturum işini atlar; yetki ucun içinde CRON_SECRET ile). */
+export function isCronPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return CRON_PATHS.some((p) => matchesPrefix(pathname, p));
 }
 
 /** Rol bilinmiyorsa en dar yetki (fail-closed). */

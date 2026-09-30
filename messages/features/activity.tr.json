@@ -100,7 +100,8 @@
       "invoice": "Fatura",
       "cost_entry": "Maliyet satırı",
       "cost_budget": "Maliyet bütçesi",
-      "cost_settings": "Maliyet ayarı"
+      "cost_settings": "Maliyet ayarı",
+      "report_subscription": "Rapor aboneliği"
     },
     "actions": {
       "DEMO_CREATED": "Demo kurum açıldı",
@@ -151,7 +152,11 @@
       "COST_BUDGET_CREATED": "Maliyet bütçesi eklendi",
       "COST_BUDGET_UPDATED": "Maliyet bütçesi güncellendi",
       "COST_BUDGET_DELETED": "Maliyet bütçesi silindi",
-      "COST_SETTINGS_UPDATED": "Maliyet ayarı güncellendi"
+      "COST_SETTINGS_UPDATED": "Maliyet ayarı güncellendi",
+      "REPORT_SUBSCRIPTION_CREATED": "Rapor aboneliği eklendi",
+      "REPORT_SUBSCRIPTION_UPDATED": "Rapor aboneliği güncellendi",
+      "REPORT_SUBSCRIPTION_DELETED": "Rapor aboneliği silindi",
+      "REPORT_SENT": "Rapor e-postası gönderildi"
     },
     "detailKeys": {
       "amount": "Tutar",

@@ -57,6 +57,11 @@ export const AUDIT_ACTIONS = [
   "COST_BUDGET_UPDATED",
   "COST_BUDGET_DELETED",
   "COST_SETTINGS_UPDATED",
+  // Raporlar: abonelik adı, sıklık, saat ve alıcı / bölüm sayısı yazılır; alıcı adresi ve rapor içeriği yazılmaz.
+  "REPORT_SUBSCRIPTION_CREATED",
+  "REPORT_SUBSCRIPTION_UPDATED",
+  "REPORT_SUBSCRIPTION_DELETED",
+  "REPORT_SENT",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -75,6 +80,7 @@ export const AUDIT_ENTITY_TYPES = [
   "cost_entry",
   "cost_budget",
   "cost_settings",
+  "report_subscription",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

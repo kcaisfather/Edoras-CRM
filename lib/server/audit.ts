@@ -22,6 +22,25 @@ export interface AuditEntry {
   details?: Record<string, string | number | boolean | null>;
 }
 
+/**
+ * Oturumsuz (zamanlayıcı) işlemlerin kaydı: aktör yok, ad "Zamanlayıcı". Yalnız rapor dağıtıcısı kullanır
+ * (POST /api/cron/reports). Aynı kural: `details`'e kişisel veri yazılmaz.
+ */
+export async function recordSystemAudit(entry: AuditEntry, actorName = "Zamanlayıcı"): Promise<void> {
+  const { error } = await getSupabaseAdminClient()
+    .from("crm_audit_logs")
+    .insert({
+      actor_id: null,
+      actor_name: actorName,
+      action: entry.action,
+      entity_type: entry.entityType,
+      entity_id: entry.entityId ?? null,
+      entity_label: entry.entityLabel ?? null,
+      details: entry.details ?? {},
+    });
+  if (error) console.error(`[audit] yazılamadı: ${entry.action} (${error.code ?? "?"})`);
+}
+
 export async function recordAudit(staff: StaffContext, entry: AuditEntry): Promise<void> {
   const { error } = await getSupabaseAdminClient()
     .from("crm_audit_logs")

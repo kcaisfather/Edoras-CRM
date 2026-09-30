@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { isCustomerPublicPath, isPublicPath } from "@/lib/permissions";
+import { isCronPath, isCustomerPublicPath, isPublicPath } from "@/lib/permissions";
 import { SERVER_REALTIME } from "@/lib/supabase/realtime";
 
 /**
@@ -11,8 +11,18 @@ import { SERVER_REALTIME } from "@/lib/supabase/realtime";
  * Müşteriye açık anket yolları (/s/*, /api/public/*) CRM oturumuyla ilgisizdir: Supabase istemcisi hiç kurulmaz,
  * çerez okunmaz / tazelenmez, /login'e yönlendirilmez. Token URL'de olduğu için Referer gönderilmez ve arama
  * motorlarına kapalıdır.
+ *
+ * Zamanlayıcı ucu (/api/cron/*) da oturumsuzdur: çerez okunmaz, Supabase istemcisi kurulmaz; ucun kendisi
+ * `Authorization: Bearer ${CRON_SECRET}` ister (lib/server/cron-auth.ts).
  */
 export async function proxy(request: NextRequest) {
+  if (isCronPath(request.nextUrl.pathname)) {
+    const open = NextResponse.next();
+    open.headers.set("Cache-Control", "no-store");
+    open.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return open;
+  }
+
   if (isCustomerPublicPath(request.nextUrl.pathname)) {
     const open = NextResponse.next();
     open.headers.set("Referrer-Policy", "no-referrer");

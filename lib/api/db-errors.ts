@@ -42,6 +42,8 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_TASK_NOT_COMPLETER: [403, "TASK_NOT_COMPLETER"],
   CRM_TASK_ASSIGNEE_INVALID: [422, "TASK_ASSIGNEE_INVALID"],
   CRM_TASK_PAST_DUE: [400, "TASK_PAST_DUE"],
+  // 20260929230000_crm_reports
+  CRM_REPORT_RECIPIENT_INVALID: [422, "REPORT_RECIPIENT_INVALID"],
   CRM_TASK_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
   CRM_TASK_INVALID: [400, "VALIDATION"],
   CRM_TASK_ACTOR_REQUIRED: [400, "VALIDATION"],
@@ -179,6 +181,15 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_cost_budgets_note_check: [400, "VALIDATION"],
   crm_cost_budgets_active_scope_key: [409, "COST_BUDGET_EXISTS"],
   crm_cost_settings_sms_price_check: [400, "VALIDATION"],
+  // 20260929230000_crm_reports
+  crm_report_subscriptions_name_check: [400, "VALIDATION"],
+  crm_report_subscriptions_recipients_check: [400, "VALIDATION"],
+  crm_report_subscriptions_frequency_check: [400, "VALIDATION"],
+  crm_report_subscriptions_time_check: [400, "VALIDATION"],
+  crm_report_subscriptions_weekday_check: [400, "VALIDATION"],
+  crm_report_subscriptions_day_check: [400, "VALIDATION"],
+  crm_report_subscriptions_sections_check: [400, "VALIDATION"],
+  crm_report_subscriptions_timezone_check: [400, "VALIDATION"],
 };
 
 export function mapDbError(err: DbErrorLike): MappedDbError {

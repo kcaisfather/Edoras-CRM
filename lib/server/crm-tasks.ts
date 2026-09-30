@@ -274,6 +274,15 @@ export async function listTasks(
   );
 }
 
+/**
+ * Rapor e-postası (lib/server/reports.ts): ekibin TÜM açık görevleri (kural + atanan; soğuk liste görevi yok, tamamlananlar
+ * yok). Görünürlük süzmesi (atanmış görev yalnız atanana + ADMIN) çağıranda, alıcı başına yapılır — bağlam bir kez yüklenir.
+ */
+export async function listOpenTasksForReport(): Promise<CrmTaskDto[]> {
+  const ctx = await loadContext();
+  return mergeTasks(deriveTasks(ctx.input, ctx.rules, todayIso()), ctx.stored, ctx).filter((t) => t.status === "OPEN");
+}
+
 /** Menü rozeti: çağıranın gördüğü gecikmiş + bugün açık görev sayısı. */
 export async function dueTaskCount(staff: StaffContext): Promise<number> {
   const today = todayIso();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessPathFor, filterNavGroups, homePathFor, isCustomerPublicPath, isPublicPath, panelRoleOf } from "./permissions";
+import { canAccessPathFor, filterNavGroups, homePathFor, isCronPath, isCustomerPublicPath, isPublicPath, panelRoleOf } from "./permissions";
 
 describe("permissions", () => {
   it("rol bilinmiyorsa en dar yetki", () => {
@@ -111,5 +111,17 @@ describe("filterNavGroups", () => {
   it("CRM_AGENT yönetici öğelerini ve boş grupları görmez", () => {
     const out = filterNavGroups(groups, { isAdmin: false, canAccessPath: (h) => canAccessPathFor("CRM_AGENT", h) });
     expect(out.map((g) => g.key)).toEqual(["main", "customers"]);
+  });
+  it("zamanlayıcı yolu oturumsuzdur ama müşteriye açık değildir", () => {
+    expect(isCronPath("/api/cron/reports")).toBe(true);
+    expect(isCronPath("/api/cron")).toBe(true);
+    expect(isCronPath("/api/cronx")).toBe(false);
+    expect(isCronPath("/api/reports/subscriptions")).toBe(false);
+    expect(isCronPath("/settings")).toBe(false);
+    expect(isCronPath(null)).toBe(false);
+    expect(isCustomerPublicPath("/api/cron/reports")).toBe(false);
+    expect(isPublicPath("/api/cron/reports")).toBe(false);
+    // CRM_AGENT sayfa olarak da erişemez.
+    expect(canAccessPathFor("CRM_AGENT", "/api/cron/reports")).toBe(false);
   });
 });

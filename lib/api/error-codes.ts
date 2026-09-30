@@ -54,6 +54,7 @@ export const API_ERROR_CODES = [
   "BILLING_PROFILE_INCOMPLETE",
   "RATE_LIMITED",
   "COST_BUDGET_EXISTS",
+  "REPORT_RECIPIENT_INVALID",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

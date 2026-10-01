@@ -2,6 +2,8 @@ import { assertSameOrigin, ok, requireStaff, requireUuid, route } from "@/lib/ap
 import { retryInvoice } from "@/lib/server/invoices";
 
 export const dynamic = "force-dynamic";
+/** Platform faturası (Paraşüt) resmileştirme işini bekler: en çok ~30 sn. */
+export const maxDuration = 60;
 
 type Ctx = { params: Promise<{ id: string }> };
 

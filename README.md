@@ -80,11 +80,14 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    - Faturalar: isteğe bağlı `ACCOUNTANT_EMAIL` (fatura talebinin gideceği muhasebeci adresi; `RESEND_API_KEY` +
      `EMAIL_FROM` ile birlikte doluysa "E-posta ile talep" açılır, yoksa 503 `MAIL_NOT_CONFIGURED` ve ekran "Elle kayıt"ı
      önerir). İsteğe bağlı `PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`,
-     `PARASUT_COMPANY_ID` (hepsi doluysa sağlayıcı "yapılandırıldı" görünür; gerçek Paraşüt istemcisi henüz yazılmadı)
+     `PARASUT_COMPANY_ID` (beşi de doluysa "Platforma aktar" açılır ve fatura Paraşüt'te kesilir) + isteğe bağlı
+     `PARASUT_PRODUCT_ID` (fatura kalemindeki hizmet; boşsa `EDORAS-LISANS` kodlu hizmet bulunur ya da açılır)
 3. **Migration'ları CRM projesine sırayla uygulayın** (bir kez): `supabase/migrations/*.sql` (ad sırasıyla;
    `20260929160000_crm_leads.sql` adaylar ve notlar, `20260929170000_crm_tasks.sql` görevler ve takip kuralları,
    `20260929180000_crm_prospects.sql` soğuk listeler ve kişileri, `20260929190000_crm_surveys.sql` anketler, davetler
-   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar, `20260929230000_crm_reports.sql` rapor abonelikleri ve gönderim kaydı — **henüz uygulanmadı**).
+   ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar, `20260929230000_crm_reports.sql` rapor abonelikleri ve gönderim kaydı, `20261001090000_crm_invoice_provider_refs.sql`
+   Paraşüt satış faturası / iş kimlikleri). **Durum (2026-10-01): hepsi CRM projesine uygulandı**; yeni migration eklenince
+   MCP `list_migrations` ile karşılaştırın.
    Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
@@ -229,9 +232,19 @@ zamanında olur. Kesinti sonrası kaçırılan çalışmalar birikmez (tek e-pos
     muhasebeci keser. Gönderilirse `SENT`, olmazsa `FAILED` + kısa hata kodu (`resend:422`…). Resend ya da adres yoksa
     satır açılmaz, 503 `MAIL_NOT_CONFIGURED`.
   - **Elle kayıt**: faturayı başka yerde kestiniz; numara + tarih kaydedilir, `ISSUED`.
-  - **Platforma aktar (Paraşüt)**: `lib/server/invoices.ts` → `InvoiceProvider` arayüzü hazır, istemci yazılmadı
-    (kimlik bilgisi yok; TODO orada). `GET /api/sales/invoices/providers` PARASUT için `configured: false` döner
-    (`PARASUT_*` ortam değişkenleri tümüyle doluysa `true`, ama çağrı `parasut:not-implemented` ile FAILED olur).
+  - **Platforma aktar (Paraşüt)**: istemci `lib/server/parasut-client.ts` (Paraşüt API v4; birim testi sahte sunucuyla),
+    bağlantı `lib/server/invoices.ts`. Akış: OAuth2 password grant → müşteri (VKN/TCKN ile ara, yoksa aç) → hizmet
+    (`PARASUT_PRODUCT_ID` ya da `EDORAS-LISANS` kodlu, yoksa açılır) → taslak satış faturası (1 kalem: net + KDV oranı,
+    TRL) → e-Fatura mükellefi sorgusu (`/e_invoice_inboxes`; kutusu varsa e-Fatura temel senaryo, yoksa e-Arşiv) →
+    resmileştirme işi (trackable job, ~25 sn beklenir) → GİB fatura numarası + tür (`E_FATURA` / `E_ARSIV`), `ISSUED`.
+    **Çift fatura koruması:** Paraşüt satış faturası kimliği açılır açılmaz satıra yazılır (`provider_ref`, bir kez yazılır —
+    tetikleyici değiştirmeyi reddeder), süren iş `provider_job`'da. İş süre içinde bitmezse `FAILED` + `parasut:pending`;
+    "Yeniden dene" yeni fatura AÇMAZ, aynı işi sorar / gerekirse yalnız resmileştirmeyi yineler. Hata kodları kısa
+    (`parasut:<adım>:<http>`, ör. `parasut:auth:401`, `parasut:invoice:422`); Paraşüt gövdesi saklanmaz. **PDF**
+    saklanmaz (Paraşüt adresi 1 saat geçerli): Faturalar'daki PDF düğmesi `GET /api/sales/invoices/{id}/pdf`'e gider, uç her
+    açılışta taze adrese yönlendirir (hazır değilse 409 `INVOICE_PDF_NOT_READY`). Fatura uçlarında `maxDuration = 60`.
+    İlk kullanımda bir test faturasıyla Paraşüt panelinde müşteri / hizmet / belge kontrol edilmeli (canlı hesapla
+    uçtan uca denenmedi).
   - Yeniden deneme yalnız `FAILED` (`POST /api/sales/invoices/{id}/retry`; koşullu güncelleme: iki eşzamanlı istekten biri
     gönderir). Aynı `Idempotency-Key` (başlık ya da gövde) yeni satır açmaz, var olanı döndürür (200; yeni fatura 201).
     DeepSport'ta iptal ucu yok → `CANCELLED` durumu şemada var, uç yok.
@@ -240,7 +253,7 @@ zamanında olur. Kesinti sonrası kaçırılan çalışmalar birikmez (tek e-pos
 - **Fatura profili** `crm_institutions`'ta (ayrı tablo yok): kurum ayrıntısı → "Fatura bilgileri" (`GET / PUT
   /api/institutions/{id}/billing`; PATCH eski adı). Tür (bireysel = TC, kurumsal = Vergi No) kimlikten türetilir. Ücretliye
   geçiş ve kayda alma formları yalnız adres + kimlik ister (profil sonradan tamamlanır); ücretliye geçişte tür boşalır.
-- Uçlar: `GET /api/sales/payments`, `GET|POST /api/sales/invoices`, `POST /api/sales/invoices/{id}/retry`,
+- Uçlar: `GET /api/sales/payments`, `GET|POST /api/sales/invoices`, `POST /api/sales/invoices/{id}/retry`, `GET /api/sales/invoices/{id}/pdf`,
   `GET /api/sales/invoices/providers|options`. İşlem kaydı: `INVOICE_CREATED / _ISSUED / _FAILED / _RETRIED`, `BILLING_UPDATED`
   (tutar, yöntem, durum, satış referansı; e-posta, adres, TC/VKN, unvan yazılmaz).
 
@@ -297,20 +310,23 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 | --- | --- |
 | Kurumlar, demo, lisans, ödeme | ✔ |
 | Ayarlar: Genel, Ekip (hesap aç, rol, erişim, şifre sıfırla), Kurallar, Raporlar, Veri kalitesi (iç kurumlar), Hata kaydı, KVKK | ✔ |
-| Raporlar (Ayarlar → Raporlar, yalnız ADMIN): zamanlanmış rapor e-postaları — abonelik listesi ve düzenleyici (ad, alıcılar = aktif CRM personeli, sıklık, saat, gün, 6 bölüm, aktif), sunucuda üretilen ve role göre süzülen önizleme, metni kopyala, "Şimdi gönder" (onaylı), silme; dağıtıcı `POST /api/cron/reports` (CRON_SECRET), `vercel.json` cron. Uçlar `/api/reports/*`; `crm_report_subscriptions`, `crm_report_runs` (migration `20260929230000_crm_reports.sql` — **CRM projesine uygulanmalı**) | ✔ (alıcı serbest e-posta değil personel; localStorage taslağı yok — nedenleri raporda) |
+| Raporlar (Ayarlar → Raporlar, yalnız ADMIN): zamanlanmış rapor e-postaları — abonelik listesi ve düzenleyici (ad, alıcılar = aktif CRM personeli, sıklık, saat, gün, 6 bölüm, aktif), sunucuda üretilen ve role göre süzülen önizleme, metni kopyala, "Şimdi gönder" (onaylı), silme; dağıtıcı `POST /api/cron/reports` (CRON_SECRET), `vercel.json` cron. Uçlar `/api/reports/*`; `crm_report_subscriptions`, `crm_report_runs` (migration `20260929230000_crm_reports.sql`, uygulandı) | ✔ (alıcı serbest e-posta değil personel; localStorage taslağı yok — nedenleri raporda) |
 | İşlem kaydı altyapısı (`crm_audit_logs`) | ✔ (ekranı: Aktivite geçmişi) |
 | CRM adayları + notlar (`/crm`): liste, aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar, olası mükerrer), detay, ekle/düzenle, notlar (şikâyet, devir, program etiketi), iletişim menüsü, adaydan demo aç / kuruma bağla, tahsilat (= bağlı kurumun `crm_payments`'ı), CSV; kurum ayrıntısında "CRM adayı" kartı; Ana sayfada açık alacak | ✔ |
 | Satış Analizleri (`/crm/analytics`): satış hunisi, aylık / müşteri satış kırılımları | ✔ |
 | Görevlerim + kural motoru (`/crm/tasks`, `/crm/rules`, Ayarlar → Kurallar): gecikmiş / bugün / yaklaşan, tamamla (sonuç + not + statü / sonraki arama, tek transaction), geri al, "Görev ata" ve "Arama listesine ekle" (aday satırı, mobil kart, detay), menü rozeti; `crm_tasks`, `crm_rules` | ✔ (en iyi arama saati yok) |
 | Soğuk listeler + Excel/CSV içe aktarma (`/crm/cold-lists`, Adaylar → "İçe aktar"): liste seçici, sonuç süzgeci ve toplu sonuç kaydı, "Sıcağa taşı" (aday + not tek transaction), CSV, şablon; içe aktarma (sütun eşleme, önizleme, mükerrer çözümü, sunucu doğrulaması ve atlanan satırların nedenleri); Görevlerim'de "Soğuk liste araması" (kaynak süzgeci, sonuç gir); KVKK envanteri; `crm_prospect_lists`, `crm_prospects` | ✔ (Arama Kuyruğu / Süresi Dolacaklar / müşteri sekmelerindeki içe aktarma yok — ekranlar yok) |
-| Satış ve faturalar (`/payment-history`, `/sales/invoices`, yalnız ADMIN): Ödeme Geçmişi (tüm kurumların ödemeleri, süzgeç, sayfalama, toplam, fatura rozeti), Faturalar (durum sekmeleri, tarih, sayfalama, CSV, yeniden dene), "Fatura kes" (kurum ödeme satırı, aday satırı / detayı; e-posta talebi Resend + `ACCOUNTANT_EMAIL`, elle kayıt, Paraşüt arayüzü hazır — istemci yok), genişletilmiş fatura profili (`crm_institutions` sütunları, "Fatura bilgileri" formu), KVKK envanteri; `crm_invoices` | ✔ (Paraşüt entegrasyonu yok; e-Fatura mükellef sorgusu yok; iptal ucu DeepSport'ta da yok) |
+| Satış ve faturalar (`/payment-history`, `/sales/invoices`, yalnız ADMIN): Ödeme Geçmişi (tüm kurumların ödemeleri, süzgeç, sayfalama, toplam, fatura rozeti), Faturalar (durum sekmeleri, tarih, sayfalama, CSV, yeniden dene), "Fatura kes" (kurum ödeme satırı, aday satırı / detayı; e-posta talebi Resend + `ACCOUNTANT_EMAIL`, elle kayıt, Paraşüt'te e-Fatura / e-Arşiv + PDF), genişletilmiş fatura profili (`crm_institutions` sütunları, "Fatura bilgileri" formu), KVKK envanteri; `crm_invoices` | ✔ (Paraşüt canlı hesapla denenmedi; fatura iptali yok — DeepSport'ta da yok) |
 | Anketler (`/crm/surveys`, herkese açık `/s/[token]`): özet (NPS, dağılım, yanıt oranı, memnuniyet ort.), gönderimler (süzgeç, CSV, kopyala / WhatsApp hatırlatması / "Gönderdim" / e-postayı yeniden gönder), yanıtlar (süzgeç, CSV), anket tanımı ve önizleme; "Anket gönder" (Adaylar satırı, mobil kart, aday detayı; sayfadan toplu: adaylar + adayı olmayan kurumlar); memnuniyet rozeti (tablo, mobil kart, detay) ve kurum ayrıntısında memnuniyet kartı; Görevlerim'de "Anket araması" (`surveyNoResponse`) + WhatsApp hatırlatması; e-posta Resend ile (isteğe bağlı); KVKK envanteri; `crm_surveys`, `crm_survey_invitations`, `crm_survey_responses` | ✔ (eleştirmen ticket'ı yok — DeepSport'ta da yok) |
 | Müşteri analizleri (`/growth/customers`, `/growth/analytics`): Müşteri Takibi (Hepsi / Kullanıyor / Kullanmıyor, Süresi Dolacaklar kovaları, Sadık top 50 + Kampanya (WhatsApp bağlantıları, CSV), hazır süzgeçler, segmentler; kurum türü süzgeci, arama, sıralama, CSV), Müşteri Analizleri (kartlar, kullanım dağılımı ve kaynak bazında etkinlik, haftalık büyüme, gelir sızıntısı, retention & churn + kohort, birim ekonomisi — ADMIN); kurum ayrıntısında "Kullanım" kartı; Edoras'tan salt okunur etkinlik sinyalleri, migration yok | ✔ (Genişleme, kanal, AWS maliyeti / CAC, e-posta kampanyası, telemetri yok — nedenleri yukarıda) |
 | Aktivite geçmişi (`/activity-history`, yalnız ADMIN, menü "Aktivite"): iki kapsam. **Kurum etkinliği**: Edoras'tan salt okunur, birleşik ve sayfalı zaman çizelgesi (yoklama, ödev, deneme oluşturma / sonuç yayını, konu işleme, duyuru, elle SMS); kurum + olay türü + tarih süzgeci, en çok 90 gün (varsayılan 7), en yeni 1000 olay gezilebilir; satırda yalnız zaman, kurum, tür, sayı ve kişinin rolü (ad / öğrenci verisi yok); iç kurumlar kurum seçilmeden listelenmez. **CRM işlem kaydı**: `crm_audit_logs` (kişi, eylem, kayıt türü, tarih süzgeci; `details` düz metin çipleri). Uçlar `/api/activity/*`, migration yok | ✔ |
-| Maliyetler (`/costs`, yalnız ADMIN, menü "Operasyon"): Genel bakış (bu ay, ay sonu tahmini, geçen ay, hizmet payı halkası, 12 aylık eğilim, uyarılar, Edoras'a göre tahmini SMS), Hizmetler (hizmet × 12 ay, ayrıntı, SMS birim fiyatı), Kayıtlar (elle ekle / düzenle / sil, CSV-Excel içe aktarma), Kurumlar (ortak maliyet aktif öğrenciyle + kurumun SMS'i, lisans gelirine göre marj), Bütçeler (CRUD), Uyarılar (okuma anında hesaplanır: yumuşak / sert eşik, aşım tahmini, aylık sıçrama), Dışa aktar (CSV). Uçlar `/api/costs/*`; `crm_cost_entries`, `crm_cost_budgets`, `crm_cost_settings` (migration `20260929220000_crm_costs.sql` — **CRM projesine uygulanmalı**) | ✔ (Microservices, Query, Reconcile, AWS CE/CUR yok — nedenleri raporda) |
+| Maliyetler (`/costs`, yalnız ADMIN, menü "Operasyon"): Genel bakış (bu ay, ay sonu tahmini, geçen ay, hizmet payı halkası, 12 aylık eğilim, uyarılar, Edoras'a göre tahmini SMS), Hizmetler (hizmet × 12 ay, ayrıntı, SMS birim fiyatı), Kayıtlar (elle ekle / düzenle / sil, CSV-Excel içe aktarma), Kurumlar (ortak maliyet aktif öğrenciyle + kurumun SMS'i, lisans gelirine göre marj), Bütçeler (CRUD), Uyarılar (okuma anında hesaplanır: yumuşak / sert eşik, aşım tahmini, aylık sıçrama), Dışa aktar (CSV). Uçlar `/api/costs/*`; `crm_cost_entries`, `crm_cost_budgets`, `crm_cost_settings` (migration `20260929220000_crm_costs.sql`, uygulandı) | ✔ (Microservices, Query, Reconcile, AWS CE/CUR yok — nedenleri raporda) |
 
 ## DeepSportAdmin'den sıradaki modüller
 
 Taşındıkça `components/navigation.tsx` → `NAV_GROUPS` ve `lib/permissions.ts` → `CRM_AGENT_PATHS` güncellenir.
 
-1. Paraşüt istemcisi (Satış ve faturalar → "Platforma aktar"; `InvoiceProvider` arayüzü hazır)
+Yok — DeepSport CRM'inin taşınabilir bütün modülleri taşındı (2026-10-01). Bilerek bırakılanlar (veri yok / Edoras'ta
+kavram yok): Antrenör / Takım / Sporcu / Hesaplar ekranları (yerine Kurumlar), `/analytics` telemetri, Maliyetler'de
+Microservices / Query / Reconcile ve AWS maliyeti, genişleme (koltuk), kanal sekmeleri, CAC / ROAS, kampanyada e-posta,
+en iyi arama saati, kayıtlı görünümler. Açık iş: Paraşüt'ün canlı hesapla ilk denemesi; fatura iptali (iki tarafta da yok).

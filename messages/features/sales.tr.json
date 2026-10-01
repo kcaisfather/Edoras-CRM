@@ -75,7 +75,7 @@
     "retryFailedAgain": "Yine hata: {error}",
     "retryError": "İstek başarısız oldu",
     "statusNote": "\"Gönderildi\": fatura talebi e-postayla muhasebeciye iletildi, kesim muhasebecide. \"Kesildi\": fatura kesilmiş ve numarası kayıtlı (elle kayıt ya da platform).",
-    "providerNote": "Platform (Paraşüt) entegrasyonu henüz bağlı değil; faturalar e-posta talebi ya da elle kayıtla yönetilir.",
+    "providerNote": "Platform (Paraşüt): fatura Paraşüt’te kesilip e-Fatura / e-Arşiv olarak resmileştirilir. \"parasut:pending\" hatası resmileştirmenin sürdüğünü gösterir; Yeniden dene yeni fatura açmaz, aynı işi sorar.",
     "paymentAction": {
       "issue": "Fatura kes",
       "status": "Fatura: {status}",
@@ -98,11 +98,11 @@
       "modeHints": {
         "EMAIL": "Fatura talebi muhasebeciye (isterseniz müşteriye de) e-postayla gider; faturayı muhasebeci keser.",
         "MANUAL": "Faturayı başka yerde kestiniz: numarasını ve tarihini kaydedin, fatura \"Kesildi\" olur.",
-        "PROVIDER": "Fatura Paraşüt'te oluşturulur ve resmileştirilir; PDF ve fatura no buraya döner."
+        "PROVIDER": "Fatura Paraşüt'te oluşturulur ve resmileştirilir; fatura no buraya döner, PDF Faturalar listesinden açılır."
       },
       "emailUnavailableTitle": "E-posta yöntemi kapalı",
       "emailUnavailableBody": "Sunucuda RESEND_API_KEY, EMAIL_FROM ve muhasebeci adresi (ACCOUNTANT_EMAIL) tanımlı değil. Faturayı başka yerde kestiyseniz \"Elle kayıt\" yöntemini kullanın.",
-      "providerUnavailable": "Paraşüt bağlantısı henüz kurulmadı (API anahtarları yok); bu yöntem kapalı.",
+      "providerUnavailable": "Paraşüt API anahtarları sunucuda tanımlı değil (PARASUT_*); bu yöntem kapalı.",
       "billingProfile": "Müşteri fatura profili",
       "billingProfileLink": "Kurum sayfasında tamamla",
       "amount": "Tutar (₺)",

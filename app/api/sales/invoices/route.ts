@@ -3,6 +3,8 @@ import { createInvoiceSchema, invoiceListQuerySchema } from "@/lib/domain/invoic
 import { createInvoice, listInvoices } from "@/lib/server/invoices";
 
 export const dynamic = "force-dynamic";
+/** Platform faturası (Paraşüt) resmileştirme işini bekler: en çok ~30 sn. */
+export const maxDuration = 60;
 
 /**
  * Faturalar. Süzgeç: status, institutionId, from, to (fatura tarihi), saleRef (`payment:<id>` / `license:<id>` — aynı

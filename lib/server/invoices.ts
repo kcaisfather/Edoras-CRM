@@ -27,6 +27,7 @@ import { recordAudit } from "./audit";
 import { fetchAll } from "./edoras";
 import { CRM_COLUMNS, toProfile, type CrmRow } from "./institutions";
 import { isMailConfigured, sendMail } from "./mail";
+import { activeDocument, documentPdfUrl, issueWithParasut, type ParasutConfig, type ParasutRefs } from "./parasut-client";
 import { pgChain, type PgChain } from "./pg-chain";
 import { staffNameMap } from "./staff";
 
@@ -35,7 +36,9 @@ import { staffNameMap } from "./staff";
  *  - EMAIL: fatura talebi Resend ile muhasebeci adresine (env ACCOUNTANT_EMAIL) — ve istenirse müşterinin fatura
  *    e-postasına — gider; muhasebeci keser. Resend ya da adres yoksa 503 MAIL_NOT_CONFIGURED (satır açılmaz).
  *  - MANUAL: fatura başka yerde kesildi; numara + tarih kaydedilir (doğrudan ISSUED).
- *  - PROVIDER: sağlayıcı entegrasyonu (Paraşüt). Kimlik bilgisi yok → yapılandırılmamış (503 PROVIDER_NOT_CONFIGURED).
+ *  - PROVIDER: Paraşüt (`./parasut-client.ts`): müşteri → satış faturası → e-Fatura / e-Arşiv. Ortam değişkenleri yoksa
+ *    503 PROVIDER_NOT_CONFIGURED. Paraşüt'teki satış faturası / iş kimliği satırda (provider_ref / provider_job): yeniden
+ *    deneme ikinci fatura açmaz. PDF istendiğinde Paraşüt'ten taze (1 saatlik) adresle verilir (`getInvoicePdfUrl`).
  *
  * KURAL: fatura yalnız fatura bilgisi (adres + TC/VKN) tam kuruma açılır — veritabanı zorlar (crm_guard_invoice,
  * CRM_BILLING_REQUIRED). E-posta / platform yöntemleri ayrıca tam fatura profili ister (unvan, il, ilçe, e-posta,
@@ -47,12 +50,25 @@ import { staffNameMap } from "./staff";
 
 export interface ProviderIssueInput {
   invoiceId: string;
-  customerName: string;
+  customer: {
+    kind: "COMPANY" | "INDIVIDUAL";
+    name: string;
+    taxNumber: string;
+    taxOffice: string | null;
+    address: string | null;
+    district: string | null;
+    city: string | null;
+    email: string | null;
+  };
   net: number;
   vatRate: number;
   gross: number;
   description: string;
   issueDate: string;
+  /** Yarım kalmış denemenin sağlayıcı referansları (satış faturası / iş). */
+  refs: ParasutRefs;
+  /** Referans değişince satıra yazar (çift fatura koruması; hata fırlatırsa akış durur). */
+  saveRefs: (refs: ParasutRefs) => Promise<void>;
 }
 
 export type ProviderIssueResult =
@@ -60,8 +76,8 @@ export type ProviderIssueResult =
   | { ok: false; error: string };
 
 /**
- * Fatura sağlayıcısı arayüzü (DeepSport InvoiceProvider). Paraşüt: müşteri (GİB e-Fatura mükellefi sorgusu) → taslak →
- * resmileştirme (e-Fatura / e-Arşiv müşterinin kaydına göre) → PDF + fatura no.
+ * Fatura sağlayıcısı arayüzü (DeepSport InvoiceProvider). Paraşüt: müşteri → taslak satış faturası → resmileştirme
+ * (e-Fatura / e-Arşiv müşterinin GİB kaydına göre) → fatura no.
  */
 export interface InvoiceProvider {
   code: InvoiceProviderCode;
@@ -70,18 +86,39 @@ export interface InvoiceProvider {
   issue(input: ProviderIssueInput): Promise<ProviderIssueResult>;
 }
 
-/** Paraşüt ortam değişkenleri (hepsi dolu değilse yapılandırılmamış). */
+/** Paraşüt ortam değişkenleri (hepsi dolu değilse yapılandırılmamış). PARASUT_PRODUCT_ID isteğe bağlı. */
 const PARASUT_ENV = ["PARASUT_CLIENT_ID", "PARASUT_CLIENT_SECRET", "PARASUT_USERNAME", "PARASUT_PASSWORD", "PARASUT_COMPANY_ID"] as const;
+
+function parasutConfig(): ParasutConfig | null {
+  const v = (name: string) => process.env[name]?.trim() ?? "";
+  if (!PARASUT_ENV.every((name) => v(name))) return null;
+  return {
+    clientId: v("PARASUT_CLIENT_ID"),
+    clientSecret: v("PARASUT_CLIENT_SECRET"),
+    username: v("PARASUT_USERNAME"),
+    password: v("PARASUT_PASSWORD"),
+    companyId: v("PARASUT_COMPANY_ID"),
+    productId: v("PARASUT_PRODUCT_ID") || null,
+  };
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const parasut: InvoiceProvider = {
   code: "PARASUT",
   name: "Paraşüt",
-  isConfigured: () => PARASUT_ENV.every((name) => Boolean(process.env[name]?.trim())),
-  // TODO(Paraşüt): gerçek istemci yazılmadı (kimlik bilgisi yok). Yapılacaklar: OAuth2 (password grant) → /contacts
-  // (VKN/TCKN ile ara, yoksa oluştur; e-Fatura mükellefi sorgusu: /e_invoice_inboxes) → /sales_invoices (taslak,
-  // açıklama + KDV) → /e_invoices ya da /e_archives (resmileştirme) → PDF adresi + fatura no. Başarısızlıkta
-  // { ok: false, error: "parasut:<http durumu>" } (sağlayıcı gövdesi ve alıcı bilgisi döndürülmez).
-  issue: async () => ({ ok: false, error: "parasut:not-implemented" }),
+  isConfigured: () => parasutConfig() != null,
+  issue: async (input) => {
+    const config = parasutConfig();
+    if (!config) return { ok: false, error: "parasut:not-configured" };
+    const result = await issueWithParasut(
+      config,
+      { customer: input.customer, description: input.description, net: input.net, vatRate: input.vatRate, issueDate: input.issueDate },
+      input.refs,
+      { fetch, sleep, saveRefs: input.saveRefs }
+    );
+    return result.ok ? { ok: true, invoiceNo: result.invoiceNo, type: result.type } : { ok: false, error: result.error };
+  },
 };
 
 const PROVIDERS: Record<InvoiceProviderCode, InvoiceProvider | null> = { PARASUT: parasut, LOGO: null, OTHER: null };
@@ -107,7 +144,7 @@ export function getInvoiceOptions(): InvoiceOptions {
 // --- Satırlar ------------------------------------------------------------------------------------
 
 const INVOICE_COLUMNS =
-  "id, institution_id, payment_id, license_id, customer_name, mode, provider, type, recipient_emails, amount, net_amount, vat_rate, vat_amount, currency, description, issue_date, status, invoice_no, pdf_url, error, attempts, note, created_at, issued_at, created_by";
+  "id, institution_id, payment_id, license_id, customer_name, mode, provider, type, recipient_emails, amount, net_amount, vat_rate, vat_amount, currency, description, issue_date, status, invoice_no, pdf_url, error, attempts, note, created_at, issued_at, created_by, provider_ref, provider_job";
 
 interface InvoiceRow {
   id: string;
@@ -135,7 +172,13 @@ interface InvoiceRow {
   created_at: string;
   issued_at: string | null;
   created_by: string | null;
+  provider_ref: string | null;
+  provider_job: string | null;
 }
+
+/** Paraşüt faturasının PDF'i saklanmaz (adres 1 saat geçerli): kesilmişse bu uç her açılışta taze adrese yönlendirir. */
+const providerPdfPath = (row: InvoiceRow): string | null =>
+  row.provider === "PARASUT" && row.provider_ref && row.status === "ISSUED" ? `/api/sales/invoices/${row.id}/pdf` : null;
 
 function toInvoice(row: InvoiceRow, names: Map<string, string>): Invoice {
   return {
@@ -157,7 +200,7 @@ function toInvoice(row: InvoiceRow, names: Map<string, string>): Invoice {
     issueDate: row.issue_date,
     status: row.status,
     invoiceNo: row.invoice_no,
-    pdfUrl: row.pdf_url,
+    pdfUrl: row.pdf_url ?? providerPdfPath(row),
     error: row.error,
     attempts: row.attempts,
     note: row.note,
@@ -383,15 +426,34 @@ async function deliver(row: InvoiceRow, crm: CrmRow, profile: Profile, staff: St
     update = { ...outcomeAfterMail(attemptsBefore, first.ok ? { ok: true } : { ok: false, error: first.error }), recipient_emails: delivered };
   } else {
     const provider = PROVIDERS[row.provider ?? "PARASUT"];
+    const company = effectiveBillingType(profile) === "COMPANY";
+    const taxNumber = (company ? profile.taxNo : profile.tcNo) ?? profile.taxNo ?? profile.tcNo ?? "";
     const result: ProviderIssueResult = provider
       ? await provider.issue({
           invoiceId: row.id,
-          customerName: row.customer_name,
+          customer: {
+            kind: company ? "COMPANY" : "INDIVIDUAL",
+            name: row.customer_name,
+            taxNumber,
+            taxOffice: company ? profile.taxOffice : null,
+            address: profile.address,
+            district: profile.district,
+            city: profile.city,
+            email: profile.email,
+          },
           net: Number(row.net_amount),
           vatRate: Number(row.vat_rate),
           gross: Number(row.amount),
           description: row.description,
           issueDate: row.issue_date,
+          refs: { salesInvoiceId: row.provider_ref, jobId: row.provider_job },
+          saveRefs: async (refs) => {
+            const { error } = await db
+              .from("crm_invoices")
+              .update({ provider_ref: refs.salesInvoiceId, provider_job: refs.jobId })
+              .eq("id", row.id);
+            if (error) throw dbError(error);
+          },
         })
       : { ok: false, error: "provider:not-configured" };
     update = result.ok
@@ -453,4 +515,26 @@ export async function retryInvoice(id: string, staff: StaffContext): Promise<Inv
 
   const row = await deliver(claimed[0] as unknown as InvoiceRow, crm, profile, staff);
   return toInvoice(row, await staffNameMap());
+}
+
+/**
+ * Paraşüt'te kesilmiş faturanın PDF adresi (Paraşüt'ün imzalı adresi, 1 saat geçerli; saklanmaz). PDF henüz
+ * üretilmediyse 409 INVOICE_PDF_NOT_READY; Paraşüt faturası değilse 404.
+ */
+export async function getInvoicePdfUrl(id: string): Promise<string> {
+  const row = await loadInvoice(id);
+  if (row.pdf_url) return row.pdf_url;
+  if (row.provider !== "PARASUT" || !row.provider_ref || row.status !== "ISSUED") throw new HttpError(404, "NOT_FOUND");
+  const config = parasutConfig();
+  if (!config) throw new HttpError(503, "PROVIDER_NOT_CONFIGURED");
+  const deps = { fetch, sleep };
+  try {
+    const doc = await activeDocument(config, deps, row.provider_ref);
+    const url = doc ? await documentPdfUrl(config, deps, doc) : null;
+    if (!url) throw new HttpError(409, "INVOICE_PDF_NOT_READY");
+    return url;
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
+    throw new HttpError(502, "PROVIDER_ERROR");
+  }
 }

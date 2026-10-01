@@ -69,6 +69,8 @@
         "COST_BUDGET_EXISTS":"Bu kapsam için zaten aktif bir bütçe var. Önce onu pasife alın ya da düzenleyin.",
         "PROVIDER_NOT_CONFIGURED": "Fatura platformunun (Paraşüt) API anahtarları tanımlı değil.",
         "INVOICE_NOT_RETRYABLE": "Yalnız başarısız e-posta ya da platform faturası yeniden denenebilir.",
+        "INVOICE_PDF_NOT_READY": "Faturanın PDF'i Paraşüt'te henüz hazır değil; birkaç dakika sonra yeniden deneyin.",
+        "PROVIDER_ERROR": "Fatura platformuna (Paraşüt) ulaşılamadı. Biraz sonra yeniden deneyin.",
         "BILLING_PROFILE_INCOMPLETE": "Fatura profili eksik: unvan, il, ilçe, fatura e-postası (kurumsalda vergi dairesi) kurum sayfasından tamamlanmalı."
       }
     },

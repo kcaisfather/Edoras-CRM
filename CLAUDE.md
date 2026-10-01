@@ -1,7 +1,20 @@
 # EdorasCRM — ajan notları
 
 Edoras'ın şirket içi paneli (kurum / demo / lisans / ödeme). DeepSportAdmin'den (`Desktop/DeepSportAdmin`)
-kopyalanıp Supabase'e taşındı; yeni modüller oradan taşınır. Ayrıntı: `README.md`.
+kopyalanıp Supabase'e taşındı (DeepSport'un taşınabilir modüllerinin hepsi taşındı, 2026-10-01). Ayrıntı: `README.md`.
+Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
+
+> **Modüler hafıza:** konu başına notlar `docs/memory/EdorasCRM/` altında — önce
+> [docs/memory/EdorasCRM/index.md](docs/memory/EdorasCRM/index.md)'yi oku. Bir modülün davranışı, kuralı ya da ortam
+> değişkeni değişince ilgili hafıza dosyasını aynı commit'te güncelle.
+>
+> - Mimari → [architecture.md](docs/memory/EdorasCRM/architecture.md) · Veri modeli + migration listesi →
+>   [data-model.md](docs/memory/EdorasCRM/data-model.md) · Yetki → [auth.md](docs/memory/EdorasCRM/auth.md) ·
+>   Kalıplar → [patterns.md](docs/memory/EdorasCRM/patterns.md)
+> - Modüller → `docs/memory/EdorasCRM/modules/` (kurum-demo, crm-leads, tasks-rules, cold-lists-import, surveys,
+>   sales-invoices + Paraşüt, growth-analytics, activity-costs, reports, settings-team)
+> - Vercel env listesi → [reference/deploy-vercel.md](docs/memory/EdorasCRM/reference/deploy-vercel.md) · Entegrasyonlar,
+>   kararlar, runbook → `docs/memory/EdorasCRM/reference/`
 
 ## En kritik kurallar
 
@@ -15,7 +28,7 @@ kopyalanıp Supabase'e taşındı; yeni modüller oradan taşınır. Ayrıntı: 
 3. **Kural veritabanında da durur.** Sunucu `service_role` kullanır, RLS'i görmez. Demo, ücretli ve ödeme
    kuralları CRM projesinde CHECK kısıtları ve tetikleyicilerle zorunlu. Kural değişirse üç yeri birlikte
    güncelleyin: `lib/domain/institutions/{rules,schemas}.ts`, migration, testler.
-4. **SQL değişikliği önce testte.** `supabase/tests/crm-core.test.ts` (PGlite, bellek içi Postgres) ile
+4. **SQL değişikliği önce testte.** `supabase/tests/*.test.ts` (PGlite, bellek içi Postgres) ile
    doğrulanır, sonra CRM projesine uygulanır (MCP `supabase-crm` → yalnız CRM projesi; `.mcp.json`).
 5. **Veri yalnız `/api` üzerinden.** Her uç `requireStaff()` ile başlar; ADMIN işi `requireStaff({ role: "ADMIN" })`.
    CRM_AGENT'a tutar/TC/VKN/adres sunucuda boşaltılır. `service_role` anahtarları yalnız `lib/supabase/server.ts`.

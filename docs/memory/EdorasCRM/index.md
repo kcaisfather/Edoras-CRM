@@ -16,7 +16,8 @@ Supabase'e taşındı. Bu klasör ajanlar ve ekip için **modüler hafızadır**
 - CRM projesine 10 migration'ın hepsi uygulandı (son: `crm_invoice_provider_refs`, 2026-10-01).
 - Bağlantı kontrolü (2026-10-01): CRM projesi 20 tablo OK, anon anahtarı tablolara erişemiyor (RLS), Edoras canlı okuma OK.
 - **Demo açma canlıda hiç çalıştırılmadı** (işlem kaydında `DEMO_CREATED` yok). Şema uyumu salt okunur doğrulandı.
-- Vercel'e henüz dağıtılmadı → [reference/deploy-vercel.md](reference/deploy-vercel.md).
+- Vercel: `https://edorascrm.vercel.app` (Kamil projects / `edorascrm`), production env'leri eklendi; Resend ve Paraşüt
+  anahtarları henüz yok → [reference/deploy-vercel.md](reference/deploy-vercel.md).
 
 ## Çekirdek
 

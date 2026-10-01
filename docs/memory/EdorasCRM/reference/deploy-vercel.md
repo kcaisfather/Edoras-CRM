@@ -1,6 +1,11 @@
 # Vercel dağıtımı ve ortam değişkenleri
 
-Durum (2026-10-01): henüz dağıtılmadı. Framework: Next.js 16 (otomatik algılanır), build `next build`, Node 20+ (22 önerilir).
+Durum (2026-10-01): **dağıtıldı** — Vercel ekibi `kamil-nissas-projects`, proje `edorascrm`, adres
+`https://edorascrm.vercel.app` (GitHub `main`'e bağlı, her push üretime gider; yerel klasör `vercel link` ile bağlı,
+`.vercel/` git dışı). Production env'leri eklendi: Supabase CRM (3), Edoras (2), `NEXT_PUBLIC_EDORAS_PANEL_URL`,
+`NEXT_PUBLIC_APP_URL=https://edorascrm.vercel.app`, `CRON_SECRET` (aynı değer yerel `.env.local`'da). **Eksik:** Resend
+(`RESEND_API_KEY`, `EMAIL_FROM`), `ACCOUNTANT_EMAIL`, `PARASUT_*`. Preview ortamına env eklenmedi (CLI dal adı istiyor).
+Özel alan adı bağlanınca `NEXT_PUBLIC_APP_URL`'i değiştirip yeniden dağıt. Framework: Next.js 16 (otomatik algılanır), build `next build`, Node 20+ (22 önerilir).
 `vercel.json` yalnız cron içerir. Tüm değişkenler **Production** (+ istenirse Preview) ortamına eklenir. `NEXT_PUBLIC_*`
 derlemeye gömülür → değiştirince yeniden dağıt.
 

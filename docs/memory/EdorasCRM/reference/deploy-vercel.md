@@ -34,7 +34,7 @@ derlemeye gömülür → değiştirince yeniden dağıt.
 ## Dağıtım sonrası
 
 1. Supabase CRM projesi → Authentication → URL Configuration: Site URL ve Redirect URL'e üretim adresini ekle (şifre
-   sıfırlama bağlantıları için).
+   sıfırlama bağlantıları için). **Yapıldı (2026-10-01, `https://edorascrm.vercel.app`)** — alan adı değişirse güncelle.
 2. `/login` → yönetici girişi; Kurumlar listesi Edoras'tan geliyorsa iki DB bağlantısı tamam.
 3. Ayarlar → Raporlar → "Şimdi gönder" ile Resend'i dene.
 4. Cron: Vercel → Settings → Cron Jobs'ta `/api/cron/reports` görünmeli. Hobby planında günde bir kez.

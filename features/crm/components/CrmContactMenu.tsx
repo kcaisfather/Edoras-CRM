@@ -63,17 +63,8 @@ export function contactTargetFor(lead: CrmLead, displayName: string, withBalance
   };
 }
 
-/**
- * Tek tık iletişim (G20): Ara (tel:), E-posta (mailto:), WhatsApp şablonları (wa.me). Bağlantılar gönderimi
- * doğrulayamaz; tıklamada adaya yalnızca "iletişim denemesi" notu (ILETISIM) düşer.
- */
-export function CrmContactMenu({
-  target,
-  templates = CONTACT_TEMPLATES,
-}: {
-  target: ContactTarget;
-  templates?: readonly ContactTemplate[];
-}) {
+/** İletişim menüsünün ortak durumu: bağlantılar, şablon metni ve "iletişim denemesi" notu. */
+function useContactMenu(target: ContactTarget, templates: readonly ContactTemplate[]) {
   const t = useTranslations("crm.contact");
   const tTpl = useTranslations("crm.templates");
   const createNote = useCreateCrmNote();
@@ -99,64 +90,111 @@ export function CrmContactMenu({
     });
   // Bakiye şablonu yalnız kalan bakiye biliniyorsa (tutar görmeyen CRM_AGENT'a hiç verilmez).
   const shownTemplates = templates.filter((tpl) => tpl !== "balanceReminder" || !!target.remainingBalance);
+  return { tel, email, phoneInvalid, logAttempt, templateText, shownTemplates };
+}
 
+/**
+ * Menü öğeleri (Ara, E-posta, WhatsApp şablonları) — hem kendi düğmesiyle (`CrmContactMenu`) hem başka bir menünün
+ * alt menüsünde (satır "İşlemler" menüsü) kullanılır.
+ */
+export function CrmContactMenuItems({
+  target,
+  templates = CONTACT_TEMPLATES,
+}: {
+  target: ContactTarget;
+  templates?: readonly ContactTemplate[];
+}) {
+  const t = useTranslations("crm.contact");
+  const tTpl = useTranslations("crm.templates");
+  const { tel, email, phoneInvalid, logAttempt, templateText, shownTemplates } = useContactMenu(target, templates);
+  return (
+    <>
+      {phoneInvalid && (
+        <DropdownMenuLabel className="text-xs font-normal text-warning">
+          {t("phoneInvalid")}: {target.phone}
+        </DropdownMenuLabel>
+      )}
+      {/* Gerçek bağlantılar (tel:/mailto:): işletim sistemi uygulamayı açar, orta tık ve kopyalama çalışır. */}
+      {tel ? (
+        <DropdownMenuItem asChild onSelect={() => logAttempt("telefon")}>
+          <a href={tel}>
+            <Phone />
+            {t("call")} · {formatPhone(target.phone)}
+          </a>
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem disabled>
+          <Phone />
+          {t("call")}
+        </DropdownMenuItem>
+      )}
+      {email ? (
+        <DropdownMenuItem asChild onSelect={() => logAttempt("eposta")}>
+          <a href={`mailto:${email}`}>
+            <Mail />
+            {t("email")}
+          </a>
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem disabled>
+          <Mail />
+          {t("email")}
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{t("whatsapp")}</DropdownMenuLabel>
+      {shownTemplates.map((tpl) => (
+        <DropdownMenuItem
+          key={tpl}
+          disabled={!tel}
+          onSelect={() => {
+            const link = toWhatsAppLink(target.phone, templateText(tpl));
+            if (!link) return;
+            logAttempt("whatsapp", tpl);
+            window.open(link, "_blank", "noopener,noreferrer");
+          }}
+        >
+          <MessageCircle />
+          {tTpl(`${tpl}.label`)}
+        </DropdownMenuItem>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Tek tık iletişim (G20): Ara (tel:), E-posta (mailto:), WhatsApp şablonları (wa.me). Bağlantılar gönderimi
+ * doğrulayamaz; tıklamada adaya yalnızca "iletişim denemesi" notu (ILETISIM) düşer. `showLabel`: ikon + "İletişim"
+ * etiketli outline düğme (aday panelinin eylem satırı).
+ */
+export function CrmContactMenu({
+  target,
+  templates = CONTACT_TEMPLATES,
+  showLabel = false,
+}: {
+  target: ContactTarget;
+  templates?: readonly ContactTemplate[];
+  showLabel?: boolean;
+}) {
+  const t = useTranslations("crm.contact");
+  const phoneInvalid = !!target.phone?.trim() && !toTelLink(target.phone);
+  const icon = phoneInvalid ? <PhoneOff className="text-warning" /> : <Phone />;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={t("label")} title={phoneInvalid ? t("phoneInvalid") : t("label")}>
-          {phoneInvalid ? <PhoneOff className="text-warning" /> : <Phone />}
-        </Button>
+        {showLabel ? (
+          <Button variant="outline" size="sm" title={phoneInvalid ? t("phoneInvalid") : undefined}>
+            {icon}
+            {t("label")}
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon-sm" aria-label={t("label")} title={phoneInvalid ? t("phoneInvalid") : t("label")}>
+            {icon}
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {phoneInvalid && (
-          <DropdownMenuLabel className="text-xs font-normal text-warning">
-            {t("phoneInvalid")}: {target.phone}
-          </DropdownMenuLabel>
-        )}
-        {/* Gerçek bağlantılar (tel:/mailto:): işletim sistemi uygulamayı açar, orta tık ve kopyalama çalışır. */}
-        {tel ? (
-          <DropdownMenuItem asChild onSelect={() => logAttempt("telefon")}>
-            <a href={tel}>
-              <Phone />
-              {t("call")} · {formatPhone(target.phone)}
-            </a>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem disabled>
-            <Phone />
-            {t("call")}
-          </DropdownMenuItem>
-        )}
-        {email ? (
-          <DropdownMenuItem asChild onSelect={() => logAttempt("eposta")}>
-            <a href={`mailto:${email}`}>
-              <Mail />
-              {t("email")}
-            </a>
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem disabled>
-            <Mail />
-            {t("email")}
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{t("whatsapp")}</DropdownMenuLabel>
-        {shownTemplates.map((tpl) => (
-          <DropdownMenuItem
-            key={tpl}
-            disabled={!tel}
-            onSelect={() => {
-              const link = toWhatsAppLink(target.phone, templateText(tpl));
-              if (!link) return;
-              logAttempt("whatsapp", tpl);
-              window.open(link, "_blank", "noopener,noreferrer");
-            }}
-          >
-            <MessageCircle />
-            {tTpl(`${tpl}.label`)}
-          </DropdownMenuItem>
-        ))}
+        <CrmContactMenuItems target={target} templates={templates} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

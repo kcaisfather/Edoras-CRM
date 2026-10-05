@@ -26,14 +26,14 @@ describe("leadFollowUp (kolonlardan)", () => {
       lostReason: null,
       markedAt: 5,
     });
-    expect(leadFollowUp(lead({ status: "OLUMSUZ", lostReason: "FIYAT" }))).toMatchObject({ offerOpen: false, lostReason: "FIYAT" });
+    expect(leadFollowUp(lead({ status: "OLUMSUZ", lostReason: "PRICE" }))).toMatchObject({ offerOpen: false, lostReason: "PRICE" });
     expect(leadFollowUp(lead())).toEqual(NONE);
   });
 });
 
 describe("applyStatusChange", () => {
   it("teklife geçiş bugünün teklif tarihini yazar; sonraki arama kalır", () => {
-    expect(applyStatusChange({ status: "TAKIPTE" }, { status: "TEKLIF_VERILDI", nextDate: "2026-09-29", lostReason: "FIYAT" }, today)).toEqual({
+    expect(applyStatusChange({ status: "TAKIPTE" }, { status: "TEKLIF_VERILDI", nextDate: "2026-09-29", lostReason: "PRICE" }, today)).toEqual({
       status: "TEKLIF_VERILDI",
       next_follow_up_at: "2026-09-29",
       lost_reason: null,
@@ -48,11 +48,11 @@ describe("applyStatusChange", () => {
   });
 
   it("kayıp nedeni yalnız Satış olmadı'da; takip dışı statüde sonraki arama silinir", () => {
-    expect(applyStatusChange({ status: "TAKIPTE" }, { status: "OLUMSUZ", nextDate: "2026-12-25", lostReason: "BUTCE" }, today)).toMatchObject({
+    expect(applyStatusChange({ status: "TAKIPTE" }, { status: "OLUMSUZ", nextDate: "2026-12-25", lostReason: "BUDGET_NOT_APPROVED" }, today)).toMatchObject({
       next_follow_up_at: "2026-12-25",
-      lost_reason: "BUTCE",
+      lost_reason: "BUDGET_NOT_APPROVED",
     });
-    expect(applyStatusChange({ status: "OLUMSUZ" }, { status: "ARANACAK", nextDate: "2026-12-25", lostReason: "BUTCE" }, today)).toEqual({
+    expect(applyStatusChange({ status: "OLUMSUZ" }, { status: "ARANACAK", nextDate: "2026-12-25", lostReason: "BUDGET_NOT_APPROVED" }, today)).toEqual({
       status: "ARANACAK",
       next_follow_up_at: null,
       lost_reason: null,

@@ -16,18 +16,21 @@ import {
 } from "@/components/ui/select";
 import { usePermissions } from "@/features/auth";
 import { STORED_STATUSES } from "@/lib/domain/crm/signals";
+import { LEAD_SOURCES } from "@/lib/domain/crm/types";
 import { CRM_VIEWS, FINANCIAL_VIEWS, type CrmQuickTab } from "@/lib/domain/crm/views";
 import { PAGE_SIZES } from "../hooks";
 
 /**
- * Tablo araç satırı: tek süzgeç listesi ("Tümü" + Görünümler ?tab= + Durumlar ?status=; biri seçilince diğeri
- * temizlenir), arama, sayfa boyutu; sağda tek "Yeni aday".
+ * Tablo araç satırı: tek süzgeç listesi ("Tümü" + Görünümler ?tab= + Durumlar ?status= + Kaynaklar ?source=; aynı anda
+ * biri seçili, seçilince diğerleri temizlenir), arama, sayfa boyutu; sağda tek "Yeni aday".
  */
 export function CrmListToolbar({
   quickTab,
   statusFilter,
+  sourceFilter,
   onQuickTab,
   onStatus,
+  onSource,
   showListControls,
   search,
   onSearch,
@@ -38,8 +41,10 @@ export function CrmListToolbar({
 }: {
   quickTab: CrmQuickTab;
   statusFilter: string;
+  sourceFilter: string;
   onQuickTab: (tab: CrmQuickTab) => void;
   onStatus: (status: string) => void;
+  onSource: (source: string) => void;
   showListControls: boolean;
   search: string;
   onSearch: (value: string) => void;
@@ -50,6 +55,7 @@ export function CrmListToolbar({
 }) {
   const t = useTranslations("crm.list");
   const tStatus = useTranslations("crm.status");
+  const tSource = useTranslations("crm.source");
   const { canSeeFinancials } = usePermissions();
   const views = canSeeFinancials ? CRM_VIEWS : CRM_VIEWS.filter((v) => !FINANCIAL_VIEWS.includes(v.value));
 
@@ -57,10 +63,11 @@ export function CrmListToolbar({
     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Select
-          value={quickTab ? `tab:${quickTab}` : statusFilter ? `status:${statusFilter}` : "__all__"}
+          value={quickTab ? `tab:${quickTab}` : statusFilter ? `status:${statusFilter}` : sourceFilter ? `source:${sourceFilter}` : "__all__"}
           onValueChange={(v) => {
             if (v.startsWith("tab:")) onQuickTab(v.slice(4) as CrmQuickTab);
             else if (v.startsWith("status:")) onStatus(v.slice(7));
+            else if (v.startsWith("source:")) onSource(v.slice(7));
             else onQuickTab("");
           }}
         >
@@ -87,6 +94,19 @@ export function CrmListToolbar({
                 </SelectItem>
               ))}
             </SelectGroup>
+            {showListControls && (
+              <>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>{t("filters.sourceGroup")}</SelectLabel>
+                  {LEAD_SOURCES.map((s) => (
+                    <SelectItem key={s} value={`source:${s}`}>
+                      {tSource(s)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </>
+            )}
           </SelectContent>
         </Select>
         {showListControls && (

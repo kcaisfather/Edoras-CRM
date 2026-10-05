@@ -7,4 +7,6 @@ export interface CurrentUser {
   email: string | null;
   fullName: string | null;
   role: PanelRole;
+  /** Süper admin (tek kurucu): ekip / rol yönetimi yalnız bunda. Her zaman ADMIN. */
+  isSuper: boolean;
 }

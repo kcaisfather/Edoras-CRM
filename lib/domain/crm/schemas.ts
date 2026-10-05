@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { normalizeTrPhone } from "@/lib/utils/phone";
 import { isIsoDate } from "@/lib/domain/institutions/rules";
+import { COMPETITOR_NAME_MAX, LOST_NOTE_MAX } from "./loss-detail";
 import { CRM_STATUSES, LEAD_SOURCES, LOST_REASONS } from "./types";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -63,6 +64,13 @@ const followUpShape = {
   /** YYYY-MM-DD; boş = yok. */
   nextFollowUpAt: isoDateOrNull,
   lostReason: z.enum(LOST_REASONS).nullable(),
+  /**
+   * Kayıp ayrıntısı (yalnız "Satış olmadı"; başka statüde sunucu temizler): kayıp notu, rakip adı (yalnız neden
+   * COMPETITOR iken kalır), yeniden temas günü. Boş metin = temizle.
+   */
+  lostNote: z.string().trim().max(LOST_NOTE_MAX, MSG.tooLong).nullable().transform((v) => v || null),
+  competitor: z.string().trim().max(COMPETITOR_NAME_MAX, MSG.tooLong).nullable().transform((v) => v || null),
+  recallAt: isoDateOrNull,
 };
 
 const hasIdentity = (v: { organizationName?: string; contactFirstName?: string; contactLastName?: string }) =>
@@ -82,6 +90,9 @@ export const leadCreateSchema = z
     status: followUpShape.status.default("ARANACAK"),
     nextFollowUpAt: followUpShape.nextFollowUpAt.default(null),
     lostReason: followUpShape.lostReason.default(null),
+    lostNote: followUpShape.lostNote.default(null),
+    competitor: followUpShape.competitor.default(null),
+    recallAt: followUpShape.recallAt.default(null),
     source: z.enum(LEAD_SOURCES).default("MANUAL"),
     offerAmount: amount.optional(),
     saleAmount: amount.optional(),

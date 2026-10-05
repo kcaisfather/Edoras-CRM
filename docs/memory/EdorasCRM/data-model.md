@@ -17,6 +17,7 @@ kullandığı için RLS korumaz; kural mutlaka DB'de de durur. Tam kural tablosu
 | `20260929220000_crm_costs` | `crm_cost_entries`, `crm_cost_budgets`, `crm_cost_settings` |
 | `20260929230000_crm_reports` | `crm_report_subscriptions`, `crm_report_runs` |
 | `20261001090000_crm_invoice_provider_refs` | `crm_invoices.provider_ref` (Paraşüt satış faturası id, bir kez yazılır) + `provider_job` (süren iş) |
+| `20261005100000_crm_loss_actor` | `crm_leads`: kayıp nedeni 12'li küme (eski 6 değer dönüştürüldü), `lost_note` / `competitor` / `recall_at` (yalnız OLUMSUZ), `offer_by` / `sold_by` (+ `crm_leads_actor` tetikleyicisi); `crm_complete_task` yeni anahtarları kabul eder |
 
 Hepsinde: RLS açık + politika yok (bilinçli; Supabase danışmanı "RLS Enabled No Policy" INFO verir, sorun değil),
 yalnız `service_role`'e grant, fonksiyonlar PUBLIC'ten revoke. Her dosyanın sonunda geri alma bloğu var.

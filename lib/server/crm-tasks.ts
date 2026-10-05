@@ -346,6 +346,19 @@ export async function assignTask(input: AssignTaskValues, staff: StaffContext): 
   if (staff.role !== "ADMIN" && assignee && assignee !== staff.userId) throw new HttpError(403, "FORBIDDEN");
   const lead = await getLead(input.leadId);
   if (!lead) throw new HttpError(404, "NOT_FOUND");
+  // Mükerrer görev açılmaz: aynı aday, gün, amaç ve atanan için açık görev varsa 409 (çift tıklama, "Arama listesine
+  // ekle"nin tekrarı). Kontrol kodda; veritabanı şeması değişmedi.
+  const sameOpen = getSupabaseAdminClient()
+    .from("crm_tasks")
+    .select("id")
+    .eq("kind", "assigned")
+    .eq("status", "OPEN")
+    .eq("lead_id", input.leadId)
+    .eq("due_date", input.dueDate)
+    .eq("assignment_type", input.type);
+  const { data: duplicate, error: duplicateError } = await (assignee ? sameOpen.eq("assignee_id", assignee) : sameOpen.is("assignee_id", null)).limit(1);
+  if (duplicateError) throw dbError(duplicateError);
+  if (duplicate?.length) throw new HttpError(409, "TASK_DUPLICATE");
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_tasks")
     .insert({

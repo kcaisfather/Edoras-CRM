@@ -37,6 +37,7 @@ export function TeamPanel() {
   const locale = useLocale();
   const errorMessage = useApiErrorMessage();
   const { data: me } = useCurrentUser();
+  const canManage = me?.isSuper === true;
   const users = useStaff();
   const list = users.data ?? [];
 
@@ -96,10 +97,12 @@ export function TeamPanel() {
               </div>
               <h2 className="min-w-0 text-lg font-bold">{t("title")}</h2>
             </div>
-            <Button onClick={() => setInviteOpen(true)}>
-              <UserPlus />
-              {t("invite")}
-            </Button>
+            {canManage && (
+              <Button onClick={() => setInviteOpen(true)}>
+                <UserPlus />
+                {t("invite")}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
@@ -148,13 +151,14 @@ export function TeamPanel() {
                         <TableCell className="font-medium">
                           {displayName(u)}
                           {isMe && <span className="ml-2 text-xs text-muted-foreground">{t("you")}</span>}
+                          {u.isSuper && <span className="ml-2 text-xs text-primary">{t("super")}</span>}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{u.email}</TableCell>
                         <TableCell>
                           <Select
                             value={u.role}
                             onValueChange={(v) => ask({ kind: "role", user: u, next: v as PanelRole })}
-                            disabled={isMe}
+                            disabled={isMe || !canManage || u.isSuper}
                           >
                             <SelectTrigger className="h-8 w-48" aria-label={`${t("cols.role")}: ${displayName(u)}`}>
                               <SelectValue />
@@ -173,7 +177,7 @@ export function TeamPanel() {
                           {u.lastLoginAt ? formatRelativeTr(u.lastLoginAt, new Date(), locale) : "—"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {isMe ? null : (
+                          {isMe || !canManage || u.isSuper ? null : (
                             <span className="inline-flex gap-1">
                               <Button
                                 variant="ghost"

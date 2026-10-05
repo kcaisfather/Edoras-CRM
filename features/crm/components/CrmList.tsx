@@ -18,11 +18,10 @@ import type { CrmScreenSlots } from "../types";
 import { CrmAddModal } from "./CrmAddModal";
 import { CrmCollectionDialog } from "./CrmCollectionDialog";
 import { CrmDuplicates } from "./CrmDuplicates";
-import { CrmEditModal } from "./CrmEditModal";
 import { CrmEmptyState } from "./CrmEmptyState";
 import { CrmErrorState } from "./CrmErrorState";
 import { CrmExportButton } from "./CrmExportButton";
-import { CrmLeadDetailSheet } from "./CrmLeadDetailSheet";
+import { CrmLeadSheet } from "./CrmLeadSheet";
 import { CrmListSkeleton } from "./CrmListSkeleton";
 import { CrmListToolbar } from "./CrmListToolbar";
 import { CrmMobileCards } from "./CrmMobileCards";
@@ -91,8 +90,10 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
       <CrmListToolbar
         quickTab={list.quickTab}
         statusFilter={list.statusFilter}
+        sourceFilter={list.sourceFilter}
         onQuickTab={list.setQuickTab}
         onStatus={list.setStatusFilter}
+        onSource={list.setSourceFilter}
         showListControls={isListView}
         search={list.searchBox.input}
         onSearch={list.searchBox.change}
@@ -141,7 +142,7 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
   );
 }
 
-/** Ekranın pencereleri: detay, yeni aday, düzenle, not, demo aç, kuruma bağla, tahsilat. */
+/** Ekranın pencereleri: aday paneli (düzenleme), yeni aday, not, demo aç, kuruma bağla, tahsilat. */
 function CrmListDialogs({ list }: { list: ReturnType<typeof useCrmList> }) {
   const tDemo = useTranslations("crm.demo");
   const invalidateCrm = useInvalidateCrm();
@@ -150,18 +151,8 @@ function CrmListDialogs({ list }: { list: ReturnType<typeof useCrmList> }) {
 
   return (
     <>
-      <CrmLeadDetailSheet lead={list.detailLead} onOpenChange={(next) => !next && list.closeDetail()} actions={actions} />
+      <CrmLeadSheet lead={list.detailLead} onOpenChange={(next) => !next && list.closeDetail()} actions={actions} onDeleted={list.closeDetail} />
       <CrmAddModal open={list.addOpen} onOpenChange={list.setAddOpen} onCreated={(lead) => list.showCreated(lead.id)} />
-      <CrmEditModal
-        open={list.editLead != null}
-        onOpenChange={(next) => !next && list.closeEdit()}
-        lead={list.editLead}
-        onDeleted={list.closeDetail}
-        onSold={(lead) => actions.onAddNote(lead, "handoff")}
-        onOpenDemo={actions.onOpenDemo}
-        onLink={actions.onLink}
-        onAddCollection={actions.onAddCollection}
-      />
       <CrmNoteModal open={list.noteLead != null} onOpenChange={(next) => !next && list.closeNote()} lead={list.noteLead} mode={list.noteMode} />
       {demoLead && (
         <NewDemoDialog

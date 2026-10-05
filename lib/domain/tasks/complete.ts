@@ -5,6 +5,7 @@
  * bilgisi crm_leads kolonlarında. Yazım crm_complete_task'ta tek transaction'dır.
  */
 
+import { LOSS_DETAIL_CLEARED, type LossDetailColumns } from "@/lib/domain/crm/loss-detail";
 import { applyStatusChange, type StatusColumns } from "@/lib/domain/crm/offer";
 import type { CrmStatus, LostReason } from "@/lib/domain/crm/types";
 
@@ -25,6 +26,7 @@ export interface CurrentLeadStatus {
  * Adaya yazılacak kolonlar (değişiklik yoksa null):
  * - statü değişirse `applyStatusChange` kuralları (sonraki arama yalnız takip statülerinde, kayıp nedeni yalnız
  *   "Satış olmadı"da, teklif / satış tarihi geçişte bugün);
+ * - "Satış olmadı"dan çıkışta kayıp ayrıntısı (lost_note, competitor, recall_at) null'lanır;
  * - sonraki arama günü girildiyse ve statü yazımı onu zaten koymadıysa her statüde yazılır ("Girilirse bu tarihte
  *   yeni bir görev oluşur" — DeepSport ile aynı).
  */
@@ -32,8 +34,8 @@ export function planLeadPatch(
   current: CurrentLeadStatus,
   input: CompletionLeadInput,
   today: string
-): Partial<StatusColumns> | null {
-  const out: Partial<StatusColumns> = {};
+): (Partial<StatusColumns> & Partial<LossDetailColumns>) | null {
+  const out: Partial<StatusColumns> & Partial<LossDetailColumns> = {};
   if (input.status && input.status !== current.status) {
     Object.assign(
       out,
@@ -44,6 +46,8 @@ export function planLeadPatch(
       )
     );
   }
+  // "Satış olmadı"dan çıkış: kayıp ayrıntısı (not, rakip, yeniden temas) da temizlenir.
+  if (out.status && out.status !== "OLUMSUZ" && current.status === "OLUMSUZ") Object.assign(out, LOSS_DETAIL_CLEARED);
   const dateWritten = out.next_follow_up_at != null;
   if (input.nextFollowUpAt && !dateWritten && input.nextFollowUpAt !== current.next_follow_up_at) {
     out.next_follow_up_at = input.nextFollowUpAt;

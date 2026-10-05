@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Rol ya da durum (aktif/kapalı) değiştir — yalnız ADMIN; kendi hesabı ve son aktif yönetici korunur. */
+/** Rol ya da durum (aktif/kapalı) değiştir — yalnız süper admin; kendi hesabı ve son aktif yönetici korunur. */
 export const PATCH = route(async (request: Request, { params }: Ctx) => {
-  const actor = await requireStaff({ role: "ADMIN" });
+  const actor = await requireStaff({ role: "ADMIN", super: true });
   const id = requireUuid((await params).id);
   return ok(await updateStaff(id, await parseBody(request, staffPatchSchema), actor));
 });

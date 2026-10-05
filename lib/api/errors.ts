@@ -43,3 +43,13 @@ export function apiErrorKind(err: unknown): ApiErrorKind {
 export function apiErrorCode(err: unknown): ApiErrorCode | null {
   return err instanceof ApiError ? err.code : null;
 }
+
+/**
+ * Doğrulama hatasında sunucunun alan mesajları (`error.fields`, Türkçe zod mesajları): "mesaj; mesaj". Alan adları
+ * teknik olduğu için gösterilmez. Alan yoksa null. (DeepSport 422 alan hatası gösteriminin karşılığı.)
+ */
+export function apiErrorFieldDetail(err: unknown): string | null {
+  if (!(err instanceof ApiError) || !err.fields) return null;
+  const parts = [...new Set(Object.values(err.fields).map((m) => (typeof m === "string" ? m.trim() : "")).filter(Boolean))];
+  return parts.length ? parts.join("; ") : null;
+}

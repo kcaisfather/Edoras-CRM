@@ -356,7 +356,7 @@ describe("crm_complete_task — kural görevi", () => {
       outcome: "ilgilenmiyor",
       note: "Not",
       // Kayıp nedeni yalnız "Satış olmadı"da olabilir → crm_leads_lost_reason_check.
-      patch: { status: "TAKIPTE", lost_reason: "FIYAT" },
+      patch: { status: "TAKIPTE", lost_reason: "PRICE" },
       actor: agentA,
     });
     expect(failure).toBe("crm_leads_lost_reason_check");

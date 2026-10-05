@@ -37,6 +37,14 @@ export function isValidVkn(value: string | null | undefined): boolean {
   return (10 - (total % 10)) % 10 === d[9];
 }
 
+/**
+ * Kurumsal faturada vergi numarası: VKN (10 hane) ya da şahıs şirketinin TCKN'si (11 hane; şahıs şirketlerinde vergi
+ * numarası sahibin kimlik numarasıdır). SQL: crm_institutions_tax_no_check.
+ */
+export function isValidTaxNumber(value: string | null | undefined): boolean {
+  return isValidVkn(value) || isValidTckn(value);
+}
+
 /** Yalnız rakamlar (boşluk, tire vb. atılır). */
 export function digitsOnly(value: string | null | undefined): string {
   return (value ?? "").replace(/\D/g, "");
@@ -54,7 +62,7 @@ export function isBillingComplete(billing: {
   taxNo: string | null | undefined;
 }): boolean {
   const addressOk = (billing.address ?? "").trim().length >= ADDRESS_MIN_LENGTH;
-  const idOk = isValidTckn(billing.tcNo) || isValidVkn(billing.taxNo);
+  const idOk = isValidTckn(billing.tcNo) || isValidTaxNumber(billing.taxNo);
   return addressOk && idOk;
 }
 

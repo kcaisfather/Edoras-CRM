@@ -27,7 +27,7 @@ describe("aday formu", () => {
   });
 
   it("düzenleme gövdesi API şemasından geçer; takip dışı statüde tarih ve neden gönderilmez", () => {
-    const body = formToPatch({ ...leadToForm(lead), status: "ARANACAK", lostReason: "FIYAT" }, lead, true);
+    const body = formToPatch({ ...leadToForm(lead), status: "ARANACAK", lostReason: "PRICE" }, lead, true);
     expect(body).toMatchObject({ status: "ARANACAK", nextFollowUpAt: null, lostReason: null, offerAmount: 12500.5 });
     expect("saleAmount" in body).toBe(false);
     expect(leadPatchSchema.safeParse(body).success).toBe(true);
@@ -40,8 +40,8 @@ describe("aday formu", () => {
   });
 
   it("kayıp nedeni yalnız Satış Olmadı'da gider", () => {
-    const body = formToPatch({ ...leadToForm(lead), status: "OLUMSUZ", lostReason: "BUTCE", nextCall: "2026-12-25" }, lead, true);
-    expect(body).toMatchObject({ lostReason: "BUTCE", nextFollowUpAt: "2026-12-25" });
+    const body = formToPatch({ ...leadToForm(lead), status: "OLUMSUZ", lostReason: "BUDGET_NOT_APPROVED", nextCall: "2026-12-25" }, lead, true);
+    expect(body).toMatchObject({ lostReason: "BUDGET_NOT_APPROVED", nextFollowUpAt: "2026-12-25" });
   });
 
   it("yeni aday gövdesi API şemasından geçer", () => {
@@ -49,5 +49,19 @@ describe("aday formu", () => {
     expect(body).toMatchObject({ organizationName: "Yeni Kurum", status: "TEKLIF_VERILDI", offerAmount: 0, source: "MANUAL" });
     const parsed = leadCreateSchema.safeParse(body);
     expect(parsed.success).toBe(true);
+  });
+
+  it("kayıp ayrıntısı yalnız Satış olmadı'da gider; rakip adı yalnız COMPETITOR'da; çıkışta açık null", () => {
+    const lead = { id: "l1", status: "OLUMSUZ" as const, lostReason: "COMPETITOR" as const, lostNote: "Eski", competitor: "Rakip", recallAt: "2027-01-10" };
+    const form = { ...leadToForm(lead), lostNote: " Yeni not ", competitor: " Başka ", recallAt: "2027-03-01" };
+    expect(formToPatch(form, lead, false)).toMatchObject({ lostNote: "Yeni not", competitor: "Başka", recallAt: "2027-03-01" });
+    expect(formToPatch({ ...form, lostReason: "PRICE" }, lead, false)).toMatchObject({ lostReason: "PRICE", competitor: null });
+    expect(formToPatch({ ...form, status: "TAKIPTE" }, lead, false)).toMatchObject({
+      lostReason: null,
+      lostNote: null,
+      competitor: null,
+      recallAt: null,
+    });
+    expect(leadToForm(lead)).toMatchObject({ lostNote: "Eski", competitor: "Rakip", recallAt: "2027-01-10" });
   });
 });

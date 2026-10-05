@@ -3,13 +3,10 @@
 import { useState } from "react";
 import { CrmList } from "@/features/crm/components/CrmList";
 import type { CrmLead } from "@/lib/domain/crm/types";
-import { AssignTaskMenu } from "@/features/tasks";
+import { AssignTaskDialog, useAddToCallList } from "@/features/tasks";
 import { ImportButton } from "@/features/cold-lists";
 import { SatisfactionBadge, SendSurveyDialog, leadRecipient } from "@/features/surveys";
 import { InvoiceDialog } from "@/features/invoices";
-
-/** Aday satırlarının "Görev ata" parçası (crm → tasks bağımlılığı olmasın diye ekranı kuran yer verir). */
-const renderAssignTask = (lead: CrmLead, opts?: { showLabel?: boolean }) => <AssignTaskMenu lead={lead} showLabel={opts?.showLabel} />;
 
 /**
  * Madde 7: memnuniyet rozeti — yalnız müşterinin anket yanıtından (salt okunur; aday ve bağlı kurumu birlikte). Tüm
@@ -24,21 +21,32 @@ const renderSatisfaction = (lead: CrmLead) => <SatisfactionBadge leadId={lead.id
 const renderImport = () => <ImportButton targets={["crm", "coldList"]} defaultTarget="crm" />;
 
 /**
- * Adaylar ekranı + başka modüllerin parçaları (DeepSport app/[locale]/crm/_components/CrmList.tsx): Görev ata, İçe aktar,
+ * Adaylar ekranı + başka modüllerin parçaları (DeepSport app/[locale]/crm/_components/CrmList.tsx): "Görev ata" (görev
+ * penceresi) ve "Arama listesine ekle" (bugüne Arama görevi; satırın tek İşlemler menüsü ve aday paneli), İçe aktar,
  * memnuniyet rozeti, "Anket gönder" (satır, mobil kart, aday detayı → anketler modülünün penceresi) ve "Fatura kes"
  * (ücretli kuruma bağlı aday; faturalar modülünün penceresi, satış pencerede seçilir).
  */
 export function CrmScreen() {
   const [surveyLead, setSurveyLead] = useState<CrmLead | null>(null);
   const [invoiceLead, setInvoiceLead] = useState<CrmLead | null>(null);
+  const [taskLead, setTaskLead] = useState<CrmLead | null>(null);
+  const callList = useAddToCallList();
   return (
     <>
       <CrmList
-        renderAssignTask={renderAssignTask}
+        onAssignTask={setTaskLead}
+        onAddToCallList={(lead) => void callList.add(lead)}
         renderSatisfaction={renderSatisfaction}
         onSendSurvey={setSurveyLead}
         onIssueInvoice={setInvoiceLead}
         renderImport={renderImport}
+      />
+      <AssignTaskDialog
+        lead={taskLead}
+        open={taskLead != null}
+        onOpenChange={(next) => {
+          if (!next) setTaskLead(null);
+        }}
       />
       <InvoiceDialog
         target={invoiceLead?.institutionId ? { institutionId: invoiceLead.institutionId } : null}

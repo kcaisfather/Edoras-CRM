@@ -10,7 +10,7 @@
 
 import { daysBetween, todayIso } from "@/lib/domain/institutions/rules";
 import { foldTr } from "@/lib/domain/institutions/search";
-import { CRM_STATUSES, type CrmLead, type CrmStatus, type CrmSummary } from "./types";
+import { CRM_STATUSES, type CrmLead, type CrmStatus, type CrmSummary, type LeadSource } from "./types";
 
 /** Süzülebilen / toplanabilen statüler — CRM_OFFER_FIELDS açık yol: hepsi (Teklif verildi dahil). */
 export const STORED_STATUSES: CrmStatus[] = [...CRM_STATUSES];
@@ -42,6 +42,8 @@ export function leadBalance(lead: Pick<CrmLead, "saleAmount" | "collectedAmount"
 
 export interface ClientLeadFilter {
   status?: string;
+  /** Aday kaynağı ("Tümü" menüsünün Kaynaklar grubu, ?source=). */
+  source?: LeadSource;
   dateFrom?: number;
   dateTo?: number;
   search?: string;
@@ -50,7 +52,7 @@ export interface ClientLeadFilter {
 
 
 /**
- * Tüm aday listesi üzerinde istemci süzgeci: statü, oluşturma tarihi, görünüm ve arama (kurum, yetkili,
+ * Tüm aday listesi üzerinde istemci süzgeci: statü, kaynak, oluşturma tarihi, görünüm ve arama (kurum, yetkili,
  * e-posta, telefon — telefon rakamlarla: "0532 123" → "+90532123…" eşleşir).
  */
 export function filterLeadsClient(leads: CrmLead[], f: ClientLeadFilter, now = new Date()): CrmLead[] {
@@ -58,6 +60,7 @@ export function filterLeadsClient(leads: CrmLead[], f: ClientLeadFilter, now = n
   const digits = (f.search ?? "").replace(/\D/g, "").replace(/^0+/, "");
   return leads.filter((lead) => {
     if (f.status && lead.status !== f.status) return false;
+    if (f.source && lead.source !== f.source) return false;
     if (f.dateFrom != null && (lead.createdAt ?? 0) < f.dateFrom) return false;
     if (f.dateTo != null && (lead.createdAt ?? 0) > f.dateTo) return false;
     if (f.tab === "demoEnded" && !isDemoEndedNoSale(lead, now)) return false;

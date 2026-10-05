@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Geçici şifre üret (yalnız ADMIN, kendi hesabı değil). Şifre yanıtta bir kez döner. */
+/** Geçici şifre üret (yalnız süper admin, kendi hesabı değil). Şifre yanıtta bir kez döner. */
 export const POST = route(async (request: Request, { params }: Ctx) => {
-  const actor = await requireStaff({ role: "ADMIN" });
+  const actor = await requireStaff({ role: "ADMIN", super: true });
   const id = requireUuid((await params).id);
   await parseBody(request, z.object({}).strict());
   return ok(await resetStaffPassword(id, actor));

@@ -10,6 +10,7 @@ import {
   isFullName,
   isIsoDate,
   isValidTckn,
+  isValidTaxNumber,
   isValidVkn,
   licenseEndDate,
   renewalStartDate,
@@ -121,5 +122,14 @@ describe("geçici şifre", () => {
     expect(pw).toMatch(/[a-z]/);
     expect(pw).toMatch(/\d/);
     expect(pw).not.toMatch(/[0O1lI]/);
+  });
+});
+
+describe("vergi numarası (VKN ya da şahıs şirketinin TCKN'si)", () => {
+  it("10 haneli VKN ve 11 haneli TCKN kabul edilir", () => {
+    expect(isValidTaxNumber("9876543217")).toBe(true);
+    expect(isValidTaxNumber("10000000146")).toBe(true);
+    expect(isValidTaxNumber("10000000147")).toBe(false);
+    expect(isValidTaxNumber("")).toBe(false);
   });
 });

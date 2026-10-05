@@ -1,23 +1,26 @@
 export type DatePeriodParam = "day" | "week" | "month";
 
-export function getDateRangeByPeriod(period: DatePeriodParam): { from: string; to: string } {
-  const to = new Date();
-  const from = new Date(to);
-  if (period === "day") {
-    return {
-      from: to.toISOString().slice(0, 10),
-      to: to.toISOString().slice(0, 10),
-    };
-  }
-  if (period === "week") {
-    from.setDate(from.getDate() - 7);
-  } else {
-    from.setDate(from.getDate() - 30);
-  }
-  return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
-  };
+/** Takvim günü (YYYY-MM-DD), Europe/Istanbul — sunucunun dönem ve önbellek anahtarıyla aynı gün (UTC değil). */
+export function istanbulIsoDay(at: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+}
+
+/** YYYY-MM-DD'ye gün ekler (takvim aritmetiği, saat dilimine bağlı değil). */
+function addIsoDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Bugün dahil kaç gün: gün 1, hafta 7, ay 30 ("son 7 gün" = bugün + önceki 6 gün). */
+export const PERIOD_DAYS: Record<DatePeriodParam, number> = { day: 1, week: 7, month: 30 };
+
+/**
+ * Dashboard dönemi → `from`/`to`. Bugün dahil son 1 / 7 / 30 gün, İstanbul takvim günüyle. Sunucunun varsayılan aralığı
+ * ve önbellek ısıtması da bu aralık (docs/backend-performans-yanit-2026-10.md 3. tur); eskiden 8 / 31 gün ve UTC günüydü.
+ */
+export function getDateRangeByPeriod(period: DatePeriodParam, now: Date = new Date()): { from: string; to: string } {
+  const to = istanbulIsoDay(now);
+  return { from: addIsoDays(to, -(PERIOD_DAYS[period] - 1)), to };
 }
 
 export function formatDateRangeLabel(
@@ -82,10 +85,11 @@ export function periodToRange(
   switch (period) {
     case "day":
       return { from: todayStart, to: endOf(todayStart) };
+    // Bugün dahil son 7 / 30 gün (dashboard ve sunucu varsayılanıyla aynı; eskiden 8 / 31 gündü).
     case "week":
-      return { from: back(7), to: endOf(todayStart) };
+      return { from: back(6), to: endOf(todayStart) };
     case "month":
-      return { from: back(30), to: endOf(todayStart) };
+      return { from: back(29), to: endOf(todayStart) };
     case "custom": {
       const s = isoDayStart(startDate);
       const e = isoDayStart(endDate);

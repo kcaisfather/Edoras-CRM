@@ -3,6 +3,7 @@
     "title": "Ekip",
     "invite": "CRM kullanıcısı ekle",
     "you": "(sen)",
+    "super": "Süper admin",
     "empty": "CRM kullanıcısı yok.",
     "loadError": "Ekip listesi yüklenemedi.",
     "retry": "Tekrar dene",

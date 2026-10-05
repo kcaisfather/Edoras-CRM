@@ -19,7 +19,7 @@ import { recordAudit } from "./audit";
 
 /**
  * CRM personeli: crm_staff (rol, ad, aktif) + CRM projesinin Auth kullanıcıları (e-posta, son giriş).
- * Edoras'a dokunmaz. Yazma işlemleri yalnız ADMIN (uçlar denetler) ve işlem kaydına yazılır.
+ * Edoras'a dokunmaz. Yazma işlemleri yalnız süper admin (uçlar denetler) ve işlem kaydına yazılır.
  */
 
 interface StaffRow {
@@ -27,6 +27,7 @@ interface StaffRow {
   role: PanelRole;
   full_name: string | null;
   is_active: boolean;
+  is_super: boolean;
   created_at: string;
 }
 
@@ -47,6 +48,7 @@ function toMember(row: StaffRow, user: User | undefined): StaffMember {
     email: user?.email ?? "",
     fullName: row.full_name,
     role: row.role,
+    isSuper: row.is_super,
     status: row.is_active ? "ACTIVE" : "DISABLED",
     lastLoginAt: user?.last_sign_in_at ?? null,
     createdAt: row.created_at,
@@ -56,7 +58,7 @@ function toMember(row: StaffRow, user: User | undefined): StaffMember {
 export async function listStaff(): Promise<StaffMember[]> {
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_staff")
-    .select("user_id, role, full_name, is_active, created_at")
+    .select("user_id, role, full_name, is_active, is_super, created_at")
     .order("created_at");
   if (error) throw dbError(error);
   const users = await listAuthUsers();
@@ -95,7 +97,7 @@ export async function inviteStaff(input: InviteInput, actor: StaffContext): Prom
   const { data: row, error } = await db
     .from("crm_staff")
     .insert({ user_id: user.id, role: input.panelRole, full_name: fullName, is_active: true, created_by: actor.userId })
-    .select("user_id, role, full_name, is_active, created_at")
+    .select("user_id, role, full_name, is_active, is_super, created_at")
     .single();
   if (error) {
     // Hesabı biz açtıysak ekip kaydı yazılamadığında geri al (yarım hesap kalmasın).
@@ -134,7 +136,7 @@ export async function updateStaff(
     .from("crm_staff")
     .update(update)
     .eq("user_id", id)
-    .select("user_id, role, full_name, is_active, created_at")
+    .select("user_id, role, full_name, is_active, is_super, created_at")
     .single();
   if (error) throw dbError(error); // CRM_LAST_ADMIN → 409 LAST_ADMIN (eşzamanlı değişiklik)
 

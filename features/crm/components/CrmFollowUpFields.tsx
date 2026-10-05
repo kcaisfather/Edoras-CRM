@@ -2,12 +2,18 @@
 
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { LeadFormValues } from "@/lib/domain/crm/form";
+import { COMPETITOR_NAME_MAX, LOST_NOTE_MAX } from "@/lib/domain/crm/loss-detail";
 import { LOST_REASONS, type CrmStatus } from "@/lib/domain/crm/types";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
+
+const TEXTAREA_CLASS =
+  "flex min-h-[64px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y";
 
 /**
  * Madde 4 — sonraki arama tarihi ve (Satış olmadı için) kayıp nedeni. Teklif verildi / Takipte /
@@ -23,6 +29,7 @@ export function CrmFollowUpFields({
   onLostReason,
   offerDate,
   disabled,
+  form,
 }: {
   idPrefix: string;
   status: CrmStatus;
@@ -33,8 +40,11 @@ export function CrmFollowUpFields({
   /** Açık teklifin tarihi (YYYY-MM-DD). */
   offerDate?: string | null;
   disabled?: boolean;
+  /** Verilirse "Satış olmadı"da kayıp ayrıntısı alanları (kayıp notu, rakip, yeniden temas) da gösterilir. */
+  form?: UseFormReturn<LeadFormValues>;
 }) {
   const t = useTranslations("crm.offer");
+  const tLoss = useTranslations("crm.lossDetail");
   return (
     <div className="mt-3 space-y-2 rounded-lg border border-border bg-muted/30 p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("sectionTitle")}</p>
@@ -74,6 +84,39 @@ export function CrmFollowUpFields({
               </SelectContent>
             </Select>
           </div>
+        )}
+        {status === "OLUMSUZ" && form && (
+          <>
+            {lostReason === "COMPETITOR" && (
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor={`${idPrefix}-competitor`}>{tLoss("competitor")}</Label>
+                <Input
+                  id={`${idPrefix}-competitor`}
+                  maxLength={COMPETITOR_NAME_MAX}
+                  placeholder={tLoss("competitorPlaceholder")}
+                  disabled={disabled}
+                  {...form.register("competitor")}
+                />
+              </div>
+            )}
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor={`${idPrefix}-lostNote`}>{tLoss("note")}</Label>
+              <textarea
+                id={`${idPrefix}-lostNote`}
+                rows={2}
+                maxLength={LOST_NOTE_MAX}
+                className={TEXTAREA_CLASS}
+                placeholder={tLoss("notePlaceholder")}
+                disabled={disabled}
+                {...form.register("lostNote")}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`${idPrefix}-recallAt`}>{tLoss("recallAt")}</Label>
+              <Input id={`${idPrefix}-recallAt`} type="date" disabled={disabled} {...form.register("recallAt")} />
+              <p className="text-xs text-muted-foreground">{tLoss("recallHint")}</p>
+            </div>
+          </>
         )}
         {status === "TEKLIF_VERILDI" && offerDate && (
           <p className="self-end text-xs text-muted-foreground">{t("offerDate", { date: formatCrmDate(offerDate) })}</p>

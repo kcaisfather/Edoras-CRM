@@ -41,6 +41,9 @@ export function CrmExportButton({
       l.createdAt ? new Date(l.createdAt).toISOString().slice(0, 10) : "",
       l.nextFollowUpAt,
       l.lostReason ? tOffer(`reasons.${l.lostReason}`) : "",
+      l.competitor,
+      l.lostNote,
+      l.recallAt,
       l.institutionId ? (l.institution?.name ?? t("yes")) : t("no"),
       ...(canSeeFinancials
         ? [l.offerAmount, l.saleAmount, l.collectedAmount, l.saleAmount ? getRemainingAmount(l.saleAmount, l.collectedAmount) : null]
@@ -60,6 +63,9 @@ export function CrmExportButton({
         t("h.created"),
         t("h.nextCall"),
         t("h.lostReason"),
+        t("h.competitor"),
+        t("h.lostNote"),
+        t("h.recallAt"),
         t("h.institution"),
         ...(canSeeFinancials ? [t("h.offer"), t("h.sale"), t("h.collected"), t("h.remaining")] : []),
       ],

@@ -140,14 +140,15 @@ export interface StaffContext {
   email: string | null;
   fullName: string | null;
   role: PanelRole;
+  isSuper: boolean;
 }
 
 /**
  * Kapı: oturum (CRM projesinin Supabase Auth'u, imza sunucuda doğrulanır) + crm_staff kaydı (aktif).
- * `role: "ADMIN"` verilirse CRM_AGENT 403 alır. İki veritabanına da service_role ile yalnız bu kapıdan
+ * `role: "ADMIN"` verilirse CRM_AGENT 403 alır; `super: true` verilirse yalnız süper admin geçer (ekip / rol yönetimi). İki veritabanına da service_role ile yalnız bu kapıdan
  * sonra gidilir.
  */
-export async function requireStaff(options: { role?: "ADMIN" } = {}): Promise<StaffContext> {
+export async function requireStaff(options: { role?: "ADMIN"; super?: true } = {}): Promise<StaffContext> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -156,7 +157,7 @@ export async function requireStaff(options: { role?: "ADMIN" } = {}): Promise<St
 
   const { data: staff, error } = await getSupabaseAdminClient()
     .from("crm_staff")
-    .select("role, is_active, full_name")
+    .select("role, is_active, full_name, is_super")
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw dbError(error);
@@ -164,7 +165,9 @@ export async function requireStaff(options: { role?: "ADMIN" } = {}): Promise<St
 
   const role = staff.role as PanelRole;
   if (options.role === "ADMIN" && role !== "ADMIN") throw new HttpError(403, "FORBIDDEN");
-  return { userId: user.id, email: user.email ?? null, fullName: (staff.full_name as string | null) ?? null, role };
+  const isSuper = staff.is_super === true;
+  if (options.super && !isSuper) throw new HttpError(403, "FORBIDDEN");
+  return { userId: user.id, email: user.email ?? null, fullName: (staff.full_name as string | null) ?? null, role, isSuper };
 }
 
 /** UUID biçimi (yol parametresi) — hatalıysa 404. */

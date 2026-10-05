@@ -4,6 +4,7 @@
  * sunucu `to*` fonksiyonlarıyla veritabanı biçimine çevirir (telefon E.164, e-posta küçük harf…).
  */
 import { z } from "zod";
+import { canonicalLocation, withLocationDefaults } from "@/lib/data/tr-locations";
 import { normalizeTrPhone } from "@/lib/utils/phone";
 import { parseAmount } from "@/lib/utils/money";
 import {
@@ -12,7 +13,7 @@ import {
   isFullName,
   isIsoDate,
   isValidTckn,
-  isValidVkn,
+  isValidTaxNumber,
 } from "./rules";
 import { effectiveBillingType } from "./billing-profile";
 import { PAYMENT_METHODS, type Billing, type BillingProfile, type BillingType, type PaymentMethod } from "./types";
@@ -29,7 +30,7 @@ const MSG = {
   emailInvalid: "Geçerli bir e-posta adresi girin",
   address: `Açık adres zorunlu (en az ${ADDRESS_MIN_LENGTH} karakter)`,
   tcInvalid: "Geçerli bir TC Kimlik No girin (11 hane)",
-  vknInvalid: "Geçerli bir Vergi No girin (10 hane)",
+  vknInvalid: "Geçerli bir Vergi No (10 hane) ya da şahıs şirketi için TC Kimlik No (11 hane) girin",
   legalName: "Unvan / ad soyad zorunlu (en az 2 karakter)",
   taxOffice: "Kurumsal (Vergi No) fatura için vergi dairesi zorunlu",
   city: "İl zorunlu",
@@ -87,7 +88,7 @@ function checkBilling(v: { address: string; idType: "TC" | "VKN"; idNumber: stri
   if (v.address.length < ADDRESS_MIN_LENGTH) ctx.addIssue({ code: "custom", path: ["address"], message: MSG.address });
   const digits = digitsOnly(v.idNumber);
   if (v.idType === "TC" && !isValidTckn(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.tcInvalid });
-  if (v.idType === "VKN" && !isValidVkn(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.vknInvalid });
+  if (v.idType === "VKN" && !isValidTaxNumber(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.vknInvalid });
 }
 
 function checkProfile(
@@ -257,14 +258,16 @@ export function billingProfileFormValues(
   defaults: { legalName?: string; email?: string } = {}
 ): BillingInput {
   const idType = billing ? (effectiveBillingType(billing) === "COMPANY" ? "VKN" : "TC") : "TC";
+  const loc = withLocationDefaults(canonicalLocation({ city: billing?.city, district: billing?.district, country: "" }));
   return {
     address: billing?.address ?? "",
     idType,
     idNumber: (idType === "VKN" ? billing?.taxNo : billing?.tcNo) ?? "",
     legalName: billing?.legalName ?? defaults.legalName ?? "",
     taxOffice: billing?.taxOffice ?? "",
-    city: billing?.city ?? "",
-    district: billing?.district ?? "",
+    // Kayıt yoksa İstanbul varsayılanı; eski serbest yazımlar resmî yazıma eşlenir.
+    city: loc.city,
+    district: loc.district,
     postalCode: billing?.postalCode ?? "",
     email: billing?.email ?? defaults.email ?? "",
   };

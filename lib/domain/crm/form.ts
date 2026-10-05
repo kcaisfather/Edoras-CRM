@@ -4,8 +4,10 @@
  * dokunulmamış boş alan gönderilmez (her kayıtta null → 0 kirlenmesi olmasın).
  */
 import { z } from "zod";
+import { canonicalLocation, withLocationDefaults } from "@/lib/data/tr-locations";
 import { normalizeTrPhone } from "@/lib/utils/phone";
 import { parseAmount } from "@/lib/utils/money";
+import { COMPETITOR_NAME_MAX, LOST_NOTE_MAX } from "./loss-detail";
 import { FOLLOW_UP_STATUSES } from "./offer";
 import type { LeadCreateInput, LeadPatchInput } from "./schemas";
 import { CRM_STATUSES, isLostReason, type CrmLead, type CrmStatus } from "./types";
@@ -26,6 +28,10 @@ export const leadFormSchema = z
     status: z.enum(CRM_STATUSES),
     nextCall: z.string(),
     lostReason: z.string(),
+    /** Kayıp ayrıntısı (yalnız "Satış olmadı"): kayıp notu, rakip adı, yeniden temas günü (YYYY-MM-DD). */
+    lostNote: z.string().max(LOST_NOTE_MAX, "Çok uzun"),
+    competitor: z.string().max(COMPETITOR_NAME_MAX, "Çok uzun"),
+    recallAt: z.string(),
     offerAmount: z.string().refine((v) => !v.trim() || parseAmount(v) !== null, "Geçerli bir tutar girin (ör. 45.000)"),
     saleAmount: z.string().refine((v) => !v.trim() || parseAmount(v) !== null, "Geçerli bir tutar girin (ör. 45.000)"),
   })
@@ -37,7 +43,8 @@ export const leadFormSchema = z
 export type LeadFormValues = z.infer<typeof leadFormSchema>;
 
 export function emptyLeadForm(status: CrmStatus = "ARANACAK"): LeadFormValues {
-  return {
+  // Yeni aday: Ülke = Türkiye, İl = İstanbul (listeden değiştirilir).
+  return withLocationDefaults({
     organizationName: "",
     firstName: "",
     lastName: "",
@@ -49,9 +56,12 @@ export function emptyLeadForm(status: CrmStatus = "ARANACAK"): LeadFormValues {
     status,
     nextCall: "",
     lostReason: "",
+    lostNote: "",
+    competitor: "",
+    recallAt: "",
     offerAmount: "",
     saleAmount: "",
-  };
+  });
 }
 
 /** "+905321234567" → "0532 123 45 67" (formda okunur; kaydederken yine E.164'e çevrilir). */
@@ -68,12 +78,13 @@ export function leadToForm(lead: CrmLead): LeadFormValues {
     lastName: lead.contactLastName ?? "",
     phone: phoneToInput(lead.contactPhone),
     email: lead.contactEmail ?? "",
-    city: lead.city ?? "",
-    district: lead.district ?? "",
-    country: lead.country ?? "",
+    ...canonicalLocation({ city: lead.city, district: lead.district, country: lead.country }),
     status: lead.status ?? "ARANACAK",
     nextCall: lead.nextFollowUpAt ?? "",
     lostReason: lead.lostReason ?? "",
+    lostNote: lead.lostNote ?? "",
+    competitor: lead.competitor ?? "",
+    recallAt: lead.recallAt ?? "",
     offerAmount: amountToInput(lead.offerAmount),
     saleAmount: amountToInput(lead.saleAmount),
   };
@@ -81,10 +92,16 @@ export function leadToForm(lead: CrmLead): LeadFormValues {
 
 function followUpBody(v: LeadFormValues) {
   const tracked = FOLLOW_UP_STATUSES.includes(v.status);
+  const lost = v.status === "OLUMSUZ";
+  const lostReason = lost && isLostReason(v.lostReason) ? v.lostReason : null;
   return {
     status: v.status,
     nextFollowUpAt: tracked && v.nextCall ? v.nextCall : null,
-    lostReason: v.status === "OLUMSUZ" && isLostReason(v.lostReason) ? v.lostReason : null,
+    lostReason,
+    // Kayıp ayrıntısı yalnız "Satış olmadı"da; rakip adı yalnız neden "Rakip tercih edildi" iken. Boş = temizle.
+    lostNote: lost ? v.lostNote.trim() || null : null,
+    competitor: lostReason === "COMPETITOR" ? v.competitor.trim() || null : null,
+    recallAt: lost && v.recallAt ? v.recallAt : null,
   };
 }
 

@@ -5,7 +5,7 @@
  * bu, onun üstüne gelen fatura kuralıdır (SQL'de billing_type doluyken crm_institutions_billing_profile_check).
  */
 import { normalizeEmail } from "@/lib/utils/phone";
-import { ADDRESS_MIN_LENGTH, isValidTckn, isValidVkn } from "./rules";
+import { ADDRESS_MIN_LENGTH, isValidTaxNumber, isValidTckn } from "./rules";
 import type { BillingProfile, BillingType } from "./types";
 
 export type BillingField = "legalName" | "taxNumber" | "taxOffice" | "address" | "city" | "district" | "email";
@@ -52,7 +52,7 @@ export function billingProfileCompleteness(p: ProfileLike | null | undefined): B
     : ["legalName", "taxNumber", "address", "city", "district", "email"];
   const missing = need.filter((f) => !filled(values[f]));
   const invalid: BillingField[] = [];
-  if (filled(taxNumber) && !(company ? isValidVkn(taxNumber) : isValidTckn(taxNumber))) invalid.push("taxNumber");
+  if (filled(taxNumber) && !(company ? isValidTaxNumber(taxNumber) : isValidTckn(taxNumber))) invalid.push("taxNumber");
   if (filled(p.address) && (p.address ?? "").trim().length < ADDRESS_MIN_LENGTH) invalid.push("address");
   if (filled(p.email) && !normalizeEmail(p.email)) invalid.push("email");
   return { complete: missing.length === 0 && invalid.length === 0, missing, invalid };

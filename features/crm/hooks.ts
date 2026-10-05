@@ -9,7 +9,7 @@ import { parseSort, sortRows } from "@/lib/utils/sort";
 import { leadFunnel } from "@/lib/domain/crm/insights";
 import { STORED_STATUSES, filterLeadsClient, pipelineByStatus, summarizeLeads, type CrmClientTab } from "@/lib/domain/crm/signals";
 import { CRM_SORT_ACCESSORS, CRM_SORT_KEYS } from "@/lib/domain/crm/sort";
-import { isCrmStatus, type CrmLead, type CrmNoteMode } from "@/lib/domain/crm/types";
+import { isCrmStatus, isLeadSource, type CrmLead, type CrmNoteMode } from "@/lib/domain/crm/types";
 import { getRemainingAmount } from "@/lib/domain/crm/utils";
 import { CRM_QUICK_TABS, FINANCIAL_VIEWS, type CrmQuickTab } from "@/lib/domain/crm/views";
 import { useAllCrmLeads } from "./queries";
@@ -54,9 +54,9 @@ function useSearchInput(search: string, commit: (value: string) => void) {
 
 /**
  * Aday listesi (DeepSport useCrmList). Tüm adaylar (paylaşılan önbellek) istemcide süzülür: dönem (oluşturma
- * tarihi), statü / görünüm, arama, sütun sıralaması ve sayfa URL'de. Detay penceresi de URL'de (?lead=<id>):
- * kurum sayfasındaki "Adaylar'da aç" bağlantısı doğrudan açar. Pencereler (düzenle, not, demo, bağla,
- * tahsilat) yerel durumdadır.
+ * tarihi), statü / görünüm / kaynak (tek "Tümü" menüsü), arama, sütun sıralaması ve sayfa URL'de. Aday paneli
+ * (düzenleme) de URL'de (?lead=<id>): kurum sayfasındaki "Adaylar'da aç" bağlantısı doğrudan açar; "Düzenle" de aynı
+ * paneli açar. Pencereler (not, demo, bağla, tahsilat) yerel durumdadır.
  */
 export function useCrmList(slots: CrmRowSlots = {}) {
   const searchParams = useSearchParams();
@@ -66,6 +66,8 @@ export function useCrmList(slots: CrmRowSlots = {}) {
   const search = searchParams.get("search") ?? "";
   const statusParam = searchParams.get("status") ?? "";
   const statusFilter = isCrmStatus(statusParam) ? statusParam : "";
+  const sourceParam = searchParams.get("source") ?? "";
+  const sourceFilter = isLeadSource(sourceParam) ? sourceParam : "";
   const tabParam = searchParams.get("tab") ?? "";
   // Tutar içeren görünüm (Bakiyesi olanlar) CRM_AGENT için varsayılana düşer.
   const quickTab = (
@@ -105,17 +107,24 @@ export function useCrmList(slots: CrmRowSlots = {}) {
   const rangeLeads = useMemo(() => filterLeadsClient(all.leads, { dateFrom, dateTo }), [all.leads, dateFrom, dateTo]);
 
   const filteredLeads = useMemo(() => {
-    const filtered = filterLeadsClient(all.leads, { status: effectiveStatus || undefined, dateFrom, dateTo, tab: clientTab, search });
+    const filtered = filterLeadsClient(all.leads, {
+      status: effectiveStatus || undefined,
+      source: sourceFilter || undefined,
+      dateFrom,
+      dateTo,
+      tab: clientTab,
+      search,
+    });
     if (colSort) return sortRows(filtered, colSort, CRM_SORT_ACCESSORS);
     // "Bakiyesi olanlar": en yüksek kalan bakiye önce; diğerleri en yeni kayıt önce (sunucu sırası).
     if (clientTab === "balance") return sortRows(filtered, { key: "balance", dir: "desc" }, CRM_SORT_ACCESSORS);
     return filtered;
-  }, [all.leads, effectiveStatus, dateFrom, dateTo, clientTab, search, colSort]);
+  }, [all.leads, effectiveStatus, sourceFilter, dateFrom, dateTo, clientTab, search, colSort]);
 
   // Statü şeridi (G35): dönemdeki aşamalar (statü seçiminden bağımsız).
   const pipeline = useMemo(() => pipelineByStatus(rangeLeads, STORED_STATUSES), [rangeLeads]);
   // Özet kartlar (G03): süzgeç varsa süzülen satırlar, yoksa seçili dönemin tamamı.
-  const hasFilter = !!effectiveStatus || !!clientTab || !!search.trim();
+  const hasFilter = !!effectiveStatus || !!sourceFilter || !!clientTab || !!search.trim();
   const summary = useMemo(() => summarizeLeads(hasFilter ? filteredLeads : rangeLeads), [rangeLeads, hasFilter, filteredLeads]);
   // G19: açık alacak — dönemdeki kayıtlar (satır formülüyle aynı).
   const openReceivables = useMemo(
@@ -132,7 +141,6 @@ export function useCrmList(slots: CrmRowSlots = {}) {
   );
 
   // Pencereler
-  const [editId, setEditId] = useState<string | null>(null);
   const [note, setNote] = useState<{ id: string; mode: CrmNoteMode } | null>(null);
   const [demoLead, setDemoLead] = useState<CrmLead | null>(null);
   const [linkId, setLinkId] = useState<string | null>(null);
@@ -147,8 +155,10 @@ export function useCrmList(slots: CrmRowSlots = {}) {
 
   const actions: CrmTableActions = {
     onOpen: (lead) => setDetail(lead.id),
-    onEdit: (lead) => setEditId(lead.id),
+    onEdit: (lead) => setDetail(lead.id),
     onAddNote: (lead, mode = "note") => setNote({ id: lead.id, mode }),
+    // Satış oldu (satır içi seçici ya da panel formu): devir notu penceresi (G22).
+    onStatusSold: (lead) => setNote({ id: lead.id, mode: "handoff" }),
     onOpenDemo: (lead) => setDemoLead(lead),
     onLink: (lead) => setLinkId(lead.id),
     // Tahsilat yalnız finans yetkisiyle (uç da CRM_AGENT'a 403).
@@ -174,6 +184,7 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     // Süzgeçler
     searchBox,
     statusFilter,
+    sourceFilter,
     quickTab,
     effectiveStatus,
     isSignupsTab,
@@ -183,6 +194,16 @@ export function useCrmList(slots: CrmRowSlots = {}) {
         if (value) p.set("status", value);
         else p.delete("status");
         p.delete("tab");
+        p.delete("source");
+        p.delete("page");
+      }),
+    /** Tek süzgeç listesi: kaynak seçilince görünüm ve durum temizlenir. */
+    setSourceFilter: (value: string) =>
+      replaceParams((p) => {
+        if (value) p.set("source", value);
+        else p.delete("source");
+        p.delete("tab");
+        p.delete("status");
         p.delete("page");
       }),
     setQuickTab: (tab: CrmQuickTab) =>
@@ -190,6 +211,7 @@ export function useCrmList(slots: CrmRowSlots = {}) {
         if (tab) p.set("tab", tab);
         else p.delete("tab");
         p.delete("status");
+        p.delete("source");
         p.delete("page");
       }),
     setPage: (next: number) =>
@@ -220,8 +242,6 @@ export function useCrmList(slots: CrmRowSlots = {}) {
         p.delete("new");
         p.set("lead", id);
       }),
-    editLead: byId(editId),
-    closeEdit: () => setEditId(null),
     noteLead: byId(note?.id ?? null),
     noteMode: note?.mode ?? "note",
     closeNote: () => setNote(null),

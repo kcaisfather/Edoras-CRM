@@ -1,20 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { FlaskConical, MessageSquarePlus, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { usePermissions } from "@/features/auth";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { formatCrmDate, getLeadTitle } from "@/lib/domain/crm/utils";
 import type { CrmTableActions } from "../types";
-import { DissatisfiedBadge, ProgramBadges, StatusBadge } from "./CrmBadges";
-import { CrmContactMenu, contactTargetFor } from "./CrmContactMenu";
-import { CustomerBadge, IssueInvoiceButton, LinkedMark, SendSurveyButton, stop } from "./CrmTable";
+import { DissatisfiedBadge, ProgramBadges } from "./CrmBadges";
+import { CrmRowActionsMenu } from "./CrmRowActionsMenu";
+import { CustomerBadge, LinkedMark } from "./CrmRowParts";
+import { StatusDropdown } from "./StatusDropdown";
 
-/** Mobil kart listesi — tabloyla aynı sade içerik; karta dokunmak detay penceresini açar. */
+/** Mobil kart listesi — tabloyla aynı sade içerik (satır içi statü seçici + tek "İşlemler" menüsü); karta dokunmak aday panelini açar. */
 export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: CrmTableActions }) {
   const t = useTranslations("crm.list");
-  const { canSeeFinancials } = usePermissions();
 
   return (
     <div className="space-y-3 p-3 md:hidden">
@@ -52,9 +49,10 @@ export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: 
                   </div>
                   {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
                 </div>
-                <span className="shrink-0">
-                  <StatusBadge status={lead.status} />
-                </span>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <StatusDropdown lead={lead} onSold={actions.onStatusSold} />
+                  <CrmRowActionsMenu lead={lead} actions={actions} className="-mr-1.5 -mt-0.5" />
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
@@ -66,37 +64,6 @@ export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: 
               <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                 <span>{location || "-"}</span>
                 <span>{formatCrmDate(lead.createdAt)}</span>
-              </div>
-
-              <div className="flex flex-wrap gap-1 border-t border-border pt-2" onClick={stop} onKeyDown={stop}>
-                <Button variant="outline" size="sm" onClick={() => actions.onEdit(lead)}>
-                  <Pencil />
-                  {t("actions.edit")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => actions.onAddNote(lead)}
-                  aria-label={t("actions.addNote")}
-                  title={t("actions.addNote")}
-                >
-                  <MessageSquarePlus />
-                </Button>
-                {actions.onOpenDemo && !lead.institutionId && (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => actions.onOpenDemo?.(lead)}
-                    aria-label={t("openDemo")}
-                    title={t("openDemo")}
-                  >
-                    <FlaskConical />
-                  </Button>
-                )}
-                <IssueInvoiceButton lead={lead} actions={actions} />
-                <SendSurveyButton lead={lead} actions={actions} />
-                {actions.renderAssignTask?.(lead)}
-                <CrmContactMenu target={contactTargetFor(lead, title, canSeeFinancials)} />
               </div>
             </div>
           </div>

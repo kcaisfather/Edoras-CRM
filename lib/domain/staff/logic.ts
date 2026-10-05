@@ -15,6 +15,8 @@ export interface StaffMember {
   email: string;
   fullName: string | null;
   role: PanelRole;
+  /** Süper admin: rolü / durumu değiştirilemez. */
+  isSuper: boolean;
   status: StaffStatus;
   lastLoginAt: string | null;
   createdAt: string;

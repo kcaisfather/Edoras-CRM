@@ -53,3 +53,16 @@ describe("billingProfileCompleteness (DeepSport billingCompleteness testleri)", 
     expect(billingProfileCompleteness(null).complete).toBe(false);
   });
 });
+
+describe("şahıs şirketi (DeepSport c933af9)", () => {
+  it("kurumsalda şahıs şirketinin TCKN'si vergi numarası olarak geçerli", () => {
+    expect(billingProfileCompleteness({ ...company, taxNo: "10000000146" }).invalid).toEqual([]);
+    expect(billingProfileCompleteness({ ...company, taxNo: "10000000147" }).invalid).toEqual(["taxNumber"]);
+  });
+
+  it("bireyselde yalnız TCKN (kimlik sütunu tc_no; VKN kurumsal türüne aittir)", () => {
+    const person = { ...company, billingType: "INDIVIDUAL" as const, taxNo: null, taxOffice: null };
+    expect(billingProfileCompleteness({ ...person, tcNo: "10000000146" }).invalid).toEqual([]);
+    expect(billingProfileCompleteness({ ...person, tcNo: "9876543217" }).invalid).toEqual(["taxNumber"]);
+  });
+});

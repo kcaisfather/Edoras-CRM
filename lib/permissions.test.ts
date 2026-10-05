@@ -5,7 +5,7 @@ describe("permissions", () => {
   it("rol bilinmiyorsa en dar yetki", () => {
     expect(panelRoleOf(null)).toBe("CRM_AGENT");
     expect(panelRoleOf(undefined)).toBe("CRM_AGENT");
-    expect(panelRoleOf({ id: "u", email: null, fullName: null, role: "ADMIN" })).toBe("ADMIN");
+    expect(panelRoleOf({ id: "u", email: null, fullName: null, role: "ADMIN", isSuper: false })).toBe("ADMIN");
   });
 
   it("CRM_AGENT yalnız izinli yollara girer", () => {

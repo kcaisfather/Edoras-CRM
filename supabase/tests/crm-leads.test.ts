@@ -106,13 +106,13 @@ describe("kimlik ve biçim kuralları", () => {
 
 describe("statüye bağlı alanlar", () => {
   it("kayıp nedeni yalnız Satış Olmadı (OLUMSUZ) statüsünde ve tanımlı değerlerden", async () => {
-    expect(await h().failure("insert into crm_leads (organization_name, lost_reason) values ('A', 'FIYAT')")).toBe(
+    expect(await h().failure("insert into crm_leads (organization_name, lost_reason) values ('A', 'PRICE')")).toBe(
       "crm_leads_lost_reason_check"
     );
     expect(await h().failure("insert into crm_leads (organization_name, status, lost_reason) values ('A', 'OLUMSUZ', 'UYDURMA')")).toBe(
       "crm_leads_lost_reason_check"
     );
-    const id = await lead("Kayıp Kurum", { status: "OLUMSUZ", lost_reason: "BUTCE" });
+    const id = await lead("Kayıp Kurum", { status: "OLUMSUZ", lost_reason: "BUDGET_NOT_APPROVED" });
     // Statü değişirken neden temizlenmezse reddedilir.
     expect(await h().failure("update crm_leads set status = 'TAKIPTE' where id = $1", [id])).toBe("crm_leads_lost_reason_check");
     expect(await h().failure("update crm_leads set status = 'TAKIPTE', lost_reason = null where id = $1", [id])).toBeNull();

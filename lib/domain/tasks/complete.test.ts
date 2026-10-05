@@ -15,10 +15,10 @@ describe("planLeadPatch", () => {
   it("statü değişikliği teklifi kapatır, kayıp nedenini ve sonraki aramayı yazar", () => {
     const p = planLeadPatch(
       { status: "TEKLIF_VERILDI", next_follow_up_at: null },
-      { status: "OLUMSUZ", nextFollowUpAt: "2026-12-25", lostReason: "FIYAT" },
+      { status: "OLUMSUZ", nextFollowUpAt: "2026-12-25", lostReason: "PRICE" },
       TODAY
     );
-    expect(p).toEqual({ status: "OLUMSUZ", next_follow_up_at: "2026-12-25", lost_reason: "FIYAT", sold_at: null });
+    expect(p).toEqual({ status: "OLUMSUZ", next_follow_up_at: "2026-12-25", lost_reason: "PRICE", sold_at: null });
   });
 
   it("statü değişmeden sonraki arama tarihi her statüde yazılır", () => {
@@ -46,5 +46,16 @@ describe("planLeadPatch", () => {
       next_follow_up_at: null,
       lost_reason: null,
     });
+  });
+
+  it('"Satış olmadı"dan çıkış kayıp ayrıntısını da temizler; kalırken dokunmaz', () => {
+    expect(planLeadPatch({ status: "OLUMSUZ", next_follow_up_at: null }, { status: "TAKIPTE" }, TODAY)).toMatchObject({
+      status: "TAKIPTE",
+      lost_reason: null,
+      lost_note: null,
+      competitor: null,
+      recall_at: null,
+    });
+    expect(planLeadPatch({ status: "TAKIPTE", next_follow_up_at: null }, { status: "ARANACAK" }, TODAY)).not.toHaveProperty("lost_note");
   });
 });

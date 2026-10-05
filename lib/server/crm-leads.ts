@@ -6,6 +6,7 @@ import { todayIso } from "@/lib/domain/institutions/rules";
 import type { NewDemoInput, PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials, PaymentMethod } from "@/lib/domain/institutions/types";
 import { sumByInstitution, type CollectionRecord } from "@/lib/domain/crm/collections";
+import { planLossDetail, type LossDetailColumns } from "@/lib/domain/crm/loss-detail";
 import { applyStatusChange } from "@/lib/domain/crm/offer";
 import { CONTACT_FIELDS, toContactColumns, type LeadCreateValues, type LeadPatchValues } from "@/lib/domain/crm/schemas";
 import type { CrmLeadDto, CrmStatus, LeadSource, LostReason } from "@/lib/domain/crm/types";
@@ -25,7 +26,7 @@ import { createDemoInstitution, recordPayment } from "./institutions";
  */
 
 const LEAD_COLUMNS =
-  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, city, district, country, status, source, offer_amount, sale_amount, lost_reason, next_follow_up_at, offer_sent_at, sold_at, institution_id, created_by, updated_by, created_at, updated_at";
+  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, city, district, country, status, source, offer_amount, sale_amount, lost_reason, lost_note, competitor, recall_at, next_follow_up_at, offer_sent_at, sold_at, institution_id, offer_by, sold_by, created_by, updated_by, created_at, updated_at";
 
 interface LeadRow {
   id: string;
@@ -42,10 +43,15 @@ interface LeadRow {
   offer_amount: number | string | null;
   sale_amount: number | string | null;
   lost_reason: LostReason | null;
+  lost_note: string | null;
+  competitor: string | null;
+  recall_at: string | null;
   next_follow_up_at: string | null;
   offer_sent_at: string | null;
   sold_at: string | null;
   institution_id: string | null;
+  offer_by: string | null;
+  sold_by: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -133,6 +139,9 @@ function toDto(row: LeadRow, ctx: DtoContext): CrmLeadDto {
     saleAmount: ctx.financial ? toNumber(row.sale_amount) : null,
     collectedAmount: ctx.financial ? (row.institution_id ? (ctx.sums.get(row.institution_id) ?? 0) : 0) : null,
     lostReason: row.lost_reason,
+    lostNote: row.lost_note,
+    competitor: row.competitor,
+    recallAt: row.recall_at,
     nextFollowUpAt: row.next_follow_up_at,
     offerSentAt: row.offer_sent_at,
     soldAt: row.sold_at,
@@ -143,6 +152,10 @@ function toDto(row: LeadRow, ctx: DtoContext): CrmLeadDto {
     createdByName: row.created_by ? (ctx.names.get(row.created_by) ?? null) : null,
     updatedBy: row.updated_by,
     updatedByName: row.updated_by ? (ctx.names.get(row.updated_by) ?? null) : null,
+    offerBy: row.offer_by,
+    offerByName: row.offer_by ? (ctx.names.get(row.offer_by) ?? null) : null,
+    soldBy: row.sold_by,
+    soldByName: row.sold_by ? (ctx.names.get(row.sold_by) ?? null) : null,
     createdAt: Date.parse(row.created_at),
     updatedAt: Date.parse(row.updated_at),
   };
@@ -203,11 +216,14 @@ export async function createLead(input: LeadCreateValues, staff: StaffContext): 
   if (input.institutionId && !(await getEdorasInstitution(input.institutionId))) throw new HttpError(404, "NOT_FOUND");
   const financial = isFinancial(staff);
   const status = applyStatusChange({}, { status: input.status, nextDate: input.nextFollowUpAt, lostReason: input.lostReason }, todayIso());
+  const loss = planLossDetail(NO_LOSS_DETAIL, input, input.status, status.lost_reason);
   const { data, error } = await getSupabaseAdminClient()
     .from("crm_leads")
     .insert({
       ...toContactColumns(input),
       ...status,
+      ...loss,
+      ...actorColumns(undefined, input.status, staff),
       source: input.source,
       institution_id: input.institutionId,
       // EK-3: CRM_AGENT'ın gönderdiği tutarlar yok sayılır.
@@ -232,6 +248,20 @@ export async function createLead(input: LeadCreateValues, staff: StaffContext): 
     },
   });
   return leadDto(id, staff);
+}
+
+const NO_LOSS_DETAIL: LossDetailColumns = { lost_note: null, competitor: null, recall_at: null };
+
+/**
+ * Teklifi veren / satışı yapan: statü TEKLIF_VERILDI / SATIS_OLDU'ya GEÇİLDİĞİ anda oturumdaki personel yazılır
+ * (gövdeden okunmaz; DeepSport lib/domain/crm/actor.ts). Statü aynı kalıyorsa dokunulmaz. SATIS_OLDU'dan çıkışta
+ * sold_by temizliği veritabanı tetikleyicisindedir (crm_leads_actor), bu yüzden burada yazılmaz.
+ */
+function actorColumns(prev: CrmStatus | undefined, next: CrmStatus, staff: StaffContext): { offer_by?: string; sold_by?: string } {
+  if (prev === next) return {};
+  if (next === "TEKLIF_VERILDI") return { offer_by: staff.userId };
+  if (next === "SATIS_OLDU") return { sold_by: staff.userId };
+  return {};
 }
 
 const COLUMN_OF: Record<(typeof CONTACT_FIELDS)[number], keyof LeadRow> = {
@@ -283,6 +313,12 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
     if (patch.lostReason !== undefined && patch.lostReason !== current.lost_reason) update.lost_reason = patch.lostReason;
   }
 
+  // Kayıp ayrıntısı: son statü / nedene göre; "Satış olmadı"dan çıkınca temizlenir, rakip yalnız COMPETITOR'da kalır.
+  const finalStatus = (update.status as CrmStatus | undefined) ?? current.status;
+  const finalReason = "lost_reason" in update ? (update.lost_reason as string | null) : current.lost_reason;
+  Object.assign(update, planLossDetail(current, patch, finalStatus, finalReason));
+  if (patch.status !== undefined) Object.assign(update, actorColumns(current.status, patch.status, staff));
+
   const amounts: Record<string, number | null> = {};
   if (financial) {
     if (patch.offerAmount !== undefined && patch.offerAmount !== toNumber(current.offer_amount)) {
@@ -315,7 +351,9 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
       },
     });
   }
-  const followUpChanged = !statusChanged && ("next_follow_up_at" in update || "lost_reason" in update);
+  const followUpChanged =
+    !statusChanged &&
+    ("next_follow_up_at" in update || "lost_reason" in update || "lost_note" in update || "competitor" in update || "recall_at" in update);
   if (changedFields.length || Object.keys(amounts).length || followUpChanged) {
     const fields = [...changedFields, ...Object.keys(amounts), ...(followUpChanged ? ["followUp"] : [])];
     await recordAudit(staff, {
@@ -403,7 +441,11 @@ export async function unlinkLead(id: string, staff: StaffContext): Promise<CrmLe
 export async function openLeadDemo(id: string, input: NewDemoInput, staff: StaffContext): Promise<DemoCredentials> {
   const current = await requireLeadRow(id);
   if (current.institution_id) throw new HttpError(409, "LEAD_ALREADY_LINKED");
-  const status = applyStatusChange(current, { status: "DEMO_TANIMLANDI", nextDate: null, lostReason: null }, todayIso());
+  const status = {
+    ...applyStatusChange(current, { status: "DEMO_TANIMLANDI", nextDate: null, lostReason: null }, todayIso()),
+    // "Satış olmadı"dan çıkış: kayıp ayrıntısı da temizlenir (crm_leads_loss_detail_check).
+    ...planLossDetail(current, {}, "DEMO_TANIMLANDI", null),
+  };
   const credentials = await createDemoInstitution(input, staff, {
     afterEnroll: async (institutionId) => {
       const { data, error } = await getSupabaseAdminClient()

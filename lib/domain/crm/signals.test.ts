@@ -82,6 +82,14 @@ describe("istemci süzgeci", () => {
     expect(filterLeadsClient(leads, { search: "kurum" }, NOW).map((l) => l.id)).toEqual(["b"]);
   });
 
+  it("kaynak süzgeci (Tümü menüsü, ?source=)", () => {
+    const rows = [lead({ id: "a", source: "MANUAL" }), lead({ id: "b", source: "IMPORT" }), lead({ id: "c", source: "COLD_LIST" })];
+    expect(filterLeadsClient(rows, { source: "IMPORT" }, NOW).map((l) => l.id)).toEqual(["b"]);
+    expect(filterLeadsClient(rows, { source: "EDORAS" }, NOW)).toEqual([]);
+    expect(filterLeadsClient(rows, {}, NOW)).toHaveLength(3);
+    expect(filterLeadsClient(rows, { source: "COLD_LIST", status: "ARANACAK" }, NOW)).toEqual([]);
+  });
+
   it("Bakiyesi olanlar: yalnız satış > tahsilat", () => {
     const rows = [
       lead({ id: "a", saleAmount: 1000, collectedAmount: 400 }),

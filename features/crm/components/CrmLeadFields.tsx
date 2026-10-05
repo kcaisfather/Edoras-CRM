@@ -10,6 +10,7 @@ import type { LeadFormValues } from "@/lib/domain/crm/form";
 import { FOLLOW_UP_STATUSES, addDaysIso } from "@/lib/domain/crm/offer";
 import { CRM_STATUSES, type CrmStatus } from "@/lib/domain/crm/types";
 import { followUpSuggestDays } from "@/lib/domain/tasks/rules";
+import { LocationFields, type LocationKey } from "@/features/locations";
 import { useCrmRules } from "../queries";
 import { CrmFollowUpFields } from "./CrmFollowUpFields";
 
@@ -43,7 +44,18 @@ export function LeadField({
  * Statü seçilince sonraki arama alanı boşsa öneri tarihiyle dolar: günler takip kurallarından (Teklif verildi →
  * "offer" +3, Satış olmadı → "lostRecontact" +90; kural kapalıysa öneri yok).
  */
-export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; idPrefix: string; offerDate?: string | null }) {
+export function CrmLeadFields({
+  form,
+  idPrefix,
+  offerDate,
+  hideStatus = false,
+}: {
+  form: LeadForm;
+  idPrefix: string;
+  offerDate?: string | null;
+  /** Aday panelinde statü başlıktaki satır içi seçiciden değişir; formda seçici çizilmez (takip alanları statüye göre yine görünür). */
+  hideStatus?: boolean;
+}) {
   const t = useTranslations("crm.form");
   const tStatus = useTranslations("crm.status");
   const {
@@ -53,7 +65,10 @@ export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; i
     getValues,
     formState: { errors },
   } = form;
-  const [status, nextCall, lostReason] = useWatch({ control, name: ["status", "nextCall", "lostReason"] });
+  const [status, nextCall, lostReason, city, district, country] = useWatch({
+    control,
+    name: ["status", "nextCall", "lostReason", "city", "district", "country"],
+  });
   const id = (name: string) => `${idPrefix}-${name}`;
 
   const { rules } = useCrmRules();
@@ -81,41 +96,42 @@ export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; i
         <LeadField id={id("email")} label={t("email")} error={errors.email?.message}>
           <Input type="email" id={id("email")} {...register("email")} placeholder="Ör. ad@kurum.com" autoComplete="email" />
         </LeadField>
-        <LeadField id={id("status")} label={t("status")}>
-          <Controller
-            control={control}
-            name="status"
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={(v) => {
-                  field.onChange(v as CrmStatus);
-                  onStatusPicked(v as CrmStatus);
-                }}
-              >
-                <SelectTrigger id={id("status")}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CRM_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {tStatus(s)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </LeadField>
-        <LeadField id={id("city")} label={t("city")} error={errors.city?.message}>
-          <Input id={id("city")} {...register("city")} placeholder={t("city")} />
-        </LeadField>
-        <LeadField id={id("district")} label={t("district")} error={errors.district?.message}>
-          <Input id={id("district")} {...register("district")} placeholder={t("district")} />
-        </LeadField>
-        <LeadField id={id("country")} label={t("country")} error={errors.country?.message}>
-          <Input id={id("country")} {...register("country")} placeholder={t("country")} />
-        </LeadField>
+        {!hideStatus && (
+          <LeadField id={id("status")} label={t("status")}>
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v as CrmStatus);
+                    onStatusPicked(v as CrmStatus);
+                  }}
+                >
+                  <SelectTrigger id={id("status")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CRM_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {tStatus(s)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </LeadField>
+        )}
+        <LocationFields
+          idPrefix={idPrefix}
+          value={{ city, district, country }}
+          onChange={(patch) => {
+            for (const [key, v] of Object.entries(patch) as [LocationKey, string][]) setValue(key, v, { shouldDirty: true, shouldValidate: true });
+          }}
+          errors={{ city: errors.city?.message, district: errors.district?.message, country: errors.country?.message }}
+        />
       </div>
       <p className="text-xs text-muted-foreground">{t("identityHint")}</p>
       {FOLLOW_UP_STATUSES.includes(status) && (
@@ -127,6 +143,7 @@ export function CrmLeadFields({ form, idPrefix, offerDate }: { form: LeadForm; i
           lostReason={lostReason}
           onLostReason={(v) => setValue("lostReason", v, { shouldDirty: true })}
           offerDate={status === "TEKLIF_VERILDI" ? offerDate : null}
+          form={form}
         />
       )}
     </div>

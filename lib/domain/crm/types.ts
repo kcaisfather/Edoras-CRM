@@ -29,8 +29,29 @@ export function isCrmStatus(value: string | null | undefined): value is CrmStatu
 export const LEAD_SOURCES = ["MANUAL", "EDORAS", "IMPORT", "COLD_LIST"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
-/** Kayıp nedeni — yalnız Satış Olmadı (OLUMSUZ) statüsünde (SQL: crm_leads_lost_reason_check). */
-export const LOST_REASONS = ["FIYAT", "ZAMANLAMA", "RAKIP", "IHTIYAC_YOK", "BUTCE", "DIGER"] as const;
+export function isLeadSource(value: string | null | undefined): value is LeadSource {
+  return (LEAD_SOURCES as readonly string[]).includes(value ?? "");
+}
+
+/**
+ * Kayıp nedeni — yalnız Satış Olmadı (OLUMSUZ) statüsünde (SQL: crm_leads_lost_reason_check). G53 ortak 12'li
+ * küme (DeepSport LOST_REASONS); eski 6 değer (FIYAT, BUTCE, RAKIP, IHTIYAC_YOK, ZAMANLAMA, DIGER) migration'la
+ * bu kümeye dönüştürüldü ve artık kabul edilmez.
+ */
+export const LOST_REASONS = [
+  "PRICE",
+  "BUDGET_NOT_APPROVED",
+  "NOT_USED",
+  "SEASON_ENDED",
+  "TEAM_DISBANDED",
+  "COACH_LEFT_CLUB",
+  "COMPETITOR",
+  "MISSING_FEATURE_TECH",
+  "DISSATISFIED",
+  "NOT_DECISION_MAKER",
+  "UNREACHABLE",
+  "OTHER",
+] as const;
 export type LostReason = (typeof LOST_REASONS)[number];
 
 export function isLostReason(value: string | null | undefined): value is LostReason {
@@ -64,6 +85,10 @@ export interface CrmLeadDto {
   /** Bağlı kurumun crm_payments toplamı (bağlı değilse 0). */
   collectedAmount: number | null;
   lostReason: LostReason | null;
+  /** Kayıp ayrıntısı (yalnız OLUMSUZ): kayıp notu, rakip adı (neden COMPETITOR), yeniden temas günü (YYYY-MM-DD). */
+  lostNote: string | null;
+  competitor: string | null;
+  recallAt: string | null;
   nextFollowUpAt: string | null;
   offerSentAt: string | null;
   soldAt: string | null;
@@ -76,6 +101,11 @@ export interface CrmLeadDto {
   createdByName: string | null;
   updatedBy: string | null;
   updatedByName: string | null;
+  /** Teklifi veren / satışı yapan personel: statü geçişinde sunucu oturumdan yazar (istekte yok). */
+  offerBy: string | null;
+  offerByName: string | null;
+  soldBy: string | null;
+  soldByName: string | null;
   createdAt: number;
   updatedAt: number;
 }

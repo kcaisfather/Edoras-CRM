@@ -56,9 +56,11 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
   it("adres ya da geçerli numara yoksa reddedilir", () => {
     expect(issues(billingCoreSchema.safeParse({ address: "", idType: "TC", idNumber: "10000000146" }))).toEqual(["address"]);
     expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "TC", idNumber: "" }))).toEqual(["idNumber"]);
-    expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "VKN", idNumber: "10000000146" }))).toEqual([
+    expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "VKN", idNumber: "10000000147" }))).toEqual([
       "idNumber",
     ]);
+    // Şahıs şirketi: kurumsalda geçerli TCKN vergi numarası olarak kabul edilir.
+    expect(issues(billingCoreSchema.safeParse({ address: ADDRESS, idType: "VKN", idNumber: "10000000146" }))).toEqual([]);
   });
 
   const convert: ConvertInput = {
@@ -141,6 +143,16 @@ describe("fatura profili (genişletilmiş billingSchema)", () => {
     const v = billingSchema.parse(company);
     expect(toBillingProfile(v)).toMatchObject({ billingType: "COMPANY", tcNo: null, taxNo: "9876543217", taxOffice: "Kadıköy" });
     expect(issues(billingSchema.safeParse({ ...company, taxOffice: "" }))).toEqual(["taxOffice"]);
+  });
+
+  it("kurumsalda şahıs şirketinin TCKN'si vergi numarası olarak kabul edilir", () => {
+    const v = billingSchema.parse({ ...company, idNumber: "10000000146" });
+    expect(toBillingProfile(v)).toMatchObject({ billingType: "COMPANY", tcNo: null, taxNo: "10000000146", taxOffice: "Kadıköy" });
+    expect(issues(billingSchema.safeParse({ ...company, idNumber: "10000000147" }))).toEqual(["idNumber"]);
+  });
+
+  it("bireyselde VKN kabul edilmez (VKN kurumsal türüdür)", () => {
+    expect(issues(billingSchema.safeParse({ ...person, idNumber: "9876543217" }))).toEqual(["idNumber"]);
   });
 
   it("bireyselde bırakılan vergi dairesi yok sayılır (SQL: vergi dairesi yalnız VKN ile)", () => {

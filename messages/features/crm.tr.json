@@ -9,6 +9,24 @@
     "OLUMSUZ": "Satış Olmadı",
     "TAKIPTE": "Takipte"
   },
+  "statusMenu": {
+    "trigger": "Satış aşaması: {status}. Değiştirmek için seçin",
+    "hint": "Satış aşamasını değiştir",
+    "menuLabel": "Satış aşaması",
+    "updated": "Satış aşaması güncellendi",
+    "error": "Satış aşaması güncellenemedi",
+    "undo": "Geri al",
+    "undone": "Satış aşaması geri alındı",
+    "undoError": "Geri alınamadı",
+    "cancel": "Vazgeç",
+    "save": "Kaydet",
+    "nextContact": "Yeniden temas tarihi",
+    "offerAmount": "Teklif tutarı (₺)",
+    "saleAmount": "Satış tutarı (₺)",
+    "offerWas": "Teklif tutarı: {amount}",
+    "soldConfirm": "Satış oldu olarak işaretlenecek.",
+    "amountInvalid": "Geçerli bir tutar girin (ör. 45.000)"
+  },
   "source": {
     "MANUAL": "Elle girildi",
     "EDORAS": "Edoras kurumundan",
@@ -42,7 +60,8 @@
       "status": "Durum ve görünüm",
       "statusAll": "Tümü",
       "viewsGroup": "Görünümler",
-      "statusGroup": "Durumlar"
+      "statusGroup": "Durumlar",
+      "sourceGroup": "Kaynaklar"
     },
     "table": {
       "customer": "Müşteri",
@@ -78,6 +97,11 @@
       "next": "Sonraki",
       "pageSize": "Sayfa boyutu",
       "showing": "{from}-{to} / {total} kayıt"
+    },
+    "rowMenu": {
+      "assignTask": "Görev ata",
+      "addToCallList": "Arama listesine ekle",
+      "complaint": "Şikâyet kaydı"
     }
   },
   "form": {
@@ -107,8 +131,6 @@
     "error": "Aday oluşturulamadı"
   },
   "edit": {
-    "title": "Adayı düzenle",
-    "description": "Aday, takip ve satış bilgilerini güncelleyin.",
     "submit": "Kaydet",
     "success": "Aday güncellendi",
     "deleteButton": "Adayı Sil",
@@ -154,16 +176,31 @@
     "lostReasonPlaceholder": "Neden seçin",
     "noReason": "Belirtilmedi",
     "reasons": {
-      "FIYAT": "Fiyat",
-      "ZAMANLAMA": "Zamanlama",
-      "RAKIP": "Rakip tercih edildi",
-      "IHTIYAC_YOK": "İhtiyaç yok",
-      "BUTCE": "Bütçe yok",
-      "DIGER": "Diğer"
+      "PRICE": "Fiyat yüksek bulundu",
+      "BUDGET_NOT_APPROVED": "Bütçe onaylanmadı",
+      "NOT_USED": "Kullanılmadı / ihtiyaç yok",
+      "SEASON_ENDED": "Sezon bitti / zamanlama uymadı",
+      "TEAM_DISBANDED": "Takım dağıldı",
+      "COACH_LEFT_CLUB": "Antrenör kulüpten ayrıldı",
+      "COMPETITOR": "Rakip tercih edildi",
+      "MISSING_FEATURE_TECH": "Eksik özellik / teknik sorun",
+      "DISSATISFIED": "Memnun kalmadı",
+      "NOT_DECISION_MAKER": "Karar verici değil",
+      "UNREACHABLE": "Ulaşılamadı",
+      "OTHER": "Diğer"
     },
     "offerDate": "Teklif tarihi: {date}",
     "clear": "Temizle",
-    "amountHint": "Boş bırakılan tutar satışa / teklife geçerken 0 TL olarak kaydedilir; liste fiyatı otomatik doldurulmaz."
+    "amountHint": "Boş bırakılan tutar satışa / teklife geçerken 0 TL olarak kaydedilir; liste fiyatı otomatik doldurulmaz.",
+    "lostReasonRequired": "Satış olmadı için kayıp nedeni seçin."
+  },
+  "lossDetail": {
+    "note": "Kayıp notu",
+    "competitor": "Rakip",
+    "recallAt": "Yeniden temas",
+    "competitorPlaceholder": "Tercih edilen rakibin adı",
+    "notePlaceholder": "Kaybın ayrıntısı (isteğe bağlı)",
+    "recallHint": "Bu kurumla yeniden ne zaman temas kurulacağı."
   },
   "dissatisfied": {
     "badge": "Şikâyet",
@@ -321,6 +358,9 @@
       "created": "Kayıt tarihi",
       "nextCall": "Sonraki arama",
       "lostReason": "Kayıp nedeni",
+      "competitor": "Rakip",
+      "lostNote": "Kayıp notu",
+      "recallAt": "Yeniden temas",
       "institution": "Edoras kurumu",
       "offer": "Teklif",
       "sale": "Satış",
@@ -369,25 +409,26 @@
     "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
   },
   "detail": {
-    "edit": "Düzenle",
-    "contact": "İletişim",
-    "phone": "Telefon",
-    "email": "E-posta",
-    "location": "Konum",
     "createdAt": "Kayıt tarihi",
-    "details": "Takip",
+    "details": "Ayrıntılar",
     "source": "Kaynak",
-    "nextCall": "Sonraki arama",
     "offerDate": "Teklif tarihi",
     "soldAt": "Satış tarihi",
-    "lostReason": "Kayıp nedeni",
-    "offer": "Teklif",
+    "offerBy": "Teklifi veren",
+    "soldBy": "Satışı yapan",
     "notes": "Notlar",
     "notesLoading": "Notlar yükleniyor…",
     "notesEmpty": "Henüz not yok.",
     "allNotes": "Tüm notlar ({count})",
     "purchaseHistory": "Alım-satım geçmişi",
-    "markDissatisfied": "Şikâyet kaydı ekle"
+    "markDissatisfied": "Şikâyet kaydı ekle",
+    "complaint": "Şikâyet",
+    "save": "Kaydet",
+    "discardEdits": "Vazgeç",
+    "unsavedTitle": "Kaydedilmemiş değişiklikler var",
+    "unsavedBody": "Paneli kapatırsanız yaptığınız değişiklikler kaybolur.",
+    "unsavedKeep": "Düzenlemeye devam et",
+    "unsavedDiscard": "Değişiklikleri at"
   },
   "analytics": {
     "title": "Satış Analizleri",

@@ -1,0 +1,14 @@
+{
+  "city": "İl",
+  "district": "İlçe",
+  "country": "Ülke",
+  "cityPlaceholder": "İl seçin",
+  "districtPlaceholder": "İlçe seçin",
+  "districtPickCityFirst": "Önce il seçin",
+  "countryPlaceholder": "Türkiye",
+  "cityFreePlaceholder": "İl / eyalet yazın",
+  "districtFreePlaceholder": "İlçe / bölge yazın",
+  "noResults": "Sonuç bulunamadı",
+  "notInList": "listede yok — listeden seçerek düzeltin",
+  "clear": "Temizle"
+}

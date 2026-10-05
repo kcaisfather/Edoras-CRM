@@ -24,6 +24,8 @@ export function deepMergeMessages(base: Messages, extra: Messages): Messages {
 async function loadFeatureMessages(): Promise<Record<string, Messages>> {
   return {
     shell: (await import("@/messages/features/shell.tr.json")).default,
+    // Konum alanları (Ülke/İl/İlçe listeleri) DeepSport'taki ad alanında: locations.*
+    locations: (await import("@/messages/features/locations.tr.json")).default,
     settingsx: (await import("@/messages/features/settingsx.tr.json")).default,
     // Soğuk listeler ve içe aktarma DeepSport'taki ad alanlarında: growth.coldLists, growth.import.
     // Müşteri analizleri (growth.customers, growth.analytics, growth.usage…) growthx.tr.json'da; aynı ad alanına birleşir.

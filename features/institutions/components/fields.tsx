@@ -5,6 +5,7 @@ import { useFormContext, useWatch, type FieldValues, type Path, type UseFormRetu
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { LocationFields } from "@/features/locations";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { isIsoDate, licenseEndDate } from "@/lib/domain/institutions/rules";
@@ -159,10 +160,32 @@ export function BillingFields() {
       <TextField
         name="idNumber"
         label={idType === "VKN" ? t("taxNo") : t("tcNo")}
-        placeholder={idType === "VKN" ? "10 haneli Vergi No" : "11 haneli TC Kimlik No"}
+        placeholder={idType === "VKN" ? "10 haneli Vergi No ya da şahıs şirketi TCKN" : "11 haneli TC Kimlik No"}
         inputMode="numeric"
       />
     </>
+  );
+}
+
+/** İl + ilçe: yalnız listeden seçilir (Türkiye). Fatura profilinde ülke yoktur. */
+function BillingLocation() {
+  const t = useTranslations("institutions.form");
+  const { control, setValue, formState } = useFormContext();
+  const [city, district] = useWatch({ control, name: ["city", "district"] }) as [string, string];
+  const errors = formState.errors as Record<string, { message?: string } | undefined>;
+  return (
+    <LocationFields
+      idPrefix="billing"
+      showCountry={false}
+      value={{ city, district, country: "Türkiye" }}
+      onChange={(patch) => {
+        for (const key of ["city", "district"] as const) {
+          if (patch[key] !== undefined) setValue(key, patch[key], { shouldDirty: true, shouldValidate: true });
+        }
+      }}
+      labels={{ city: t("city"), district: t("district") }}
+      errors={{ city: errors.city?.message, district: errors.district?.message }}
+    />
   );
 }
 
@@ -189,15 +212,14 @@ export function BillingProfileFields() {
         <TextField
           name="idNumber"
           label={company ? t("taxNo") : t("tcNo")}
-          placeholder={company ? "10 haneli Vergi No" : "11 haneli TC Kimlik No"}
+          placeholder={company ? "10 haneli Vergi No ya da şahıs şirketi TCKN" : "11 haneli TC Kimlik No"}
           inputMode="numeric"
         />
         {company ? <TextField name="taxOffice" label={t("taxOffice")} placeholder="Ör. Kadıköy" /> : null}
       </div>
       <TextField name="address" label={t("address")} placeholder={t("addressPlaceholder")} multiline />
       <div className="grid gap-4 sm:grid-cols-3">
-        <TextField name="city" label={t("city")} autoComplete="address-level1" />
-        <TextField name="district" label={t("district")} autoComplete="address-level2" />
+        <BillingLocation />
         <TextField name="postalCode" label={t("postalCode")} inputMode="numeric" autoComplete="postal-code" />
       </div>
       <TextField name="email" label={t("billingEmail")} type="email" description={t("billingEmailHint")} autoComplete="off" />

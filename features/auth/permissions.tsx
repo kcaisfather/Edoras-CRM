@@ -25,6 +25,7 @@ export function usePermissions() {
     role,
     isCrmAgent: role === "CRM_AGENT",
     isAdmin: resolved && role === "ADMIN",
+    isSuper: resolved && user?.isSuper === true,
     canSeeFinancials: resolved && role === "ADMIN",
     canAccessPath: (pathname: string) => canAccessPathFor(role, pathname),
     homePath: homePathFor(role),

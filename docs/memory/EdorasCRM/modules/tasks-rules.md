@@ -15,3 +15,4 @@ elle atanan görevler ve tamamlanmış kural görevleri durur (anahtar `tür:öz
   kendine / havuza atar. Elle görev geçmiş güne atanamaz (`crm_tasks_guard`).
 - Soğuk liste görevi = kişinin arama sonucunu girmek; aynı anda en çok 50 kişi; menü rozeti soğuk listeyi saymaz.
 - İç kurumlar görev üretmez. "En iyi arama saati" taşınmadı.
+- "Görev ata" / "Arama listesine ekle": aday satırının tek İşlemler menüsü ve aday paneli (`onAssignTask` → `AssignTaskDialog`, `onAddToCallList` → `useAddToCallList`: bugüne, "arama", notsuz, havuz). Mükerrer görev: `assignTask` aynı aday + gün + amaç + atanan için açık görev varsa 409 `TASK_DUPLICATE` döner (kodda kontrol; şema değişmedi); "Arama listesine ekle" bunu "zaten listede" olarak bildirir, aynı aday için sürmekte olan istek varken ikinci tıklama yok sayılır.

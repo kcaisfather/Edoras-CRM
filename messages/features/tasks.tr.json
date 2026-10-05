@@ -144,14 +144,8 @@
       "submit": "Görevi ata",
       "success": "Görev atandı",
       "error": "Görev kaydedilemedi; tekrar deneyin.",
-      "menuLabel": "Görev ata",
-      "menuAssign": "Görev ata…",
-      "menuCallList": "Arama listesine ekle",
-      "needsCrm": "Görev atamak için CRM kaydı gerekli.",
-      "callListTitle": "Arama listesine ekle",
-      "callListBody": "“{name}” için bugüne bir “Arama” görevi oluşturulacak. Görev Görevlerim'de görünür.",
-      "callListConfirm": "Listeye ekle",
-      "callListSuccess": "Arama listesine eklendi"
+      "callListSuccess": "Arama listesine eklendi",
+      "callListExists": "Bu aday bugünkü arama listesinde zaten var."
     }
   },
   "rules": {

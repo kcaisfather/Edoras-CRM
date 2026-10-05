@@ -12,7 +12,7 @@ import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { emptyLeadForm, formToCreate, leadFormSchema, type LeadFormValues } from "@/lib/domain/crm/form";
 import type { CrmLeadDto } from "@/lib/domain/crm/types";
 import { useCreateCrmLead } from "../mutations";
-import { applyLeadFieldErrors } from "./CrmEditModal";
+import { applyLeadFieldErrors } from "./crm-edit/field-errors";
 import { AmountField, CrmLeadFields } from "./CrmLeadFields";
 
 /**

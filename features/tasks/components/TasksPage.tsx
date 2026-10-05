@@ -14,10 +14,10 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCurrentUser, usePermissions } from "@/features/auth";
-import { CrmEditModal, CrmErrorState, CrmNoteModal, useCrmRules } from "@/features/crm";
+import { CrmErrorState, CrmLeadSheet, CrmNoteModal, useCrmRules } from "@/features/crm";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { useMounted } from "@/lib/hooks/use-mounted";
-import type { CrmLead } from "@/lib/domain/crm/types";
+import type { CrmLead, CrmNoteMode } from "@/lib/domain/crm/types";
 import { COLD_LIST_NEW_TASK_CAP } from "@/lib/domain/tasks/cold";
 import { bucketTasks, type TaskBuckets } from "@/lib/domain/tasks/derive";
 import { ruleMap } from "@/lib/domain/tasks/rules";
@@ -148,6 +148,7 @@ export function TasksPage() {
   const [completeTask, setCompleteTask] = useState<CrmTask | null>(null);
   const [coldTask, setColdTask] = useState<CrmTask | null>(null);
   const [noteLead, setNoteLead] = useState<CrmLead | null>(null);
+  const [noteMode, setNoteMode] = useState<CrmNoteMode>("note");
   const [editLead, setEditLead] = useState<CrmLead | null>(null);
 
   const { bucket, openCount } = filters;
@@ -177,7 +178,11 @@ export function TasksPage() {
     undoing: reopen.isPending,
     onComplete: () => (task.prospect ? setColdTask(task) : setCompleteTask(task)),
     onUndo: () => undo(task),
-    onNote: () => task.lead && setNoteLead(task.lead),
+    onNote: () => {
+      if (!task.lead) return;
+      setNoteMode("note");
+      setNoteLead(task.lead);
+    },
     onEdit: () => task.lead && setEditLead(task.lead),
   });
 
@@ -269,8 +274,23 @@ export function TasksPage() {
         open={!!coldTask}
         onOpenChange={(open) => !open && setColdTask(null)}
       />
-      <CrmNoteModal open={!!noteLead} onOpenChange={(open) => !open && setNoteLead(null)} lead={noteLead} />
-      <CrmEditModal open={!!editLead} onOpenChange={(open) => !open && setEditLead(null)} lead={editLead} />
+      <CrmNoteModal open={!!noteLead} onOpenChange={(open) => !open && setNoteLead(null)} lead={noteLead} mode={noteMode} />
+      {/* Aday paneli (düzenleme): Not ekle / Şikâyet / devir notu bu sayfanın not penceresini açar. */}
+      <CrmLeadSheet
+        lead={editLead}
+        onOpenChange={(open) => !open && setEditLead(null)}
+        actions={{
+          onAddNote: (lead, mode = "note") => {
+            setNoteMode(mode);
+            setNoteLead(lead);
+          },
+          onStatusSold: (lead) => {
+            setNoteMode("handoff");
+            setNoteLead(lead);
+          },
+        }}
+        onDeleted={() => setEditLead(null)}
+      />
     </div>
   );
 }

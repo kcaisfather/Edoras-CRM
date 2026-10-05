@@ -26,7 +26,7 @@ import { billingProfileCompleteness, effectiveBillingType } from "@/lib/domain/i
 import { daysBetween, todayIso } from "@/lib/domain/institutions/rules";
 import type { InstitutionDetail, License, Payment } from "@/lib/domain/institutions/types";
 import { formatDate, formatDateTime, formatPhone } from "../format";
-import { BillingDialog, ContactDialog, PaymentDialog, RenewDialog } from "./dialogs";
+import { BillingDialog, ContactDialog, LicenseEditDialog, PaymentDialog, PaymentEditDialog, RenewDialog } from "./dialogs";
 
 export function SectionCard({
   icon: Icon,
@@ -213,6 +213,7 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
   const t = useTranslations("institutions.detail.licenses");
   const { isAdmin } = usePermissions();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<License | null>(null);
   const crm = institution.crm;
   if (!crm) return null;
   const today = todayIso();
@@ -243,6 +244,11 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
                 </span>
                 <span className="flex items-center gap-3">
                   <FinancialOnly>
+                    {l.discountPercent != null && l.discountPercent > 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        {t("discount", { percent: String(l.discountPercent).replace(".", ",") })}
+                      </span>
+                    ) : null}
                     <Money value={l.price} className="font-medium" />
                   </FinancialOnly>
                   <span
@@ -255,6 +261,11 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
                   >
                     {t(`state.${state}`)}
                   </span>
+                  {isAdmin ? (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(l)} aria-label={t("edit")} title={t("edit")}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : null}
                 </span>
               </li>
             );
@@ -263,6 +274,9 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
       )}
       <p className="mt-3 text-xs text-muted-foreground">{t("rule")}</p>
       {canRenew ? <RenewDialog institution={institution} open={open} onOpenChange={setOpen} /> : null}
+      {isAdmin && editing ? (
+        <LicenseEditDialog institution={institution} license={editing} open onOpenChange={(o) => !o && setEditing(null)} />
+      ) : null}
     </SectionCard>
   );
 }
@@ -279,6 +293,7 @@ export function PaymentsCard({
   const t = useTranslations("institutions.detail.payments");
   const tMethod = useTranslations("institutions.paymentMethod");
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Payment | null>(null);
   const crm = institution.crm;
   const payments = institution.payments;
   if (!crm || !payments) return null;
@@ -315,6 +330,9 @@ export function PaymentsCard({
                 <span className="flex items-center gap-2">
                   {renderPaymentAction?.(p, institution)}
                   <Money value={p.amount} fractionDigits={2} className="font-medium" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(p)} aria-label={t("edit")} title={t("edit")}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                 </span>
               </li>
             ))}
@@ -326,6 +344,9 @@ export function PaymentsCard({
         </>
       )}
       {crm.billingComplete ? <PaymentDialog institution={institution} open={open} onOpenChange={setOpen} /> : null}
+      {editing ? (
+        <PaymentEditDialog institution={institution} payment={editing} open onOpenChange={(o) => !o && setEditing(null)} />
+      ) : null}
     </SectionCard>
   );
 }

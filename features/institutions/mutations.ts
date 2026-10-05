@@ -6,6 +6,8 @@ import type {
   ContactInput,
   ConvertInput,
   EnrollInput,
+  LicenseEditInput,
+  LicenseListPriceInput,
   NewDemoInput,
   PaymentInput,
   RenewInput,
@@ -20,6 +22,21 @@ function useInvalidate() {
   return (id?: string) => {
     void queryClient.invalidateQueries({ queryKey: institutionKeys.list() });
     if (id) void queryClient.invalidateQueries({ queryKey: institutionKeys.detail(id) });
+  };
+}
+
+/**
+ * Lisans bedeli / ödeme düzeltmesi CRM'deki satış · tahsilat · açık bakiyeyi (aday satış tutarı tetikleyiciyle
+ * düzelir) ve Ödeme Geçmişi'ni de değiştirir. Kök anahtarlar elle yazıldı: features/crm bu modülü içe aktarır,
+ * oradan almak döngü kurar (crmKeys.all = ["crm"], salesKeys.all = ["sales"]).
+ */
+function useInvalidateSales() {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidate();
+  return (id: string) => {
+    invalidate(id);
+    void queryClient.invalidateQueries({ queryKey: ["crm"] });
+    void queryClient.invalidateQueries({ queryKey: ["sales"] });
   };
 }
 
@@ -80,5 +97,37 @@ export function useRecordPayment(id: string) {
   return useMutation({
     mutationFn: (input: PaymentInput) => institutionsApi.recordPayment(id, input),
     onSuccess: () => invalidate(id),
+  });
+}
+
+export function useUpdateLicense(id: string) {
+  const invalidate = useInvalidateSales();
+  return useMutation({
+    mutationFn: ({ licenseId, input }: { licenseId: string; input: LicenseEditInput }) => institutionsApi.updateLicense(id, licenseId, input),
+    onSuccess: () => invalidate(id),
+  });
+}
+
+export function useUpdatePayment(id: string) {
+  const invalidate = useInvalidateSales();
+  return useMutation({
+    mutationFn: ({ paymentId, input }: { paymentId: string; input: PaymentInput }) => institutionsApi.updatePayment(id, paymentId, input),
+    onSuccess: () => invalidate(id),
+  });
+}
+
+export function useDeletePayment(id: string) {
+  const invalidate = useInvalidateSales();
+  return useMutation({
+    mutationFn: (paymentId: string) => institutionsApi.deletePayment(id, paymentId),
+    onSuccess: () => invalidate(id),
+  });
+}
+
+export function useUpdateLicensePricing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LicenseListPriceInput) => institutionsApi.updateLicensePricing(input),
+    onSuccess: (data) => queryClient.setQueryData(institutionKeys.licensePricing(), data),
   });
 }

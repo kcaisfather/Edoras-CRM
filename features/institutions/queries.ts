@@ -10,6 +10,7 @@ export const institutionKeys = {
   all: ["institutions"] as const,
   list: () => [...institutionKeys.all, "list"] as const,
   detail: (id: string) => [...institutionKeys.all, "detail", id] as const,
+  licensePricing: () => [...institutionKeys.all, "license-pricing"] as const,
 };
 
 export function useInstitutions() {
@@ -24,6 +25,16 @@ export function useInstitution(id: string) {
     queryKey: institutionKeys.detail(id),
     queryFn: ({ signal }) => institutionsApi.get(id, signal),
     enabled: !!id,
+  });
+}
+
+/** Lisans liste fiyatı (Ayarlar). Yalnız ADMIN çağırır; satış formları indirim önizlemesi için kullanır. */
+export function useLicensePricing(enabled = true) {
+  return useQuery({
+    queryKey: institutionKeys.licensePricing(),
+    queryFn: ({ signal }) => institutionsApi.licensePricing(signal),
+    enabled,
+    staleTime: 60_000,
   });
 }
 

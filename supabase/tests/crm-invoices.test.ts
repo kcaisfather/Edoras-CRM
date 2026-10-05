@@ -317,7 +317,9 @@ describe("crm_invoices: değişmezlik ve durum geçişi", () => {
     const { institutionId, licenseId } = await enrollPaid("Korumalı Ödeme");
     const payment = await addPayment(institutionId, licenseId);
     await invoice({ institutionId, paymentId: payment });
-    expect(await failure("delete from crm_payments where id = $1", [payment])).toBe("crm_invoices_payment_id_fkey");
+    // 20261005190000'dan beri iptal edilmemiş faturada önce tetikleyici durdurur (CRM_SALE_INVOICED); iptal edilmiş
+    // faturada FK (crm_invoices_payment_id_fkey) — bkz. crm-license-pricing.test.ts.
+    expect(await failure("delete from crm_payments where id = $1", [payment])).toMatch(/CRM_SALE_INVOICED/);
   });
 });
 

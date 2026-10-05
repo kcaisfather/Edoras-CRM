@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { usePermissions } from "@/features/auth";
+import { LicensePricingPanel } from "@/features/institutions";
 import { RulesEditor } from "@/features/tasks";
 import { useUrlParam } from "@/lib/hooks/use-url-param";
 import { AccountPanel } from "./AccountPanel";
@@ -12,10 +13,10 @@ import { KvkkPanel } from "./KvkkPanel";
 import { ReportsPanel } from "./ReportsPanel";
 import { TeamPanel } from "./TeamPanel";
 
-type SettingsTab = "general" | "team" | "rules" | "reports" | "dataQuality" | "diagnostics" | "kvkk";
+type SettingsTab = "general" | "team" | "pricing" | "rules" | "reports" | "dataQuality" | "diagnostics" | "kvkk";
 
 /**
- * Ayarlar (DeepSportAdmin düzeni): Genel · Ekip · Kurallar · Raporlar · Veri kalitesi · Hata kaydı · KVKK. Sekme URL'de
+ * Ayarlar (DeepSportAdmin düzeni): Genel · Ekip · Lisans fiyatı · Kurallar · Raporlar · Veri kalitesi · Hata kaydı · KVKK. Sekme URL'de
  * (?tab=). Satış temsilcisi yalnız Genel ve KVKK'yı görür. Kurallar sekmesi /crm/rules ile aynı düzenleyici
  * (DeepSport /settings?tab=rules). Raporlar sekmesi zamanlanmış rapor e-postalarını yönetir (yalnız yönetici).
  */
@@ -25,7 +26,7 @@ export function SettingsPage() {
   const { isAdmin } = usePermissions();
   const [tabParam, setTab] = useUrlParam("tab", "general");
 
-  const tabs: SettingsTab[] = isAdmin ? ["general", "team", "rules", "reports", "dataQuality", "diagnostics", "kvkk"] : ["general", "kvkk"];
+  const tabs: SettingsTab[] = isAdmin ? ["general", "team", "pricing", "rules", "reports", "dataQuality", "diagnostics", "kvkk"] : ["general", "kvkk"];
   const tab: SettingsTab = (tabs as string[]).includes(tabParam) ? (tabParam as SettingsTab) : "general";
 
   return (
@@ -43,6 +44,7 @@ export function SettingsPage() {
       />
       {tab === "general" && <AccountPanel />}
       {tab === "team" && <TeamPanel />}
+      {tab === "pricing" && <LicensePricingPanel />}
       {tab === "rules" && <RulesEditor embedded />}
       {tab === "reports" && <ReportsPanel />}
       {tab === "dataQuality" && <InternalInstitutionsPanel />}

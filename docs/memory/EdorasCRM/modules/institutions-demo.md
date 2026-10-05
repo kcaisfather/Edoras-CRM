@@ -34,6 +34,23 @@ okunur doğrulandı. İlk gerçek demo açılışından sonra edoras-admin panel
 - Ödeme (`payments`, ADMIN): aynı bilgiler olmadan alınmaz (`crm_guard_payment`).
 - Demo bitince kurum pasife düşmez; yalnız "Demo bitti" rozeti / menü sayacı.
 
+## Lisans fiyatı ve düzeltme (2026-10-05)
+
+Müşteri geri bildirimi: "hesabı ödeme planını düzeltmeden kaydettim, düzenleme bulamadım" + "paket fiyatlarında yalnız
+indirim yüzdesi olsun". Kurucu kararı: tek liste fiyatı, satışta indirim %, elle bedel yalnız istisna.
+
+- Liste fiyatı: Ayarlar → Lisans fiyatı (`GET/PUT /api/settings/license-pricing`, ADMIN, tablo `crm_license_pricing`).
+  Tanımlı değilse formlar elle bedele geçer; sunucu yüzde modunda 422 `LIST_PRICE_MISSING`.
+- Satış formları (ücretliye geçiş, kayda alma, yenileme, lisans düzelt) `LicenseFields`: indirim % + önizleme ya da
+  "Bedeli elle yaz". Kural `lib/domain/institutions/pricing.ts` = SQL `crm_licenses_discount_check` (aynı yuvarlama).
+  Lisans satış anındaki liste fiyatını (`list_price`) saklar; düzeltmede o, yoksa Ayarlar'daki kullanılır.
+- RPC imzaları değişmedi: bedel RPC'ye gider, `list_price` / `discount_percent` ardından `tagLicensePricing` ile yazılır.
+- Düzeltme (ADMIN): `PATCH /api/institutions/{id}/licenses/{licenseId}` (başlangıç → bitiş +1 yıl, bedel, not),
+  `PATCH|DELETE /api/institutions/{id}/payments/{paymentId}`. İptal edilmemiş faturası olan kayıt değişmez / silinmez
+  (`CRM_SALE_INVOICED` → 409 `SALE_INVOICED`); faturası iptal edilmiş ödeme düzeltilir ama FK yüzünden silinmez.
+- Bedel değişince kurumun "Satış oldu" adayının satış tutarı (eski bedele eşitse, yeni bedel > 0) tetikleyiciyle düzelir:
+  CRM'deki satış / açık bakiye `sale_amount − tahsilat`tan hesaplanır; aksi halde eski tutar kalırdı.
+
 ## Fatura profili
 
 `GET/PUT /api/institutions/{id}/billing`. Tür kimlikten türetilir: TC → bireysel, VKN → kurumsal (+ vergi dairesi).

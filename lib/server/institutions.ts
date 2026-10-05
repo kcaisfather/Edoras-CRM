@@ -9,21 +9,24 @@ import {
   generateTemporaryPassword,
   initialAcademicPeriod,
   isBillingComplete,
+  licenseEndDate,
   todayIso,
 } from "@/lib/domain/institutions/rules";
 import {
   toBilling,
   toBillingProfile,
   toContact,
-  toLicense,
   toPayment,
   type BillingInput,
   type ContactInput,
   type ConvertInput,
   type EnrollInput,
+  type LicenseEditInput,
   type NewDemoInput,
   type PaymentInput,
+  type RenewInput,
 } from "@/lib/domain/institutions/schemas";
+import { resolveLicensePricing, type LicensePriceFields, type LicensePricing } from "@/lib/domain/institutions/pricing";
 import type {
   BillingProfile,
   BillingType,
@@ -32,6 +35,7 @@ import type {
   InstitutionDetail,
   InstitutionListItem,
   License,
+  LicensePricingSettings,
   Payment,
   PaymentMethod,
 } from "@/lib/domain/institutions/types";
@@ -174,7 +178,19 @@ export async function listInstitutions(): Promise<InstitutionListItem[]> {
   return items;
 }
 
-type LicenseRow = { id: string; starts_on: string; ends_on: string; price: number | string; note: string | null; created_at: string };
+type LicenseRow = {
+  id: string;
+  starts_on: string;
+  ends_on: string;
+  price: number | string;
+  list_price: number | string | null;
+  discount_percent: number | string | null;
+  note: string | null;
+  created_at: string;
+};
+
+const LICENSE_COLUMNS = "id, starts_on, ends_on, price, list_price, discount_percent, note, created_at";
+const numOrNull = (v: number | string | null) => (v == null ? null : Number(v));
 type PaymentRow = {
   id: string;
   license_id: string | null;
@@ -194,7 +210,7 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
     crmDb.from("crm_institutions").select(CRM_COLUMNS).eq("institution_id", id).maybeSingle(),
     crmDb
       .from("crm_licenses")
-      .select("id, starts_on, ends_on, price, note, created_at")
+      .select(LICENSE_COLUMNS)
       .eq("institution_id", id)
       .order("starts_on", { ascending: false }),
     financial
@@ -217,6 +233,8 @@ export async function getInstitutionDetail(id: string, staff: StaffContext): Pro
     startsOn: l.starts_on,
     endsOn: l.ends_on,
     price: financial ? Number(l.price) : null,
+    listPrice: financial ? numOrNull(l.list_price) : null,
+    discountPercent: financial ? numOrNull(l.discount_percent) : null,
     note: l.note,
     createdAt: l.created_at,
   }));
@@ -248,12 +266,13 @@ function enrollParams(
   institutionId: string,
   institutionName: string,
   input: Pick<EnrollInput, "status" | "contactName" | "contactPhone" | "contactEmail"> & Partial<EnrollInput>,
-  staff: StaffContext
+  staff: StaffContext,
+  /** UCRETLI kayıtta lisans bedeli (resolvePricing). */
+  pricing: LicensePricing | null = null
 ) {
   const contact = toContact(input);
   const paid = input.status === "UCRETLI";
   const billing = paid ? toBilling(input as EnrollInput) : { address: null, tcNo: null, taxNo: null };
-  const license = paid ? toLicense(input as EnrollInput) : null;
   return {
     p_institution_id: institutionId,
     p_institution_name: institutionName,
@@ -265,8 +284,8 @@ function enrollParams(
     p_tc_no: billing.tcNo,
     p_tax_no: billing.taxNo,
     p_demo_starts_on: paid ? null : (input.demoStartsOn ?? null),
-    p_license_starts_on: license?.startsOn ?? null,
-    p_license_price: license?.price ?? null,
+    p_license_starts_on: paid ? ((input as EnrollInput).licenseStartsOn ?? null) : null,
+    p_license_price: paid ? (pricing?.price ?? null) : null,
     p_created_by: staff.userId,
   };
 }
@@ -347,56 +366,123 @@ export async function createDemoInstitution(
   }
 }
 
+// --- Lisans fiyatı ------------------------------------------------------------------------------
+
+/** Ayarlar → lisans liste fiyatı (crm_license_pricing, tek satır). */
+export async function getLicensePricing(): Promise<LicensePricingSettings> {
+  const { data, error } = await getSupabaseAdminClient().from("crm_license_pricing").select("list_price, updated_at").eq("id", 1).maybeSingle();
+  if (error) throw dbError(error);
+  return { listPrice: numOrNull((data?.list_price as number | string | null) ?? null), updatedAt: (data?.updated_at as string | null) ?? null };
+}
+
+export async function updateLicenseListPrice(listPrice: number, staff: StaffContext): Promise<LicensePricingSettings> {
+  const before = await getLicensePricing();
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_license_pricing")
+    .update({ list_price: listPrice, updated_by: staff.userId })
+    .eq("id", 1)
+    .select("list_price, updated_at")
+    .maybeSingle();
+  if (error) throw dbError(error);
+  if (!data) throw new HttpError(503, "CONFIG_MISSING", undefined, "license_pricing:row");
+  await recordAudit(staff, {
+    action: "LICENSE_PRICING_UPDATED",
+    entityType: "license_pricing",
+    entityId: "1",
+    details: { before: before.listPrice, after: listPrice },
+  });
+  return { listPrice: Number(data.list_price), updatedAt: data.updated_at as string };
+}
+
+/**
+ * Formdaki bedel → yazılacak fiyat. Yüzde modunda `listPrice` verilmezse Ayarlar'daki liste fiyatı kullanılır;
+ * liste tanımlı değilse 422 LIST_PRICE_MISSING (panel bu durumda elle bedel ister).
+ */
+async function resolvePricing(input: LicensePriceFields, listPrice?: number | null): Promise<LicensePricing> {
+  const list = input.licensePriceManual ? null : (listPrice ?? (await getLicensePricing()).listPrice);
+  if (!input.licensePriceManual && list == null) throw new HttpError(422, "LIST_PRICE_MISSING");
+  const pricing = resolveLicensePricing(input, list);
+  if (!pricing) throw new HttpError(400, "VALIDATION");
+  return pricing;
+}
+
+/**
+ * Yeni açılan lisansa liste fiyatı / indirim etiketini yazar (bedel RPC'de zaten doğru). RPC imzaları değişmesin diye
+ * ayrı adım; yazılamazsa satış geçerli kalır, yalnız indirim etiketi eksik olur → loga düşer, işlem bozulmaz.
+ */
+async function tagLicensePricing(licenseId: string | null, pricing: LicensePricing): Promise<void> {
+  if (!licenseId || pricing.discountPercent == null) return;
+  const { error } = await getSupabaseAdminClient()
+    .from("crm_licenses")
+    .update({ list_price: pricing.listPrice, discount_percent: pricing.discountPercent })
+    .eq("id", licenseId);
+  if (error) console.error(`[api] lisans indirim etiketi yazılamadı: ${licenseId} (${error.code ?? "?"})`);
+}
+
+function pricingDetails(p: LicensePricing) {
+  return { price: p.price, listPrice: p.listPrice, discountPercent: p.discountPercent };
+}
+
 /** CRM öncesinden kalan kurumu kayda alır: DEMO (başlangıç + 1 yıl) ya da — yalnız ADMIN — UCRETLI. */
 export async function enrollInstitution(id: string, input: EnrollInput, staff: StaffContext): Promise<void> {
   if (input.status === "UCRETLI" && staff.role !== "ADMIN") throw new HttpError(403, "FORBIDDEN");
   const inst = await getEdorasInstitution(id);
   if (!inst) throw new HttpError(404, "NOT_FOUND");
-  const { error } = await getSupabaseAdminClient().rpc("crm_enroll_institution", enrollParams(id, inst.name, input, staff));
+  const pricing = input.status === "UCRETLI" ? await resolvePricing(input) : null;
+  const crmDb = getSupabaseAdminClient();
+  const { error } = await crmDb.rpc("crm_enroll_institution", enrollParams(id, inst.name, input, staff, pricing));
   if (error) throw dbError(error);
+  if (pricing) {
+    // Yeni kayıtta kurumun tek lisansı budur.
+    const { data } = await crmDb.from("crm_licenses").select("id").eq("institution_id", id).maybeSingle();
+    await tagLicensePricing((data?.id as string | undefined) ?? null, pricing);
+  }
   await recordAudit(staff, {
     action: "INSTITUTION_ENROLLED",
     entityType: "institution",
     entityId: id,
     entityLabel: inst.name,
-    details: { status: input.status },
+    details: { status: input.status, ...(pricing ? pricingDetails(pricing) : {}) },
   });
 }
 
 /** Demo → ücretli: fatura bilgisi + 1 yıllık lisans (+ isteğe bağlı ilk ödeme), tek transaction. */
 export async function convertToPaid(id: string, input: ConvertInput, staff: StaffContext): Promise<void> {
   const billing = toBilling(input);
-  const license = toLicense(input);
+  const pricing = await resolvePricing(input);
   const payment = input.withPayment ? toPayment(input) : null;
-  const { error } = await getSupabaseAdminClient().rpc("crm_convert_to_paid", {
+  const { data: licenseId, error } = await getSupabaseAdminClient().rpc("crm_convert_to_paid", {
     p_institution_id: id,
     p_address: billing.address,
     p_tc_no: billing.tcNo,
     p_tax_no: billing.taxNo,
-    p_license_starts_on: license.startsOn,
-    p_license_price: license.price,
+    p_license_starts_on: input.licenseStartsOn,
+    p_license_price: pricing.price,
     p_payment_amount: payment?.amount ?? null,
     p_payment_method: payment?.method ?? null,
     p_paid_on: payment?.paidOn ?? null,
     p_created_by: staff.userId,
   });
   if (error) throw dbError(error);
+  await tagLicensePricing((licenseId as string | null) ?? null, pricing);
   await recordAudit(staff, {
     action: "CONVERTED_TO_PAID",
     entityType: "institution",
     entityId: id,
-    details: { licenseStartsOn: license.startsOn, price: license.price, firstPayment: payment?.amount ?? null },
+    details: { licenseStartsOn: input.licenseStartsOn, ...pricingDetails(pricing), firstPayment: payment?.amount ?? null },
   });
 }
 
-export async function renewLicense(id: string, price: number, staff: StaffContext): Promise<void> {
-  const { error } = await getSupabaseAdminClient().rpc("crm_renew_license", {
+export async function renewLicense(id: string, input: RenewInput, staff: StaffContext): Promise<void> {
+  const pricing = await resolvePricing(input);
+  const { data: licenseId, error } = await getSupabaseAdminClient().rpc("crm_renew_license", {
     p_institution_id: id,
-    p_price: price,
+    p_price: pricing.price,
     p_created_by: staff.userId,
   });
   if (error) throw dbError(error);
-  await recordAudit(staff, { action: "LICENSE_RENEWED", entityType: "institution", entityId: id, details: { price } });
+  await tagLicensePricing((licenseId as string | null) ?? null, pricing);
+  await recordAudit(staff, { action: "LICENSE_RENEWED", entityType: "institution", entityId: id, details: pricingDetails(pricing) });
 }
 
 export async function updateContact(id: string, input: ContactInput, staff: StaffContext): Promise<void> {
@@ -491,5 +577,115 @@ export async function recordPayment(
     entityType: "institution",
     entityId: id,
     details: { amount: payment.amount, method: payment.method, paidOn: payment.paidOn, ...(context.leadId ? { leadId: context.leadId } : {}) },
+  });
+}
+
+// --- Düzeltme (kayıttan sonra, yalnız ADMIN) ----------------------------------------------------
+
+/**
+ * Lisansı düzeltir: başlangıç (bitiş +1 yıl), bedel (indirim yüzdesi ya da elle) ve not. Yüzde modunda lisansın kendi
+ * liste fiyatı varsa o (satış anındaki liste), yoksa Ayarlar'daki kullanılır. Faturası kesilmiş lisansın bedeli /
+ * tarihleri değişmez (CRM_SALE_INVOICED); çakışma CRM_LICENSE_OVERLAP.
+ */
+export async function updateLicense(id: string, licenseId: string, input: LicenseEditInput, staff: StaffContext): Promise<void> {
+  const crmDb = getSupabaseAdminClient();
+  const { data: current, error: readError } = await crmDb
+    .from("crm_licenses")
+    .select("starts_on, price, list_price, discount_percent")
+    .eq("id", licenseId)
+    .eq("institution_id", id)
+    .maybeSingle();
+  if (readError) throw dbError(readError);
+  if (!current) throw new HttpError(404, "NOT_FOUND");
+
+  const pricing = await resolvePricing(input, numOrNull(current.list_price as number | string | null));
+  const { error } = await crmDb
+    .from("crm_licenses")
+    .update({
+      starts_on: input.licenseStartsOn,
+      ends_on: licenseEndDate(input.licenseStartsOn),
+      price: pricing.price,
+      list_price: pricing.listPrice,
+      discount_percent: pricing.discountPercent,
+      note: input.note.trim() || null,
+    })
+    .eq("id", licenseId)
+    .eq("institution_id", id);
+  if (error) throw dbError(error);
+  await recordAudit(staff, {
+    action: "LICENSE_UPDATED",
+    entityType: "institution",
+    entityId: id,
+    details: {
+      licenseId,
+      startsOnBefore: current.starts_on as string,
+      startsOn: input.licenseStartsOn,
+      priceBefore: Number(current.price),
+      discountPercentBefore: numOrNull(current.discount_percent as number | string | null),
+      ...pricingDetails(pricing),
+    },
+  });
+}
+
+/** Ödemeyi düzeltir (tutar, tarih, yöntem, lisans, not). Faturası kesilmişse CRM_SALE_INVOICED. */
+export async function updatePayment(id: string, paymentId: string, input: PaymentInput, staff: StaffContext): Promise<void> {
+  const payment = toPayment(input);
+  const crmDb = getSupabaseAdminClient();
+  const { data: before, error: readError } = await crmDb
+    .from("crm_payments")
+    .select("amount, paid_on, method")
+    .eq("id", paymentId)
+    .eq("institution_id", id)
+    .maybeSingle();
+  if (readError) throw dbError(readError);
+  if (!before) throw new HttpError(404, "NOT_FOUND");
+
+  const { error } = await crmDb
+    .from("crm_payments")
+    .update({
+      amount: payment.amount,
+      paid_on: payment.paidOn,
+      method: payment.method,
+      license_id: input.licenseId || null,
+      note: input.note.trim() || null,
+    })
+    .eq("id", paymentId)
+    .eq("institution_id", id);
+  if (error) throw dbError(error);
+  await recordAudit(staff, {
+    action: "PAYMENT_UPDATED",
+    entityType: "institution",
+    entityId: id,
+    details: {
+      paymentId,
+      amountBefore: Number(before.amount),
+      amount: payment.amount,
+      paidOnBefore: before.paid_on as string,
+      paidOn: payment.paidOn,
+      methodBefore: before.method as string,
+      method: payment.method,
+    },
+  });
+}
+
+/** Yanlış girilmiş ödemeyi siler. Faturası olan ödeme (iptal edilmiş olsa da) silinmez → SALE_INVOICED. */
+export async function deletePayment(id: string, paymentId: string, staff: StaffContext): Promise<void> {
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_payments")
+    .delete()
+    .eq("id", paymentId)
+    .eq("institution_id", id)
+    .select("amount, paid_on, method");
+  if (error) {
+    if (error.code === "23503" && /crm_invoices_payment_id_fkey/.test(error.message)) throw new HttpError(409, "SALE_INVOICED");
+    throw dbError(error);
+  }
+  const row = data?.[0];
+  if (!row) throw new HttpError(404, "NOT_FOUND");
+  await recordAudit(staff, {
+    action: "PAYMENT_DELETED",
+    entityType: "institution",
+    entityId: id,
+    details: { paymentId, amount: Number(row.amount), paidOn: row.paid_on as string, method: row.method as string },
   });
 }

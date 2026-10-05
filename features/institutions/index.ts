@@ -5,4 +5,5 @@ export { InstitutionInfoBadge, InstitutionStatusBadge, useStatusLabel } from "./
 export { NewDemoDialog } from "./components/NewDemoDialog";
 export { CredentialsPanel } from "./components/CredentialsPanel";
 export { BillingProfileFields, ChoiceField, ContactFields, TextField, applyServerFieldErrors } from "./components/fields";
+export { LicensePricingPanel } from "./components/LicensePricingPanel";
 export { formatDate, formatPhone, programLabel } from "./format";

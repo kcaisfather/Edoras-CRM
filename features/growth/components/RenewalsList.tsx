@@ -12,6 +12,13 @@ import { FinancialOnly } from "@/features/auth";
 import { formatDate } from "@/features/institutions";
 import { useUrlParam } from "@/lib/hooks/use-url-param";
 import { cn } from "@/lib/utils";
+import {
+  RENEWAL_COMMITMENTS,
+  activeCommitment,
+  matchesCommitmentFilter,
+  parseCommitmentFilter,
+  radarSummary,
+} from "@/lib/domain/growth/commitments";
 import { balanceOf } from "@/lib/domain/growth/economics";
 import {
   RENEWAL_BUCKETS,
@@ -29,6 +36,8 @@ import { searchCustomers } from "@/lib/domain/growth/search";
 import { RENEWAL_SORT_KEYS, renewalSortAccessors } from "@/lib/domain/growth/sort";
 import type { GrowthCustomer } from "@/lib/domain/growth/types";
 import { sortRows } from "@/lib/utils/sort";
+import { useRenewalCommitments } from "../queries";
+import { COMMITMENT_TONE, CommitmentCell } from "./CommitmentCell";
 import { CLICKABLE_ROW, ContactActions, CustomerCell, LastActivity, StatCard, TABLE, TH, UsageBadge } from "./shared";
 
 const BUCKET_TONE: Record<RenewalBucket, string> = {
@@ -50,19 +59,24 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
   const [q, setQ] = useUrlParam("q");
   const [bucketParam, setBucket] = useUrlParam("bucket", "all");
   const bucket = parseBucketFilter(bucketParam);
+  const [commitmentParam, setCommitmentParam] = useUrlParam("commitment", "");
+  const commitmentFilter = parseCommitmentFilter(commitmentParam);
+  const tRadar = useTranslations("growth.renewals.radar");
+  const { map: commitments } = useRenewalCommitments();
   const { sort, toggle } = useUrlSort(RENEWAL_SORT_KEYS);
 
   const all = useMemo(() => renewalRows(customers), [customers]);
   const totals = useMemo(() => bucketTotals(all), [all]);
+  const radar = useMemo(() => radarSummary(all, commitments), [all, commitments]);
   const rows = useMemo(() => {
-    const byBucket = all.filter((r) => matchesBucketFilter(r.bucket, bucket));
+    const byBucket = all.filter((r) => matchesBucketFilter(r.bucket, bucket) && matchesCommitmentFilter(activeCommitment(r, commitments), commitmentFilter));
     const found = new Set(searchCustomers(byBucket.map((r) => r.customer), q));
     return sortRows(
       byBucket.filter((r) => found.has(r.customer)),
       sort,
       renewalSortAccessors()
     );
-  }, [all, bucket, q, sort]);
+  }, [all, bucket, commitments, commitmentFilter, q, sort]);
 
   const open = (id: string) => router.push(`/institutions/${id}`);
   const head = (key: (typeof RENEWAL_SORT_KEYS)[number], label: string) => (
@@ -86,6 +100,36 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
       </div>
       <CoverageNote>{t("note", { window: RENEWAL_WINDOW_DAYS, lookback: RENEWAL_EXPIRED_LOOKBACK_DAYS, active: RECENTLY_ACTIVE_DAYS })}</CoverageNote>
 
+      {/* Yenileme radarı: taahhüt durumuna göre sayılar (tıklayınca süzer) ve risk altındaki bedel. */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        {RENEWAL_COMMITMENTS.map((s) => (
+          <StatCard
+            key={s}
+            label={tRadar(`commitments.${s}`)}
+            value={radar.counts[s]}
+            tone={COMMITMENT_TONE[s]}
+            active={commitmentFilter === s}
+            onClick={() => setCommitmentParam(commitmentFilter === s ? "" : s)}
+          />
+        ))}
+        <StatCard
+          label={tRadar("none")}
+          value={radar.counts.NONE}
+          active={commitmentFilter === "NONE"}
+          onClick={() => setCommitmentParam(commitmentFilter === "NONE" ? "" : "NONE")}
+        />
+        <FinancialOnly>
+          {radar.atRiskAmount != null && (
+            <StatCard
+              label={tRadar("atRisk")}
+              value={<Money value={radar.atRiskAmount} />}
+              tone="text-destructive"
+              hint={tRadar("atRiskHint", { count: radar.atRiskCount })}
+            />
+          )}
+        </FinancialOnly>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <SearchBox value={q} onChange={setQ} />
@@ -103,7 +147,7 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
         </div>
         <CsvButton
           filename="yenileme"
-          header={[t("cols.customer"), t("cols.type"), t("cols.bucket"), t("cols.endsOn"), t("cols.days"), t("cols.lastActivity"), t("csvContact"), t("csvPhone"), t("csvEmail"), t("cols.balance")]}
+          header={[t("cols.customer"), t("cols.type"), t("cols.bucket"), t("cols.endsOn"), t("cols.days"), t("cols.lastActivity"), t("csvContact"), t("csvPhone"), t("csvEmail"), t("cols.balance"), t("csvCommitment"), t("csvCommitmentNote")]}
           financialColumns={[9]}
           rows={() =>
             rows.map((r) => [
@@ -117,6 +161,8 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
               r.customer.contactPhone,
               r.customer.contactEmail,
               r.customer.payments ? balanceOf(r.customer) : null,
+              ((c) => (c ? tRadar(`commitments.${c.status}`) : ""))(activeCommitment(r, commitments)),
+              activeCommitment(r, commitments)?.note ?? "",
             ])
           }
         />
@@ -131,6 +177,7 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
               {head("endsOn", t("cols.endsOn"))}
               {head("daysLeft", t("cols.days"))}
               {head("lastActivity", t("cols.lastActivity"))}
+              <TableHead className={TH}>{tRadar("col")}</TableHead>
               <TableHead className={TH}>{t("cols.usage")}</TableHead>
               <FinancialOnly>
                 <TableHead className={cn(TH, "text-right")}>{t("cols.balance")}</TableHead>
@@ -139,7 +186,7 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.length === 0 ? <EmptyRow colSpan={8} /> : null}
+            {rows.length === 0 ? <EmptyRow colSpan={9} /> : null}
             {rows.map((r) => {
               const balance = balanceOf(r.customer);
               return (
@@ -170,6 +217,9 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
                     <LastActivity customer={r.customer} />
                   </TableCell>
                   <TableCell>
+                    <CommitmentCell row={r} commitment={activeCommitment(r, commitments)} />
+                  </TableCell>
+                  <TableCell>
                     <UsageBadge customer={r.customer} />
                   </TableCell>
                   <FinancialOnly>
@@ -198,6 +248,9 @@ export function RenewalsList({ customers }: { customers: GrowthCustomer[] }) {
                 <LastActivity customer={r.customer} />
               </div>
               <ContactActions customer={r.customer} />
+            </div>
+            <div className="pt-2">
+              <CommitmentCell row={r} commitment={activeCommitment(r, commitments)} />
             </div>
           </MobileCard>
         ))}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { commitmentMap, type CommitmentInput } from "@/lib/domain/growth/commitments";
 import { DEFAULT_WINDOW_DAYS, parseWindowDays } from "@/lib/domain/growth/usage";
 import { DEFAULT_WEEKS } from "@/lib/domain/growth/weekly";
 import { useUrlParam } from "@/lib/hooks/use-url-param";
@@ -11,6 +12,7 @@ export const growthKeys = {
   all: ["growth"] as const,
   customers: (windowDays: number) => [...growthKeys.all, "customers", windowDays] as const,
   weekly: (weeks: number) => [...growthKeys.all, "weekly", weeks] as const,
+  commitments: () => [...growthKeys.all, "commitments"] as const,
   usage: (id: string, windowDays: number) => [...growthKeys.all, "usage", id, windowDays] as const,
 };
 
@@ -47,4 +49,27 @@ export function useWindowDays(): [number, (days: number) => void] {
   const [raw, setRaw] = useUrlParam("window", String(DEFAULT_WINDOW_DAYS));
   const days = useMemo(() => parseWindowDays(raw), [raw]);
   return [days, (next) => setRaw(String(next))];
+}
+
+/** Yenileme taahhütleri (Yenileme Radarı). Geçerlilik (bitiş günü eşleşmesi) satırla birlikte değerlenir. */
+export function useRenewalCommitments() {
+  const query = useQuery({
+    queryKey: growthKeys.commitments(),
+    queryFn: ({ signal }) => growthApi.commitments(signal),
+    staleTime: 60 * 1000,
+  });
+  const map = useMemo(() => commitmentMap(query.data ?? []), [query.data]);
+  return { ...query, map };
+}
+
+/** Taahhüt yaz (status verilirse) ya da sil (status null). Yazımdan sonra liste tazelenir. */
+export function useSetRenewalCommitment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ institutionId, input }: { institutionId: string; input: CommitmentInput | null }): Promise<void> => {
+      if (input) await growthApi.setCommitment(institutionId, input);
+      else await growthApi.clearCommitment(institutionId);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: growthKeys.commitments() }),
+  });
 }

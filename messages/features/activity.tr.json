@@ -162,7 +162,9 @@
       "REPORT_SENT": "Rapor e-postası gönderildi",
       "APPOINTMENT_CREATED": "Randevu planlandı",
       "APPOINTMENT_RESCHEDULED": "Randevu yeniden planlandı",
-      "APPOINTMENT_CLOSED": "Randevu kapatıldı"
+      "APPOINTMENT_CLOSED": "Randevu kapatıldı",
+      "RENEWAL_COMMITMENT_SET": "Yenileme taahhüdü güncellendi",
+      "RENEWAL_COMMITMENT_CLEARED": "Yenileme taahhüdü kaldırıldı"
     },
     "detailKeys": {
       "amount": "Tutar",

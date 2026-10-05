@@ -69,6 +69,9 @@ export const AUDIT_ACTIONS = [
   "APPOINTMENT_CREATED",
   "APPOINTMENT_RESCHEDULED",
   "APPOINTMENT_CLOSED",
+  // Yenileme taahhüdü: durum ve bitiş günü yazılır; not (serbest metin) yazılmaz.
+  "RENEWAL_COMMITMENT_SET",
+  "RENEWAL_COMMITMENT_CLEARED",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

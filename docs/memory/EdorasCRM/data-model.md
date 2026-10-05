@@ -18,7 +18,7 @@ kullandığı için RLS korumaz; kural mutlaka DB'de de durur. Tam kural tablosu
 | `20260929230000_crm_reports` | `crm_report_subscriptions`, `crm_report_runs` |
 | `20261001090000_crm_invoice_provider_refs` | `crm_invoices.provider_ref` (Paraşüt satış faturası id, bir kez yazılır) + `provider_job` (süren iş) |
 | `20261005100000_crm_loss_actor` | `crm_leads`: kayıp nedeni 12'li küme (eski 6 değer dönüştürüldü), `lost_note` / `competitor` / `recall_at` (yalnız OLUMSUZ), `offer_by` / `sold_by` (+ `crm_leads_actor` tetikleyicisi); `crm_complete_task` yeni anahtarları kabul eder |
-| `20261005190000_crm_license_pricing` (**henüz uygulanmadı**) | `crm_license_pricing` (tek liste fiyatı), `crm_licenses.list_price` / `discount_percent` (`crm_licenses_discount_check`: bedel = liste × (100 − %) / 100), faturalı lisans / ödeme düzeltilemez (`CRM_SALE_INVOICED`), bedel düzelince "Satış oldu" adayın `sale_amount`'ı (eski bedele eşitse) da düzelir |
+| `20261005190000_crm_license_pricing` (2026-10-05 panel SQL Editor ile elle uygulandı; MCP migration geçmişinde yok) | `crm_license_pricing` (tek liste fiyatı), `crm_licenses.list_price` / `discount_percent` (`crm_licenses_discount_check`: bedel = liste × (100 − %) / 100), faturalı lisans / ödeme düzeltilemez (`CRM_SALE_INVOICED`), bedel düzelince "Satış oldu" adayın `sale_amount`'ı (eski bedele eşitse) da düzelir |
 
 Hepsinde: RLS açık + politika yok (bilinçli; Supabase danışmanı "RLS Enabled No Policy" INFO verir, sorun değil),
 yalnız `service_role`'e grant, fonksiyonlar PUBLIC'ten revoke. Her dosyanın sonunda geri alma bloğu var.

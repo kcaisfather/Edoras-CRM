@@ -17,6 +17,7 @@ import {
   Trophy,
   MessageSquareHeart,
   Snowflake,
+  LifeBuoy,
   Workflow,
 } from "lucide-react";
 import { useCurrentUser, usePermissions } from "@/features/auth";
@@ -31,6 +32,7 @@ export type NavTranslationKey =
   | "crmTasks"
   | "crmColdLists"
   | "crmSurveys"
+  | "crmTickets"
   | "crmAnalytics"
   | "crmPerformance"
   | "crmRules"
@@ -77,6 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/crm/tasks", icon: ListTodo, translationKey: "crmTasks" },
       { href: "/crm/cold-lists", icon: Snowflake, translationKey: "crmColdLists" },
       { href: "/crm/surveys", icon: MessageSquareHeart, translationKey: "crmSurveys" },
+      { href: "/crm/tickets", icon: LifeBuoy, translationKey: "crmTickets" },
     ],
   },
   {

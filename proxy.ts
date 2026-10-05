@@ -8,7 +8,7 @@ import { SERVER_REALTIME } from "@/lib/supabase/realtime";
  * Yetki (crm_staff) burada DEĞİL, /api uçlarında `requireStaff()` ile denetlenir; proxy yalnız
  * "oturum var mı" bakar. /api istekleri yönlendirilmez — uç 401 döner, istemci girişe atar.
  *
- * Müşteriye açık anket yolları (/s/*, /api/public/*) CRM oturumuyla ilgisizdir: Supabase istemcisi hiç kurulmaz,
+ * Müşteriye açık anket yolları (/s/*, /t/*, /api/public/*) CRM oturumuyla ilgisizdir: Supabase istemcisi hiç kurulmaz,
  * çerez okunmaz / tazelenmez, /login'e yönlendirilmez. Token URL'de olduğu için Referer gönderilmez ve arama
  * motorlarına kapalıdır.
  *

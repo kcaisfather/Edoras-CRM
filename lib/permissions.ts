@@ -16,11 +16,11 @@ export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/growth/
 export const CRM_AGENT_DENIED_PATHS = ["/crm/rules"] as const;
 
 /**
- * Müşteriye açık yollar (DeepSport PUBLIC_PATH_PREFIXES "/s/"): anket sayfası /s/[token] ve uçları /api/public/*.
+ * Müşteriye açık yollar (DeepSport PUBLIC_PATH_PREFIXES "/s/"): anket sayfası /s/[token], destek formu /t/[token] ve uçları /api/public/*.
  * CRM oturumuyla ilgisi yoktur: proxy.ts oturum çerezine hiç dokunmaz (tazelemez, /login'e yollamaz), panel kabuğu
  * çizilmez. Uçlar asla 401 dönmez; erişimi kişiye özel token belirler.
  */
-export const CUSTOMER_PUBLIC_PATHS = ["/s", "/api/public"] as const;
+export const CUSTOMER_PUBLIC_PATHS = ["/s", "/t", "/api/public"] as const;
 
 /**
  * Zamanlayıcı yolları (/api/cron/*): oturum çerezi değil `Authorization: Bearer ${CRON_SECRET}` ile yetkilenir

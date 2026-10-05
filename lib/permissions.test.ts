@@ -57,6 +57,9 @@ describe("permissions", () => {
     expect(isPublicPath("/s/AbC_123-token")).toBe(true);
     expect(isPublicPath("/api/public/surveys/tok")).toBe(true);
     expect(isPublicPath("/api/public/surveys/tok/responses")).toBe(true);
+    expect(isPublicPath("/t/AbC_123-token")).toBe(true);
+    expect(isPublicPath("/api/public/tickets/tok")).toBe(true);
+    expect(isPublicPath("/tasks")).toBe(false);
     expect(isPublicPath("/institutions")).toBe(false);
     expect(isPublicPath("/settings")).toBe(false);
     expect(isPublicPath("/sales")).toBe(false);
@@ -67,14 +70,17 @@ describe("permissions", () => {
 
   it("müşteriye açık yol: proxy oturuma dokunmaz; giriş sayfası bu grupta değil", () => {
     expect(isCustomerPublicPath("/s/tok")).toBe(true);
+    expect(isCustomerPublicPath("/t/tok")).toBe(true);
+    expect(isCustomerPublicPath("/crm/tickets")).toBe(false);
     expect(isCustomerPublicPath("/api/public/surveys/tok")).toBe(true);
     expect(isCustomerPublicPath("/login")).toBe(false);
     expect(isCustomerPublicPath("/crm/surveys")).toBe(false);
     expect(isCustomerPublicPath("/settings")).toBe(false);
   });
 
-  it("CRM_AGENT Anketler'e girer", () => {
+  it("CRM_AGENT Anketler ve Destek Talepleri'ne girer", () => {
     expect(canAccessPathFor("CRM_AGENT", "/crm/surveys")).toBe(true);
+    expect(canAccessPathFor("CRM_AGENT", "/crm/tickets")).toBe(true);
   });
 
   it("Ödeme Geçmişi ve Faturalar yalnız ADMIN (tutar içerir; yollar CRM_AGENT_PATHS'te yok)", () => {

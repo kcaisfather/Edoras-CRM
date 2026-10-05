@@ -72,6 +72,14 @@ export const AUDIT_ACTIONS = [
   // Yenileme taahhüdü: durum ve bitiş günü yazılır; not (serbest metin) yazılmaz.
   "RENEWAL_COMMITMENT_SET",
   "RENEWAL_COMMITMENT_CLEARED",
+  // Destek talepleri: numara, durum, öncelik ve değişen alan adları yazılır; talep eden bilgisi (ad, e-posta, telefon),
+  // açıklama ve not metni yazılmaz. Destek bağlantısının tokenı yazılmaz.
+  "TICKET_CREATED",
+  "TICKET_UPDATED",
+  "TICKET_STATUS_CHANGED",
+  "TICKET_NOTE_ADDED",
+  "TICKET_LINK_CREATED",
+  "TICKET_LINK_ROTATED",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -92,6 +100,7 @@ export const AUDIT_ENTITY_TYPES = [
   "cost_settings",
   "report_subscription",
   "appointment",
+  "ticket",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

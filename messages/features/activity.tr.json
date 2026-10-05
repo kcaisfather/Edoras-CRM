@@ -94,6 +94,7 @@
       "note": "Not",
       "task": "Görev",
       "appointment": "Randevu",
+      "ticket": "Destek talebi",
       "rules": "Takip kuralları",
       "prospect_list": "Soğuk liste",
       "prospect": "Soğuk liste kişisi",
@@ -164,7 +165,13 @@
       "APPOINTMENT_RESCHEDULED": "Randevu yeniden planlandı",
       "APPOINTMENT_CLOSED": "Randevu kapatıldı",
       "RENEWAL_COMMITMENT_SET": "Yenileme taahhüdü güncellendi",
-      "RENEWAL_COMMITMENT_CLEARED": "Yenileme taahhüdü kaldırıldı"
+      "RENEWAL_COMMITMENT_CLEARED": "Yenileme taahhüdü kaldırıldı",
+      "TICKET_CREATED": "Destek talebi açıldı",
+      "TICKET_UPDATED": "Destek talebi güncellendi",
+      "TICKET_STATUS_CHANGED": "Destek talebi durumu değişti",
+      "TICKET_NOTE_ADDED": "Destek talebine not eklendi",
+      "TICKET_LINK_CREATED": "Destek bağlantısı oluşturuldu",
+      "TICKET_LINK_ROTATED": "Destek bağlantısı yenilendi"
     },
     "detailKeys": {
       "amount": "Tutar",

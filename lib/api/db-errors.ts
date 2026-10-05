@@ -34,6 +34,12 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_BILLING_REQUIRED: [422, "BILLING_REQUIRED"],
   CRM_STATUS_INVALID: [400, "VALIDATION"],
   CRM_LAST_ADMIN: [409, "LAST_ADMIN"],
+  // 20261005160000_crm_tickets (müşteri yolundaki hatalar da buradan: geçersiz bağlantı 404, sınır 429 — asla 401)
+  CRM_TICKET_LINK_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_TICKET_INVALID: [400, "VALIDATION"],
+  CRM_TICKET_CONTACT_REQUIRED: [422, "CONTACT_INVALID"],
+  CRM_TICKET_RATE_LIMITED: [429, "RATE_LIMITED"],
+  CRM_TICKET_ASSIGNEE_INVALID: [400, "TICKET_ASSIGNEE_INVALID"],
   // 20261005140000_crm_merge_leads
   CRM_MERGE_INVALID: [400, "VALIDATION"],
   CRM_MERGE_ACTOR_REQUIRED: [400, "VALIDATION"],
@@ -127,6 +133,19 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_tasks_assigned_fields_check: [400, "VALIDATION"],
   crm_tasks_done_check: [400, "VALIDATION"],
   crm_tasks_note_check: [400, "VALIDATION"],
+  // 20261005160000_crm_tickets
+  crm_tickets_institution_id_fkey: [404, "NOT_FOUND"],
+  crm_tickets_status_check: [400, "VALIDATION"],
+  crm_tickets_priority_check: [400, "VALIDATION"],
+  crm_tickets_source_check: [400, "VALIDATION"],
+  crm_tickets_resolved_check: [400, "VALIDATION"],
+  crm_tickets_subject_check: [400, "VALIDATION"],
+  crm_tickets_description_check: [400, "VALIDATION"],
+  crm_tickets_requester_check: [400, "VALIDATION"],
+  crm_tickets_email_check: [422, "CONTACT_INVALID"],
+  crm_tickets_portal_contact_check: [422, "CONTACT_INVALID"],
+  crm_ticket_notes_ticket_id_fkey: [404, "NOT_FOUND"],
+  crm_ticket_notes_body_check: [400, "VALIDATION"],
   // 20261005130000_crm_appointments
   crm_appointments_lead_id_fkey: [404, "NOT_FOUND"],
   crm_appointments_mode_check: [400, "VALIDATION"],

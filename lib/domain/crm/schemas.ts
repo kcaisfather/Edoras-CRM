@@ -154,3 +154,35 @@ export function toContactColumns(v: ContactValues): Record<string, string | null
 
 /** Gövdede değişen alan adları (işlem kaydı için; değerler yazılmaz). */
 export const CONTACT_FIELDS = Object.keys(contactShape) as (keyof typeof contactShape)[];
+
+// --- Birleştirme ve toplu işlem (yalnız ADMIN: birleştirme, sorumlu atama, silme) ---------------
+
+/** İki adayı birleştir: `dropId` silinir, kayıtları `keepId`'ye taşınır. */
+export const leadMergeSchema = z
+  .object({ keepId: z.uuid(), dropId: z.uuid() })
+  .refine((v) => v.keepId !== v.dropId, { path: ["dropId"], message: "Aynı aday kendisiyle birleştirilemez" });
+export type LeadMergeInput = z.input<typeof leadMergeSchema>;
+
+/** Toplu işlemin tek istekteki üst sınırı. */
+export const BATCH_MAX = 200;
+/** Toplu statü değişikliğinde seçilebilenler: ek bilgi (tarih, neden, tutar) gerektirmeyen başlangıç aşamaları. */
+export const BATCH_STATUSES = ["ARANACAK", "ULASILAMADI"] as const;
+
+export const leadBatchSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(BATCH_MAX),
+  action: z.discriminatedUnion("type", [
+    /** Sorumlu ata (null = sorumlusuz). Yalnız ADMIN. */
+    z.object({ type: z.literal("owner"), ownerId: z.uuid().nullable() }),
+    z.object({ type: z.literal("status"), status: z.enum(BATCH_STATUSES) }),
+    /** Adayları ve notlarını sil. Yalnız ADMIN. */
+    z.object({ type: z.literal("delete") }),
+  ]),
+});
+export type LeadBatchInput = z.input<typeof leadBatchSchema>;
+export type LeadBatchValues = z.output<typeof leadBatchSchema>;
+
+/** Toplu işlem sonucu: her aday ayrı işlenir; hata veren atlanır, kalanlar sürer. */
+export interface LeadBatchResult {
+  done: number;
+  failed: { id: string; code: string }[];
+}

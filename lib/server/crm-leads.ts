@@ -8,7 +8,15 @@ import type { DemoCredentials, PaymentMethod } from "@/lib/domain/institutions/t
 import { sumByInstitution, type CollectionRecord } from "@/lib/domain/crm/collections";
 import { planLossDetail, type LossDetailColumns } from "@/lib/domain/crm/loss-detail";
 import { applyStatusChange } from "@/lib/domain/crm/offer";
-import { CONTACT_FIELDS, toContactColumns, type LeadCreateValues, type LeadPatchValues } from "@/lib/domain/crm/schemas";
+import {
+  CONTACT_FIELDS,
+  toContactColumns,
+  type LeadBatchResult,
+  type LeadBatchValues,
+  type LeadCreateValues,
+  type LeadMergeInput,
+  type LeadPatchValues,
+} from "@/lib/domain/crm/schemas";
 import type { CrmLeadDto, CrmStatus, LeadSource, LostReason } from "@/lib/domain/crm/types";
 import { COMPLAINT_PREFIX, PROGRAM_PREFIX, latestDissatisfaction, programTags } from "@/lib/domain/crm-notes/utils";
 import { recordAudit } from "./audit";
@@ -290,7 +298,7 @@ const COLUMN_OF: Record<(typeof CONTACT_FIELDS)[number], keyof LeadRow> = {
  * teklif ve satış tarihi statü kurallarıyla yazılır (`applyStatusChange`). Değişmeyen alan yazılmaz;
  * hiçbir şey değişmediyse kayıt dokunulmadan döner.
  */
-export async function updateLead(id: string, patch: LeadPatchValues, staff: StaffContext): Promise<CrmLeadDto> {
+async function patchLead(id: string, patch: LeadPatchValues, staff: StaffContext): Promise<void> {
   const current = await requireLeadRow(id);
   const financial = isFinancial(staff);
   const update: Record<string, unknown> = {};
@@ -348,7 +356,7 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
     }
   }
 
-  if (Object.keys(update).length === 0) return leadDto(id, staff);
+  if (Object.keys(update).length === 0) return;
   update.updated_by = staff.userId;
   const { data, error } = await getSupabaseAdminClient().from("crm_leads").update(update).eq("id", id).select("id");
   if (error) throw dbError(error);
@@ -393,6 +401,10 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
       details: { fields: fields.join(","), ...amounts },
     });
   }
+  }
+
+export async function updateLead(id: string, patch: LeadPatchValues, staff: StaffContext): Promise<CrmLeadDto> {
+  await patchLead(id, patch, staff);
   return leadDto(id, staff);
 }
 
@@ -559,4 +571,53 @@ export async function recordLeadCollection(id: string, input: PaymentInput, staf
   const current = await requireLeadRow(id);
   if (!current.institution_id) throw new HttpError(409, "LEAD_NOT_LINKED");
   await recordPayment(current.institution_id, input, staff, { leadId: id });
+}
+
+// --- Birleştirme ve toplu işlem (yalnız ADMIN; uçlar denetler) -------------------------------------
+
+/**
+ * `dropId` adayını `keepId`'ye birleştirir (tek işlemde, veritabanı fonksiyonu crm_merge_leads): notlar, görevler,
+ * randevular, anketler ve soğuk liste kişileri taşınır, ana adayın boş alanları doldurulur, silinen aday kalmaz.
+ * İkisi de farklı bir kuruma bağlıysa 409 LEAD_MERGE_BOTH_LINKED.
+ */
+export async function mergeLeads(input: LeadMergeInput, staff: StaffContext): Promise<CrmLeadDto> {
+  const [keep] = await Promise.all([requireLeadRow(input.keepId), requireLeadRow(input.dropId)]);
+  const { data, error } = await getSupabaseAdminClient().rpc("crm_merge_leads", {
+    p_keep: input.keepId,
+    p_drop: input.dropId,
+    p_actor: staff.userId,
+  });
+  if (error) throw dbError(error);
+  const moved = (data ?? {}) as Record<string, number>;
+  await recordAudit(staff, {
+    action: "LEADS_MERGED",
+    entityType: "lead",
+    entityId: input.keepId,
+    entityLabel: keep.organization_name,
+    details: { droppedId: input.dropId, ...moved },
+  });
+  return leadDto(input.keepId, staff);
+}
+
+/**
+ * Toplu işlem: seçili adaylara sırayla uygular (her biri tek tek yazılır ve işlem kaydına düşer). Bir aday hata
+ * verirse atlanır (kod `failed` listesinde), kalanlar sürer. Sorumlu atama ve silme yalnız ADMIN (403).
+ */
+export async function batchLeads(input: LeadBatchValues, staff: StaffContext): Promise<LeadBatchResult> {
+  const { action } = input;
+  if ((action.type === "owner" || action.type === "delete") && staff.role !== "ADMIN") throw new HttpError(403, "FORBIDDEN");
+  if (action.type === "owner" && action.ownerId) await requireActiveStaff(action.ownerId);
+
+  const result: LeadBatchResult = { done: 0, failed: [] };
+  for (const id of new Set(input.ids)) {
+    try {
+      if (action.type === "owner") await patchLead(id, { ownerId: action.ownerId }, staff);
+      else if (action.type === "status") await patchLead(id, { status: action.status }, staff);
+      else await deleteLead(id, staff);
+      result.done += 1;
+    } catch (err) {
+      result.failed.push({ id, code: err instanceof HttpError ? err.code : "INTERNAL" });
+    }
+  }
+  return result;
 }

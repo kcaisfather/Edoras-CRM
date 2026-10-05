@@ -150,6 +150,26 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     [filteredLeads, currentPage, pageSize]
   );
 
+  // Toplu işlem seçimi. İşlem anında yalnız süzülmüş listede GÖRÜNEN seçimler sayılır (gizli satıra işlem yapılmaz).
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const selectedIds = useMemo(() => filteredLeads.filter((l) => selected.has(l.id)).map((l) => l.id), [filteredLeads, selected]);
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const setManySelected = (ids: string[], on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+
   // Pencereler
   const [note, setNote] = useState<{ id: string; mode: CrmNoteMode } | null>(null);
   const [demoLead, setDemoLead] = useState<CrmLead | null>(null);
@@ -246,6 +266,14 @@ export function useCrmList(slots: CrmRowSlots = {}) {
         if (Number(value) === DEFAULT_PAGE_SIZE) p.delete("size");
         else p.set("size", value);
       }),
+    // Toplu işlem
+    selection: {
+      selected,
+      selectedIds,
+      toggle: toggleSelected,
+      setMany: setManySelected,
+      clear: () => setSelected(new Set()),
+    },
     // Pencereler
     actions,
     detailLead: byId(detailId || null),

@@ -23,6 +23,8 @@ export const AUDIT_ACTIONS = [
   "LEAD_OWNER_CHANGED",
   "LEAD_STATUS_CHANGED",
   "LEAD_DELETED",
+  // Birleştirme: silinen adayın kimliği ve taşınan satır sayıları yazılır; ad, telefon, e-posta yazılmaz.
+  "LEADS_MERGED",
   "LEAD_LINKED",
   "LEAD_UNLINKED",
   "NOTE_CREATED",

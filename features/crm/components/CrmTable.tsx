@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { Money } from "@/components/ui/money";
@@ -25,14 +26,21 @@ export function CrmTable({
   actions,
   sort = null,
   onSort,
+  selection,
 }: {
   leads: CrmLead[];
   actions: CrmTableActions;
   sort?: SortState<CrmSortKey> | null;
   onSort?: (key: CrmSortKey) => void;
+  /** Toplu işlem seçimi; verilmezse seçim sütunu çizilmez. */
+  selection?: { selected: ReadonlySet<string>; toggle: (id: string) => void; setMany: (ids: string[], on: boolean) => void };
 }) {
   const t = useTranslations("crm.list");
+  const tBulk = useTranslations("crm.bulk");
   const { canSeeFinancials } = usePermissions();
+  const pageIds = leads.map((l) => l.id);
+  const selectedOnPage = selection ? pageIds.filter((id) => selection.selected.has(id)).length : 0;
+  const allOnPage = pageIds.length > 0 && selectedOnPage === pageIds.length;
   // Satış / Tahsil edilen sütunları yalnız finans yetkisiyle (CRM_AGENT görmez; sunucu da boş gönderir).
   const money = canSeeFinancials;
   const head = (key: CrmSortKey, label: string, align?: "right") =>
@@ -47,6 +55,15 @@ export function CrmTable({
       <Table className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_thead_tr]:bg-muted/40">
         <TableHeader>
           <TableRow>
+            {selection && (
+              <TableHead className="w-px">
+                <Checkbox
+                  checked={allOnPage ? true : selectedOnPage > 0 ? "indeterminate" : false}
+                  onCheckedChange={(v) => selection.setMany(pageIds, v === true)}
+                  aria-label={tBulk("selectPage")}
+                />
+              </TableHead>
+            )}
             {head("customer", t("table.customer"))}
             {head("location", t("table.location"))}
             {head("date", t("table.date"))}
@@ -86,6 +103,15 @@ export function CrmTable({
                     : undefined
                 }
               >
+                {selection && (
+                  <TableCell className="w-px" onClick={stop} onKeyDown={stop}>
+                    <Checkbox
+                      checked={selection.selected.has(lead.id)}
+                      onCheckedChange={() => selection.toggle(lead.id)}
+                      aria-label={tBulk("selectRow", { name: title })}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="max-w-[280px]">
                   <div className="flex min-w-0 flex-col">
                     <span className="flex min-w-0 items-center gap-1.5">

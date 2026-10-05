@@ -16,6 +16,7 @@ import { useCrmList } from "../hooks";
 import { useInvalidateCrm } from "../mutations";
 import type { CrmScreenSlots } from "../types";
 import { CrmAddModal } from "./CrmAddModal";
+import { CrmBulkBar } from "./CrmBulkBar";
 import { CrmCollectionDialog } from "./CrmCollectionDialog";
 import { CrmDuplicates } from "./CrmDuplicates";
 import { CrmEmptyState } from "./CrmEmptyState";
@@ -107,6 +108,13 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
         onAdd={() => list.setAddOpen(true)}
       />
 
+      <CrmBulkBar
+        ids={list.selection.selectedIds}
+        filteredCount={list.filteredLeads.length}
+        onSelectAllFiltered={() => list.selection.setMany(list.filteredLeads.map((x) => x.id), true)}
+        onClear={list.selection.clear}
+      />
+
       {list.isSignupsTab ? (
         <CrmNewSignups leads={all.leads} institutions={all.institutions} isLoading={all.institutionsLoading} isError={all.institutionsError} />
       ) : list.isDuplicatesTab ? (
@@ -125,7 +133,7 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
           <p className="border-b border-border/60 px-4 py-2 text-xs text-muted-foreground">
             {t("count", { count: list.totalElements, page: list.page + 1, totalPages: list.totalPages })}
           </p>
-          <CrmTable leads={list.leads} actions={actions} sort={colSort.sort} onSort={colSort.toggle} />
+          <CrmTable leads={list.leads} actions={actions} sort={colSort.sort} onSort={colSort.toggle} selection={list.selection} />
           <CrmMobileCards leads={list.leads} actions={actions} />
           <VisionListPagination
             currentPage={list.page}

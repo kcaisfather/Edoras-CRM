@@ -56,6 +56,7 @@
         "TASK_ASSIGNEE_INVALID": "Görev yalnız aktif ekip üyesine atanabilir.",
         "TASK_PAST_DUE": "Görev bugün ya da sonrasına atanabilir.",
         "TASK_DUPLICATE": "Bu aday için aynı gün, aynı amaç ve aynı kişiye atanmış açık bir görev zaten var.",
+        "LEAD_MERGE_BOTH_LINKED": "İki aday da farklı kurumlara bağlı; birleştirmek için önce birinin kurum bağlantısını kaldırın.",
         "APPOINTMENT_PAST": "Randevu geçmişe planlanamaz.",
         "APPOINTMENT_CLOSED": "Randevu zaten kapanmış; değiştirilemez.",
         "APPOINTMENT_ASSIGNEE_INVALID": "Randevu yalnız aktif ekip üyesine atanabilir.",

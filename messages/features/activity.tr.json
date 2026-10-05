@@ -121,6 +121,7 @@
       "INTERNAL_UNMARKED": "İç kurum işareti kaldırıldı",
       "LEAD_CREATED": "Aday eklendi",
       "LEAD_UPDATED": "Aday güncellendi",
+      "LEADS_MERGED": "Adaylar birleştirildi",
       "LEAD_OWNER_CHANGED": "Aday sorumlusu değişti",
       "LEAD_STATUS_CHANGED": "Adayın durumu değişti",
       "LEAD_DELETED": "Aday silindi",

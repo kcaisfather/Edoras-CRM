@@ -389,6 +389,7 @@
     "empty": "Olası mükerrer kayıt bulunamadı.",
     "institutionOnly": "Kurum (adaya bağlı değil)",
     "edit": "Düzenle",
+    "mergeHere": "Buna birleştir",
     "linkHere": "Adayı bu kuruma bağla",
     "linked": "Aday kuruma bağlandı",
     "linkError": "Aday kuruma bağlanamadı",
@@ -411,6 +412,39 @@
       "institution": "Edoras kurumu"
     },
     "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
+  },
+  "bulk": {
+    "region": "Toplu işlem",
+    "selected": "{count} aday seçili",
+    "selectAll": "Süzülen {count} adayın hepsini seç",
+    "selectPage": "Bu sayfadaki tüm adayları seç",
+    "selectRow": "{name} adayını seç",
+    "setStatus": "Durumu değiştir",
+    "setOwner": "Sorumlu ata",
+    "ownerNone": "Sorumlusuz",
+    "delete": "Sil",
+    "clear": "Seçimi temizle",
+    "statusDone": "{count} adayın durumu güncellendi.",
+    "ownerDone": "{count} adayın sorumlusu güncellendi.",
+    "deleteDone": "{count} aday silindi.",
+    "partial": "{done} aday işlendi, {failed} aday işlenemedi.",
+    "error": "Toplu işlem yapılamadı.",
+    "confirmDelete": {
+      "title": "{count} aday silinsin mi?",
+      "body": "Adaylar ve notları silinir; bağlı kurumların kaydı, lisansı ve ödemeleri etkilenmez. Bu işlem geri alınamaz.",
+      "cancel": "Vazgeç",
+      "confirm": "Sil"
+    }
+  },
+  "merge": {
+    "title": "Adayları birleştir",
+    "body": "\"{keep}\" kalır. Seçtiğiniz aday silinir; notları, görevleri, randevuları ve anketleri bu adaya taşınır, boş alanları doldurulur.",
+    "dropLabel": "Birleştirilip silinecek aday",
+    "moved": "Durum, tarihler ve dolu alanlar kalan adayda aynen korunur. Bu işlem geri alınamaz.",
+    "bothLinked": "İki aday da farklı kurumlara bağlı; birleştirmek için önce birinin kurum bağlantısını kaldırın.",
+    "confirm": "Birleştir",
+    "done": "Adaylar birleştirildi.",
+    "error": "Adaylar birleştirilemedi."
   },
   "appointment": {
     "title": "Randevular",

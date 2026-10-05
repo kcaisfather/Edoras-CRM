@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { institutionKeys } from "@/features/institutions";
-import type { LeadCreateInput, LeadPatchInput } from "@/lib/domain/crm/schemas";
+import { BATCH_MAX, type LeadBatchInput, type LeadBatchResult, type LeadCreateInput, type LeadMergeInput, type LeadPatchInput } from "@/lib/domain/crm/schemas";
 import type { PaymentInput } from "@/lib/domain/institutions/schemas";
 import { crmApi } from "./api";
 import { crmKeys } from "./queries";
@@ -26,6 +26,32 @@ export function useUpdateCrmLead() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: LeadPatchInput }) => crmApi.update(id, data),
     onSuccess: () => invalidate(),
+  });
+}
+
+/** İki adayı birleştirir (yalnız ADMIN): `dropId` silinir, kayıtları `keepId`'ye taşınır. */
+export function useMergeLeads() {
+  const invalidate = useInvalidateCrm();
+  return useMutation({
+    mutationFn: (input: LeadMergeInput) => crmApi.merge(input),
+    onSuccess: () => invalidate(),
+  });
+}
+
+/** Toplu işlem: seçim 200'lük parçalara bölünüp sırayla gönderilir; sonuçlar toplanır. */
+export function useBatchLeads() {
+  const invalidate = useInvalidateCrm();
+  return useMutation({
+    mutationFn: async ({ ids, action }: { ids: string[]; action: LeadBatchInput["action"] }): Promise<LeadBatchResult> => {
+      const total: LeadBatchResult = { done: 0, failed: [] };
+      for (let i = 0; i < ids.length; i += BATCH_MAX) {
+        const part = await crmApi.batch({ ids: ids.slice(i, i + BATCH_MAX), action });
+        total.done += part.done;
+        total.failed.push(...part.failed);
+      }
+      return total;
+    },
+    onSettled: () => invalidate(),
   });
 }
 

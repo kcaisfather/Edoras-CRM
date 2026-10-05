@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 import type { CollectionRecord } from "@/lib/domain/crm/collections";
-import type { LeadCreateInput, LeadPatchInput } from "@/lib/domain/crm/schemas";
+import type { LeadBatchInput, LeadBatchResult, LeadCreateInput, LeadMergeInput, LeadPatchInput } from "@/lib/domain/crm/schemas";
 import type { CrmLeadDto } from "@/lib/domain/crm/types";
 import type { NewDemoInput, PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
@@ -14,6 +14,8 @@ export const crmApi = {
     apiRequest<CrmLeadDto[]>(`/api/crm/leads?institutionId=${encodeURIComponent(institutionId)}`, { signal }),
   create: (input: LeadCreateInput) => apiRequest<CrmLeadDto>("/api/crm/leads", { method: "POST", body: input }),
   update: (id: string, input: LeadPatchInput) => apiRequest<CrmLeadDto>(base(id), { method: "PATCH", body: input }),
+  merge: (input: LeadMergeInput) => apiRequest<CrmLeadDto>("/api/crm/leads/merge", { method: "POST", body: input }),
+  batch: (input: LeadBatchInput) => apiRequest<LeadBatchResult>("/api/crm/leads/batch", { method: "POST", body: input }),
   remove: (id: string) => apiRequest<{ ok: true }>(base(id), { method: "DELETE" }),
   link: (id: string, institutionId: string) =>
     apiRequest<CrmLeadDto>(`${base(id)}/link`, { method: "POST", body: { institutionId } }),

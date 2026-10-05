@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { AlertTriangle, Link2, Pencil, RotateCcw } from "lucide-react";
+import { AlertTriangle, GitMerge, Link2, Pencil, RotateCcw } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermissions } from "@/features/auth";
 import { formatPhone } from "@/features/institutions";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { findDuplicateGroups, type DupGroup, type DupInstitution, type DupRecord } from "@/lib/domain/crm/insights";
@@ -15,6 +16,7 @@ import { formatCrmDate, getLeadDisplayName } from "@/lib/domain/crm/utils";
 import type { InstitutionListItem } from "@/lib/domain/institutions/types";
 import { useLinkLead } from "../mutations";
 import { StatusBadge, ToneBadge } from "./CrmBadges";
+import { CrmMergeDialog } from "./CrmMergeDialog";
 
 /**
  * Olası mükerrer kayıtlar (G60): adaylar ve adaya bağlı olmayan Edoras kurumları arasında normalize e-posta /
@@ -112,6 +114,8 @@ function DupCard({ record, group, onEdit }: { record: DupRecord; group: DupGroup
   const t = useTranslations("crm.duplicates");
   const errorMessage = useApiErrorMessage();
   const link = useLinkLead();
+  const { isAdmin } = usePermissions();
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   if (record.kind === "institution") {
     const inst = record.institution;
@@ -155,6 +159,7 @@ function DupCard({ record, group, onEdit }: { record: DupRecord; group: DupGroup
   }
 
   const l = record.lead;
+  const otherLeads = group.records.filter((r): r is Extract<DupRecord, { kind: "lead" }> => r.kind === "lead" && r.lead.id !== l.id).map((r) => r.lead);
   return (
     <div className="min-w-[220px] flex-1 space-y-1 rounded-xl border border-border bg-background/60 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -181,7 +186,14 @@ function DupCard({ record, group, onEdit }: { record: DupRecord; group: DupGroup
           <Pencil />
           {t("edit")}
         </Button>
+        {isAdmin && otherLeads.length > 0 && (
+          <Button size="sm" variant="outline" className="ml-1.5" onClick={() => setMergeOpen(true)}>
+            <GitMerge />
+            {t("mergeHere")}
+          </Button>
+        )}
       </div>
+      {mergeOpen && <CrmMergeDialog keep={l} others={otherLeads} onClose={() => setMergeOpen(false)} />}
     </div>
   );
 }

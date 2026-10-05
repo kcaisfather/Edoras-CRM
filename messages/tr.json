@@ -162,6 +162,8 @@
     "crmLeadsDescription": "Potansiyel ve mevcut müşteri kurumların satış takibi",
     "crmAnalytics": "Satış Analizleri",
     "crmAnalyticsDescription": "Satış hunisi ve satış kırılımları",
+    "crmPerformance": "Satış Performansı",
+    "crmPerformanceDescription": "Kişi başına arama, teklif, satış, tahsilat ve randevu",
     "crmTasks": "Görevlerim",
     "crmTasksDescription": "Bugün, gecikmiş ve yaklaşan aramalar",
     "crmTasksDueBadge": "{count} görev bugün/gecikmiş",

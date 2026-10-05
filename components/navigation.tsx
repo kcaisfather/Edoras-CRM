@@ -14,6 +14,7 @@ import {
   History,
   LayoutDashboard,
   ListTodo,
+  Trophy,
   MessageSquareHeart,
   Snowflake,
   Workflow,
@@ -31,6 +32,7 @@ export type NavTranslationKey =
   | "crmColdLists"
   | "crmSurveys"
   | "crmAnalytics"
+  | "crmPerformance"
   | "crmRules"
   | "growthCustomers"
   | "growthAnalytics"
@@ -102,6 +104,8 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: "sidebarAnalysis",
     items: [
       { href: "/crm/analytics", icon: ChartNoAxesColumnIncreasing, translationKey: "crmAnalytics" },
+      // Satış performansı: ADMIN herkesi, CRM_AGENT yalnız kendi satırını görür (tutarlar sunucuda boşaltılır).
+      { href: "/crm/performance", icon: Trophy, translationKey: "crmPerformance" },
       { href: "/growth/analytics", icon: ChartPie, translationKey: "growthAnalytics" },
       { href: "/crm/rules", icon: Workflow, translationKey: "crmRules" },
     ],

@@ -413,6 +413,36 @@
     },
     "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
   },
+  "performance": {
+    "title": "Satış Performansı",
+    "description": "Seçili dönemde kişi başına yeni aday, arama, teklif, satış, tahsilat ve randevu.",
+    "total": "Toplam",
+    "export": "CSV indir",
+    "empty": "Bu dönemde gösterilecek kayıt yok.",
+    "legend": "Arama: tamamlanan görevler; parantez içi konuşulan oranı (\"Ulaşılamadı\" dışındaki sonuçlar). Satış: parantez içi teklif→satış oranı. Randevu: gerçekleşen/planlanan, kırmızı eksi gelmeyen. Görev: kişiye atanmış açık görevler, parantez içi vadesi geçenler. Tutarlar yalnız yöneticide görünür.",
+    "cols": {
+      "name": "Kişi",
+      "newLeads": "Yeni aday",
+      "calls": "Arama",
+      "callsReached": "Arama (konuşulan)",
+      "reached": "Konuşulan",
+      "notes": "Not",
+      "offers": "Teklif",
+      "offersAmount": "Teklif tutarı",
+      "sales": "Satış",
+      "salesAmount": "Satış tutarı",
+      "collections": "Tahsilat",
+      "collectionsCount": "Tahsilat adedi",
+      "collectionsAmount": "Tahsilat tutarı",
+      "appointments": "Randevu",
+      "appointmentsPlanned": "Randevu (planlanan)",
+      "appointmentsHeld": "Randevu (gerçekleşen)",
+      "appointmentsNoShow": "Randevu (gelmedi)",
+      "tasks": "Açık görev",
+      "tasksOpen": "Açık görev",
+      "tasksOverdue": "Vadesi geçen görev"
+    }
+  },
   "bulk": {
     "region": "Toplu işlem",
     "selected": "{count} aday seçili",

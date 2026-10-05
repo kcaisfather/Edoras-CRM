@@ -638,6 +638,8 @@ export async function recordLeadSale(id: string, input: LeadSaleInput, staff: St
           idNumber: "",
           licenseStartsOn: "",
           licensePrice: "",
+          licenseDiscount: "",
+          licensePriceManual: false,
         },
         staff
       );

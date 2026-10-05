@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Bildirim zili: gecikmiş görev, yaklaşan randevu, yeni anket yanıtı ve 7 gün içinde biten lisans / demo. Okunmamış sayısı
+ * Bildirim zili: gecikmiş görev, yaklaşan randevu, yeni anket yanıtı, açık destek talebi ve 7 gün içinde biten lisans / demo. Okunmamış sayısı
  * rozette; menü açılınca hepsi görüldü olur (açılışta okunmamış olanlar o oturumda vurgulu kalır). Bildirim metni burada
  * üretilir (sunucu yalnız tür + parametre verir).
  */
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, CalendarClock, ClipboardList, MessageSquareHeart, ShieldAlert } from "lucide-react";
+import { Bell, CalendarClock, ClipboardList, LifeBuoy, MessageSquareHeart, ShieldAlert } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -22,6 +22,7 @@ const ICON: Record<NotificationItem["kind"], React.ComponentType<{ className?: s
   APPOINTMENT: CalendarClock,
   SURVEY_RESPONSES: MessageSquareHeart,
   LICENSE_ENDING: ShieldAlert,
+  TICKETS_OPEN: LifeBuoy,
 };
 
 export function NotificationBell({
@@ -56,6 +57,8 @@ export function NotificationBell({
           name,
           when: n.at != null ? formatAppointmentWhen(msToIstanbul(n.at), locale) : "",
         });
+      case "TICKETS_OPEN":
+        return t("ticketsOpen", { count: n.count ?? 0 });
       case "SURVEY_RESPONSES":
         return t("surveyResponses", { count: n.count ?? 0 });
       case "LICENSE_ENDING":

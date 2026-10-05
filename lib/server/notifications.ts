@@ -14,6 +14,7 @@ import { dueTaskCount } from "./crm-tasks";
  *
  * - Görev: çağıranın gördüğü bugün + gecikmiş açık görev sayısı (menü rozetiyle aynı hesap).
  * - Randevu: çağırana atanmış, 24 saat içinde başlayacak ya da saati geçmiş açık randevular (en çok 5).
+ * - Destek talebi: atanmamış + çağırana atanmış açık (OPEN) talep sayısı.
  * - Anket: son 7 günde gelen yanıt sayısı.
  * - Lisans / demo: 7 gün içinde biten, yenilenmemiş (en çok 5); iç kurumlar hariç.
  */
@@ -25,6 +26,20 @@ const LIST_MAX = 5;
 async function taskItem(staff: StaffContext): Promise<NotificationItem[]> {
   const count = await dueTaskCount(staff);
   return count > 0 ? [{ id: "tasks", kind: "TASKS_DUE", signature: String(count), href: "/crm/tasks", count }] : [];
+}
+
+async function ticketItem(staff: StaffContext): Promise<NotificationItem[]> {
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_tickets")
+    .select("created_at")
+    .eq("status", "OPEN")
+    .or(`assignee_id.is.null,assignee_id.eq.${staff.userId}`)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw dbError(error);
+  const rows = (data ?? []) as { created_at: string }[];
+  if (!rows.length) return [];
+  return [{ id: "tickets", kind: "TICKETS_OPEN", signature: `${rows.length}:${rows[0].created_at}`, href: "/crm/tickets", count: rows.length }];
 }
 
 async function appointmentItems(staff: StaffContext, now: number): Promise<NotificationItem[]> {
@@ -131,6 +146,12 @@ async function licenseItems(): Promise<NotificationItem[]> {
 }
 
 export async function getNotifications(staff: StaffContext, now = Date.now()): Promise<NotificationsDto> {
-  const [tasks, appointments, survey, licenses] = await Promise.all([taskItem(staff), appointmentItems(staff, now), surveyItem(now), licenseItems()]);
-  return { items: sortNotifications([...appointments, ...tasks, ...licenses, ...survey]), generatedAt: now };
+  const [tasks, appointments, tickets, survey, licenses] = await Promise.all([
+    taskItem(staff),
+    appointmentItems(staff, now),
+    ticketItem(staff),
+    surveyItem(now),
+    licenseItems(),
+  ]);
+  return { items: sortNotifications([...appointments, ...tasks, ...tickets, ...licenses, ...survey]), generatedAt: now };
 }

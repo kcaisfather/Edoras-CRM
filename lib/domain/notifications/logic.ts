@@ -6,7 +6,7 @@
  * (yeni gecikmiş görev, yeni yanıt…) yeniden okunmamış olur.
  */
 
-export const NOTIFICATION_KINDS = ["TASKS_DUE", "APPOINTMENT", "SURVEY_RESPONSES", "LICENSE_ENDING"] as const;
+export const NOTIFICATION_KINDS = ["TASKS_DUE", "APPOINTMENT", "SURVEY_RESPONSES", "LICENSE_ENDING", "TICKETS_OPEN"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export interface NotificationItem {
@@ -17,7 +17,7 @@ export interface NotificationItem {
   signature: string;
   /** Tıklayınca gidilecek panel yolu. */
   href: string;
-  /** TASKS_DUE: bugün vadesi gelen + gecikmiş açık görev; SURVEY_RESPONSES: yeni yanıt sayısı. */
+  /** TASKS_DUE: bugün vadesi gelen + gecikmiş açık görev; SURVEY_RESPONSES: yeni yanıt sayısı; TICKETS_OPEN: atanmamış + çağırana atanmış açık talep sayısı. */
   count?: number;
   /** APPOINTMENT: aday adı; LICENSE_ENDING: kurum adı. */
   name?: string | null;
@@ -62,8 +62,8 @@ export function parseSeen(raw: unknown): SeenMap {
   }
 }
 
-/** Bildirim sırası: önce randevu (zamana duyarlı), görev, lisans, anket. Aynı türde kendi sırası korunur. */
-const ORDER: Record<NotificationKind, number> = { APPOINTMENT: 0, TASKS_DUE: 1, LICENSE_ENDING: 2, SURVEY_RESPONSES: 3 };
+/** Bildirim sırası: önce randevu (zamana duyarlı), görev, destek talebi, lisans, anket. Aynı türde kendi sırası korunur. */
+const ORDER: Record<NotificationKind, number> = { APPOINTMENT: 0, TASKS_DUE: 1, TICKETS_OPEN: 2, LICENSE_ENDING: 3, SURVEY_RESPONSES: 4 };
 
 export function sortNotifications<T extends Pick<NotificationItem, "kind">>(items: readonly T[]): T[] {
   return items.map((item, i) => ({ item, i })).sort((a, b) => ORDER[a.item.kind] - ORDER[b.item.kind] || a.i - b.i).map((x) => x.item);

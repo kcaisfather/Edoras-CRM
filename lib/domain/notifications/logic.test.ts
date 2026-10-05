@@ -46,7 +46,8 @@ describe("sortNotifications", () => {
       item("a2", "1", "APPOINTMENT"),
       item("t", "1", "TASKS_DUE"),
       item("a1", "1", "APPOINTMENT"),
+      item("k", "1", "TICKETS_OPEN"),
     ]);
-    expect(sorted.map((x) => x.id)).toEqual(["a2", "a1", "t", "l", "s"]);
+    expect(sorted.map((x) => x.id)).toEqual(["a2", "a1", "t", "k", "l", "s"]);
   });
 });

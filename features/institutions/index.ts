@@ -3,4 +3,5 @@ export { useInstitution, useInstitutionAlerts, useInstitutions, institutionKeys 
 export { searchInstitutions } from "@/lib/domain/institutions/search";
 export { InstitutionInfoBadge, InstitutionStatusBadge, useStatusLabel } from "./components/InstitutionStatusBadge";
 export { NewDemoDialog } from "./components/NewDemoDialog";
+export { LicensePricingPanel } from "./components/LicensePricingPanel";
 export { formatDate, formatPhone, programLabel } from "./format";

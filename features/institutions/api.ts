@@ -4,11 +4,13 @@ import type {
   ContactInput,
   ConvertInput,
   EnrollInput,
+  LicenseEditInput,
+  LicenseListPriceInput,
   NewDemoInput,
   PaymentInput,
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
-import type { DemoCredentials, InstitutionDetail, InstitutionListItem } from "@/lib/domain/institutions/types";
+import type { DemoCredentials, InstitutionDetail, InstitutionListItem, LicensePricingSettings } from "@/lib/domain/institutions/types";
 
 const base = (id: string) => `/api/institutions/${encodeURIComponent(id)}`;
 
@@ -26,4 +28,13 @@ export const institutionsApi = {
     apiRequest(`${base(id)}/billing`, { method: "PATCH", body: input }),
   recordPayment: (id: string, input: PaymentInput) =>
     apiRequest(`${base(id)}/payments`, { method: "POST", body: input }),
+  updateLicense: (id: string, licenseId: string, input: LicenseEditInput) =>
+    apiRequest(`${base(id)}/licenses/${encodeURIComponent(licenseId)}`, { method: "PATCH", body: input }),
+  updatePayment: (id: string, paymentId: string, input: PaymentInput) =>
+    apiRequest(`${base(id)}/payments/${encodeURIComponent(paymentId)}`, { method: "PATCH", body: input }),
+  deletePayment: (id: string, paymentId: string) =>
+    apiRequest(`${base(id)}/payments/${encodeURIComponent(paymentId)}`, { method: "DELETE" }),
+  licensePricing: (signal?: AbortSignal) => apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { signal }),
+  updateLicensePricing: (input: LicenseListPriceInput) =>
+    apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { method: "PUT", body: input }),
 };

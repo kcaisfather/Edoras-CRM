@@ -1,16 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useFormContext, useWatch, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { LocationFields } from "@/features/locations";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { isIsoDate, licenseEndDate } from "@/lib/domain/institutions/rules";
+import { resolveLicensePricing } from "@/lib/domain/institutions/pricing";
 import { PAYMENT_METHODS } from "@/lib/domain/institutions/types";
+import { formatTry } from "@/lib/utils/money";
 import { formatDate } from "../format";
+import { useLicensePricing } from "../queries";
 
 const CONTROL =
   "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
@@ -227,21 +233,68 @@ export function BillingProfileFields() {
   );
 }
 
-/** Lisans: başlangıç + bedel; bitiş (1 yıl) önizlenir. */
-export function LicenseFields({ withStart = true }: { withStart?: boolean }) {
+/**
+ * Lisans: başlangıç + bedel; bitiş (1 yıl) önizlenir. Bedel = liste fiyatı − indirim yüzdesi (önizlenir); elle bedel
+ * yalnız istisna (kutucuk). `listPrice`: düzeltmede lisansın kendi liste fiyatı; yoksa Ayarlar'daki kullanılır
+ * (sunucu da aynı sırayla hesaplar). Liste tanımlı değilse form elle bedele geçer.
+ */
+export function LicenseFields({ withStart = true, listPrice }: { withStart?: boolean; listPrice?: number | null }) {
   const t = useTranslations("institutions.form");
+  const { setValue } = useFormContext();
   const start = useWatch({ name: "licenseStartsOn" }) as string | undefined;
+  const discount = (useWatch({ name: "licenseDiscount" }) as string | undefined) ?? "";
+  const manual = (useWatch({ name: "licensePriceManual" }) as boolean | undefined) ?? false;
+  const settings = useLicensePricing(listPrice == null);
+  const list = listPrice ?? settings.data?.listPrice ?? null;
+  const loaded = listPrice != null || settings.isSuccess;
+
+  useEffect(() => {
+    if (loaded && list == null && !manual) setValue("licensePriceManual", true, { shouldValidate: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, list]);
+
+  const resolved = resolveLicensePricing({ licenseDiscount: discount, licensePriceManual: false, licensePrice: "" }, list);
+  const preview =
+    list == null
+      ? loaded
+        ? t("listPriceMissing")
+        : undefined
+      : resolved
+        ? t("discountPreview", {
+            list: formatTry(list),
+            percent: String(resolved.discountPercent).replace(".", ","),
+            price: formatTry(resolved.price),
+          })
+        : t("listPriceHint", { list: formatTry(list) });
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {withStart ? (
-        <TextField
-          name="licenseStartsOn"
-          label={t("licenseStartsOn")}
-          type="date"
-          description={isIsoDate(start) ? t("licenseEndsPreview", { date: formatDate(licenseEndDate(start)) }) : undefined}
+    <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {withStart ? (
+          <TextField
+            name="licenseStartsOn"
+            label={t("licenseStartsOn")}
+            type="date"
+            description={isIsoDate(start) ? t("licenseEndsPreview", { date: formatDate(licenseEndDate(start)) }) : undefined}
+          />
+        ) : null}
+        {manual ? (
+          <TextField name="licensePrice" label={t("licensePrice")} placeholder="Ör. 45.000" inputMode="decimal" description={t("manualHint")} />
+        ) : (
+          <TextField name="licenseDiscount" label={t("licenseDiscount")} placeholder="Ör. 10" inputMode="decimal" description={preview} />
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="license-price-manual"
+          checked={manual}
+          disabled={loaded && list == null}
+          onCheckedChange={(v) => setValue("licensePriceManual", v === true, { shouldValidate: false })}
         />
-      ) : null}
-      <TextField name="licensePrice" label={t("licensePrice")} placeholder="Ör. 45.000" inputMode="decimal" />
+        <Label htmlFor="license-price-manual" className="text-sm font-normal">
+          {t("licensePriceManual")}
+        </Label>
+      </div>
     </div>
   );
 }

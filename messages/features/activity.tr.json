@@ -103,6 +103,7 @@
       "cost_entry": "Maliyet satırı",
       "cost_budget": "Maliyet bütçesi",
       "cost_settings": "Maliyet ayarı",
+      "license_pricing": "Lisans liste fiyatı",
       "report_subscription": "Rapor aboneliği"
     },
     "actions": {
@@ -110,9 +111,13 @@
       "INSTITUTION_ENROLLED": "Kurum CRM'e eklendi",
       "CONVERTED_TO_PAID": "Ücretli hesaba geçirildi",
       "LICENSE_RENEWED": "Lisans yenilendi",
+      "LICENSE_UPDATED": "Lisans düzeltildi",
+      "LICENSE_PRICING_UPDATED": "Lisans liste fiyatı güncellendi",
       "CONTACT_UPDATED": "Yetkili bilgisi güncellendi",
       "BILLING_UPDATED": "Fatura bilgisi güncellendi",
       "PAYMENT_RECORDED": "Ödeme alındı",
+      "PAYMENT_UPDATED": "Ödeme düzeltildi",
+      "PAYMENT_DELETED": "Ödeme silindi",
       "STAFF_CREATED": "Ekip üyesi eklendi",
       "STAFF_ROLE_CHANGED": "Ekip üyesinin rolü değişti",
       "STAFF_DISABLED": "Ekip üyesi pasife alındı",

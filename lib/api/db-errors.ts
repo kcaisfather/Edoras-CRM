@@ -84,6 +84,8 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   // 20260929200000_crm_invoices
   CRM_INVOICE_SALE_MISMATCH: [400, "VALIDATION"],
   CRM_INVOICE_IMMUTABLE: [409, "VALIDATION"],
+  // 20261005190000_crm_license_pricing
+  CRM_SALE_INVOICED: [409, "SALE_INVOICED"],
 };
 
 /** CHECK / FK kısıt adı → kod. */
@@ -104,6 +106,10 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_institutions_tax_office_vkn_check: [422, "VALIDATION"],
   crm_institutions_billing_profile_check: [422, "BILLING_PROFILE_INCOMPLETE"],
   crm_licenses_one_year_check: [422, "LICENSE_INVALID"],
+  // 20261005190000_crm_license_pricing
+  crm_licenses_list_price_check: [400, "VALIDATION"],
+  crm_licenses_discount_check: [400, "VALIDATION"],
+  crm_license_pricing_list_price_check: [400, "VALIDATION"],
   crm_licenses_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
   crm_payments_institution_id_fkey: [409, "HAS_FINANCIAL_RECORDS"],
   // 20260929160000_crm_leads

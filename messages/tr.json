@@ -38,6 +38,8 @@
         "LICENSE_REQUIRED": "Lisans başlangıcı ve bedeli zorunlu.",
         "LICENSE_INVALID": "Lisans süresi 1 yıl olmalı.",
         "LICENSE_OVERLAP": "Bu tarihlerde kurumun başka bir lisansı var.",
+        "LIST_PRICE_MISSING": "Lisans liste fiyatı tanımlı değil. Ayarlar → Lisans fiyatı'ndan girin ya da bedeli elle yazın.",
+        "SALE_INVOICED": "Bu kayda fatura kesilmiş; düzeltmek için önce faturayı iptal edin. Faturası olan (iptal edilmiş olsa da) ödeme silinemez.",
         "DEMO_INVALID": "Demo tarihleri geçersiz (demo 1 dönem = 1 yıl sürer).",
         "HAS_FINANCIAL_RECORDS": "Kurumun lisans ya da ödeme kaydı var; silinemez.",
         "STAFF_EXISTS": "Bu e-posta zaten ekipte.",
@@ -411,7 +413,13 @@
       "billingEmail": "Fatura e-postası",
       "billingEmailHint": "Fatura talebi ve müşteri kopyası bu adrese gider.",
       "idTypeTcHint": "Bireysel: TC Kimlik No",
-      "idTypeVknHint": "Kurumsal: Vergi No + vergi dairesi"
+      "idTypeVknHint": "Kurumsal: Vergi No + vergi dairesi",
+      "licenseDiscount": "İndirim (%)",
+      "licensePriceManual": "Bedeli elle yaz (istisna)",
+      "manualHint": "Liste fiyatı ve indirim yerine doğrudan bedel.",
+      "listPriceMissing": "Liste fiyatı tanımlı değil (Ayarlar → Lisans fiyatı); şimdilik bedeli elle yazın.",
+      "discountPreview": "Liste {list} · %{percent} indirim · Bedel {price}",
+      "listPriceHint": "Liste fiyatı {list}"
     },
     "paymentMethod": {
       "HAVALE": "Havale / EFT",
@@ -472,6 +480,25 @@
         "demoEndsPreview": "Bitiş: {date} (1 yıl)",
         "submitPaid": "Ücretli olarak kaydet",
         "saved": "Kurum CRM'e kaydedildi"
+      },
+      "licenseEdit": {
+        "title": "Lisansı düzelt",
+        "description": "Başlangıç değişirse bitiş de 1 yıl sonrasına kayar. Faturası kesilmiş lisansın bedeli ve tarihi değiştirilemez.",
+        "submit": "Kaydet",
+        "saved": "Lisans düzeltildi",
+        "note": "Not",
+        "notePlaceholder": "Ör. düzeltme nedeni"
+      },
+      "paymentEdit": {
+        "title": "Ödemeyi düzelt",
+        "description": "Yanlış girilen ödemeyi düzeltin ya da silin. Faturası kesilmiş ödeme değiştirilemez.",
+        "submit": "Kaydet",
+        "saved": "Ödeme düzeltildi",
+        "delete": "Ödemeyi sil",
+        "deleteHint": "Yanlışlıkla girilmiş ödemeyi tamamen kaldırır.",
+        "deleteConfirm": "Bu ödeme kalıcı olarak silinecek. Emin misiniz?",
+        "deleteConfirmButton": "Evet, sil",
+        "deleted": "Ödeme silindi"
       }
     },
     "detail": {
@@ -537,14 +564,17 @@
           "active": "Geçerli",
           "ended": "Bitti",
           "upcoming": "Başlayacak"
-        }
+        },
+        "edit": "Lisansı düzelt",
+        "discount": "%{percent} indirim"
       },
       "payments": {
         "title": "Ödemeler",
         "record": "Ödeme kaydet",
         "billingRequired": "Fatura bilgisi (adres + TC/VKN) girilmeden ödeme alınamaz.",
         "empty": "Ödeme kaydı yok.",
-        "total": "Toplam"
+        "total": "Toplam",
+        "edit": "Ödemeyi düzelt"
       },
       "usage": {
         "title": "Edoras kullanımı",
@@ -559,6 +589,15 @@
         "title": "CRM kaydı yok",
         "description": "Bu kurum CRM kurulmadan önce açılmış. Yetkili bilgisini ve durumunu (demo / ücretli) girmek için \"CRM'e kaydet\" düğmesini kullanın."
       }
+    },
+    "pricing": {
+      "title": "Lisans liste fiyatı",
+      "description": "Satışta (ücretliye geçiş, kayda alma, yenileme) yalnız indirim yüzdesi seçilir; bedel bu fiyattan hesaplanır. Değişiklik mevcut lisansları etkilemez.",
+      "listPrice": "Liste fiyatı (₺, KDV dahil)",
+      "current": "Şu an {amount} · son değişiklik {date}",
+      "notSet": "Henüz tanımlanmadı — tanımlanana kadar bedel elle yazılır.",
+      "save": "Kaydet",
+      "saved": "Liste fiyatı kaydedildi"
     }
   }
 }

@@ -6,8 +6,11 @@ import {
   toBillingProfile,
   convertSchema,
   enrollSchema,
+  licenseEditSchema,
+  licenseListPriceSchema,
   newDemoSchema,
   paymentSchema,
+  renewSchema,
   toBilling,
   toContact,
   type ConvertInput,
@@ -68,7 +71,9 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
     idType: "TC",
     idNumber: "10000000146",
     licenseStartsOn: "2026-10-01",
-    licensePrice: "45.000",
+    licenseDiscount: "10",
+    licensePriceManual: false,
+    licensePrice: "",
     withPayment: false,
     payAmount: "",
     payMethod: "",
@@ -81,7 +86,24 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
       ["paidOn", "payAmount", "payMethod"].sort()
     );
     expect(issues(convertSchema.safeParse({ ...convert, address: "" }))).toContain("address");
-    expect(issues(convertSchema.safeParse({ ...convert, licensePrice: "abc" }))).toContain("licensePrice");
+    expect(issues(convertSchema.safeParse({ ...convert, licenseDiscount: "abc" }))).toContain("licenseDiscount");
+    expect(issues(convertSchema.safeParse({ ...convert, licenseDiscount: "101" }))).toContain("licenseDiscount");
+  });
+
+  it("lisans bedeli: yüzde modunda elle bedel aranmaz; elle bedelde yüzde aranmaz", () => {
+    expect(convertSchema.safeParse({ ...convert, licenseDiscount: "0" }).success).toBe(true);
+    const manual = { ...convert, licenseDiscount: "", licensePriceManual: true };
+    expect(issues(convertSchema.safeParse(manual))).toEqual(["licensePrice"]);
+    expect(convertSchema.safeParse({ ...manual, licensePrice: "29.950" }).success).toBe(true);
+    expect(issues(renewSchema.safeParse({ licenseDiscount: "", licensePriceManual: false, licensePrice: "" }))).toEqual(["licenseDiscount"]);
+  });
+
+  it("lisans düzeltme ve liste fiyatı", () => {
+    const edit = { licenseStartsOn: "2026-09-15", licenseDiscount: "12,5", licensePriceManual: false, licensePrice: "", note: "" };
+    expect(licenseEditSchema.safeParse(edit).success).toBe(true);
+    expect(issues(licenseEditSchema.safeParse({ ...edit, licenseStartsOn: "" }))).toEqual(["licenseStartsOn"]);
+    expect(licenseListPriceSchema.safeParse({ listPrice: "45.000" }).success).toBe(true);
+    expect(issues(licenseListPriceSchema.safeParse({ listPrice: "0" }))).toEqual(["listPrice"]);
   });
 
   it("kayda alma: DEMO fatura istemez, UCRETLI ister", () => {
@@ -94,12 +116,14 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
       idType: "TC" as const,
       idNumber: "",
       licenseStartsOn: "",
+      licenseDiscount: "",
+      licensePriceManual: false,
       licensePrice: "",
     };
     expect(enrollSchema.safeParse({ ...base, status: "DEMO" }).success).toBe(true);
     expect(issues(enrollSchema.safeParse({ ...base, status: "DEMO", demoStartsOn: "" }))).toEqual(["demoStartsOn"]);
     expect(issues(enrollSchema.safeParse({ ...base, status: "UCRETLI" })).sort()).toEqual(
-      ["address", "idNumber", "licensePrice", "licenseStartsOn"].sort()
+      ["address", "idNumber", "licenseDiscount", "licenseStartsOn"].sort()
     );
   });
 

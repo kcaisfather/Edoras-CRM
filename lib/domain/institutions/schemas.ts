@@ -16,6 +16,7 @@ import {
   isValidTaxNumber,
 } from "./rules";
 import { effectiveBillingType } from "./billing-profile";
+import { parsePercent, type LicensePriceFields } from "./pricing";
 import { PAYMENT_METHODS, type Billing, type BillingProfile, type BillingType, type PaymentMethod } from "./types";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -39,6 +40,8 @@ const MSG = {
   billingEmail: "Faturanın gideceği geçerli bir e-posta girin",
   date: "Geçerli bir tarih seçin",
   priceInvalid: "Geçerli bir tutar girin (ör. 45.000)",
+  discountInvalid: "0 ile 100 arasında bir indirim yüzdesi girin (ör. 10 ya da 12,5)",
+  listPriceInvalid: "Sıfırdan büyük bir liste fiyatı girin",
   amountInvalid: "Sıfırdan büyük bir tutar girin",
   method: "Ödeme yöntemini seçin",
 } as const;
@@ -71,9 +74,16 @@ const profileShape = {
   email: z.string().trim(),
 };
 
+/** Lisans bedeli: indirim yüzdesi (liste fiyatından hesaplanır) ya da istisna olarak elle bedel. */
+const licensePriceShape = {
+  licenseDiscount: z.string(),
+  licensePriceManual: z.boolean(),
+  licensePrice: z.string(),
+};
+
 const licenseShape = {
   licenseStartsOn: z.string(),
-  licensePrice: z.string(),
+  ...licensePriceShape,
 };
 
 const paymentShape = {
@@ -103,9 +113,18 @@ function checkProfile(
   if (!EMAIL.test(v.email)) ctx.addIssue({ code: "custom", path: ["email"], message: MSG.billingEmail });
 }
 
-function checkLicense(v: { licenseStartsOn: string; licensePrice: string }, ctx: Ctx) {
+function checkLicensePrice(v: LicensePriceFields, ctx: Ctx) {
+  if (v.licensePriceManual) {
+    if (parseAmount(v.licensePrice) === null) ctx.addIssue({ code: "custom", path: ["licensePrice"], message: MSG.priceInvalid });
+    return;
+  }
+  const pct = parsePercent(v.licenseDiscount);
+  if (pct === null || Number.isNaN(pct)) ctx.addIssue({ code: "custom", path: ["licenseDiscount"], message: MSG.discountInvalid });
+}
+
+function checkLicense(v: { licenseStartsOn: string } & LicensePriceFields, ctx: Ctx) {
   if (!isIsoDate(v.licenseStartsOn)) ctx.addIssue({ code: "custom", path: ["licenseStartsOn"], message: MSG.date });
-  if (parseAmount(v.licensePrice) === null) ctx.addIssue({ code: "custom", path: ["licensePrice"], message: MSG.priceInvalid });
+  checkLicensePrice(v, ctx);
 }
 
 function checkPayment(v: { payAmount: string; payMethod: string; paidOn: string }, ctx: Ctx) {
@@ -185,10 +204,24 @@ export const paymentSchema = z
   .superRefine(checkPayment);
 export type PaymentInput = z.input<typeof paymentSchema>;
 
-export const renewSchema = z
-  .object({ licensePrice: z.string() })
-  .refine((v) => parseAmount(v.licensePrice) !== null, { path: ["licensePrice"], message: MSG.priceInvalid });
+export const renewSchema = z.object(licensePriceShape).superRefine(checkLicensePrice);
 export type RenewInput = z.input<typeof renewSchema>;
+
+/** Kayıttan sonra lisans düzeltme (ADMIN): başlangıç (bitiş +1 yıl) + bedel. */
+export const licenseEditSchema = z
+  .object({ ...licenseShape, note: z.string().trim().max(500) })
+  .superRefine(checkLicense);
+export type LicenseEditInput = z.input<typeof licenseEditSchema>;
+
+/** Ödeme düzeltme (ADMIN): kayıttaki alanların hepsi. */
+export const paymentEditSchema = paymentSchema;
+export type PaymentEditInput = PaymentInput;
+
+/** Ayarlar → lisans liste fiyatı (ADMIN). */
+export const licenseListPriceSchema = z
+  .object({ listPrice: z.string() })
+  .refine((v) => (parseAmount(v.listPrice) ?? 0) > 0, { path: ["listPrice"], message: MSG.listPriceInvalid });
+export type LicenseListPriceInput = z.input<typeof licenseListPriceSchema>;
 
 // --- Veritabanı biçimine çeviriler (şemadan geçmiş değerlerle çağrılır) --------------------
 
@@ -207,10 +240,6 @@ export function toBilling(v: BillingCoreInput): Billing {
     tcNo: v.idType === "TC" ? digits : null,
     taxNo: v.idType === "VKN" ? digits : null,
   };
-}
-
-export function toLicense(v: { licenseStartsOn: string; licensePrice: string }) {
-  return { startsOn: v.licenseStartsOn, price: parseAmount(v.licensePrice) as number };
 }
 
 export function toPayment(v: { payAmount: string; payMethod: string; paidOn: string }) {

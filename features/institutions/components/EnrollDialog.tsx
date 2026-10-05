@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { usePermissions } from "@/features/auth";
 import { demoEndDate, isIsoDate, todayIso } from "@/lib/domain/institutions/rules";
+import { licensePriceFormValues } from "@/lib/domain/institutions/pricing";
 import { enrollSchema, type EnrollInput } from "@/lib/domain/institutions/schemas";
 import type { InstitutionDetail } from "@/lib/domain/institutions/types";
 import { useEnrollInstitution } from "../mutations";
@@ -24,7 +25,7 @@ const initial = (): EnrollInput => ({
   idType: "TC",
   idNumber: "",
   licenseStartsOn: todayIso(),
-  licensePrice: "",
+  ...licensePriceFormValues(null),
 });
 
 /**

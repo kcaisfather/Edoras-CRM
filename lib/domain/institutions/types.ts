@@ -74,8 +74,18 @@ export interface License {
   endsOn: string;
   /** Finansal yetkisi olmayan rol için null. */
   price: number | null;
+  /** Satış anındaki liste fiyatı; elle bedelde, eski satırda ve finansal yetkisi olmayan rolde null. */
+  listPrice: number | null;
+  /** İndirim yüzdesi; elle bedelde, eski satırda ve finansal yetkisi olmayan rolde null. */
+  discountPercent: number | null;
   note: string | null;
   createdAt: string;
+}
+
+/** Ayarlar → lisans liste fiyatı (tek satır). Tanımlanmadıysa `listPrice` null: satışta yalnız elle bedel. */
+export interface LicensePricingSettings {
+  listPrice: number | null;
+  updatedAt: string | null;
 }
 
 export interface Payment {

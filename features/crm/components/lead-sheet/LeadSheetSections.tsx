@@ -5,12 +5,17 @@
  * kayıtları, fatura) ve not zaman çizelgesi. Hepsi sıkı (küçük boşluk, text-xs etiket / text-sm değer).
  */
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { ClipboardList, MessageSquarePlus, MessageSquareWarning, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QueryErrorState } from "@/components/query-error-state";
 import { FinancialOnly, usePermissions } from "@/features/auth";
 import { useLeadNotes } from "@/features/crm-notes";
+import { useAssignees } from "@/features/tasks";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
+import { useUpdateCrmLead } from "../../mutations";
 import { parseNoteContent } from "@/lib/domain/crm-notes/utils";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
@@ -62,12 +67,48 @@ export function LeadActionRow({ lead, title, actions }: { lead: CrmLead; title: 
   );
 }
 
+const NO_OWNER = "none";
+
+/** Sorumlu: herkes görür; yalnız ADMIN değiştirir (sunucu da yalnız ADMIN'e izin verir). */
+function OwnerValue({ lead }: { lead: CrmLead }) {
+  const t = useTranslations("crm.detail");
+  const errorMessage = useApiErrorMessage();
+  const { isAdmin } = usePermissions();
+  const { data: members = [] } = useAssignees(isAdmin);
+  const update = useUpdateCrmLead();
+  if (!isAdmin) return <>{lead.ownerName ?? t("ownerNone")}</>;
+  const change = async (value: string) => {
+    try {
+      await update.mutateAsync({ id: lead.id, data: { ownerId: value === NO_OWNER ? null : value } });
+      toast.success(t("ownerChanged"));
+    } catch (err) {
+      toast.error(errorMessage(err, t("ownerError")));
+    }
+  };
+  return (
+    <Select value={lead.ownerId ?? NO_OWNER} onValueChange={change} disabled={update.isPending}>
+      <SelectTrigger className="h-8 w-52" aria-label={t("owner")}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NO_OWNER}>{t("ownerNone")}</SelectItem>
+        {members.map((m) => (
+          <SelectItem key={m.id} value={m.id}>
+            {m.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /** Formda olmayan salt okunur ayrıntılar: kaynak, kayıt / teklif / satış tarihi, teklifi veren, satışı yapan. */
 export function LeadDetailsSection({ lead }: { lead: CrmLead }) {
   const t = useTranslations("crm.detail");
   const tSource = useTranslations("crm.source");
   const rows: { key: string; label: string; value: React.ReactNode }[] = [];
   if (lead.source) rows.push({ key: "source", label: t("source"), value: tSource(lead.source) });
+  rows.push({ key: "owner", label: t("owner"), value: <OwnerValue lead={lead} /> });
   rows.push({ key: "createdAt", label: t("createdAt"), value: <span className="tabular-nums">{formatCrmDate(lead.createdAt)}</span> });
   if (lead.offerSentAt) rows.push({ key: "offerDate", label: t("offerDate"), value: <span className="tabular-nums">{formatCrmDate(lead.offerSentAt)}</span> });
   if (lead.offerBy) rows.push({ key: "offerBy", label: t("offerBy"), value: lead.offerByName ?? "-" });

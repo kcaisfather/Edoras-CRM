@@ -26,7 +26,7 @@ import { createDemoInstitution, recordPayment } from "./institutions";
  */
 
 const LEAD_COLUMNS =
-  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, city, district, country, status, source, offer_amount, sale_amount, lost_reason, lost_note, competitor, recall_at, next_follow_up_at, offer_sent_at, sold_at, institution_id, offer_by, sold_by, created_by, updated_by, created_at, updated_at";
+  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, city, district, country, status, source, offer_amount, sale_amount, lost_reason, lost_note, competitor, recall_at, next_follow_up_at, offer_sent_at, sold_at, institution_id, offer_by, sold_by, owner_id, created_by, updated_by, created_at, updated_at";
 
 interface LeadRow {
   id: string;
@@ -52,6 +52,7 @@ interface LeadRow {
   institution_id: string | null;
   offer_by: string | null;
   sold_by: string | null;
+  owner_id: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -148,6 +149,8 @@ function toDto(row: LeadRow, ctx: DtoContext): CrmLeadDto {
     institutionId: row.institution_id,
     dissatisfaction: flags?.dissatisfaction ?? null,
     programTags: flags?.programTags ?? [],
+    ownerId: row.owner_id,
+    ownerName: row.owner_id ? (ctx.names.get(row.owner_id) ?? null) : null,
     createdBy: row.created_by,
     createdByName: row.created_by ? (ctx.names.get(row.created_by) ?? null) : null,
     updatedBy: row.updated_by,
@@ -250,6 +253,13 @@ export async function createLead(input: LeadCreateValues, staff: StaffContext): 
   return leadDto(id, staff);
 }
 
+/** Sorumlu olacak kişi aktif bir CRM personeli mi (değilse 400). */
+async function requireActiveStaff(userId: string): Promise<void> {
+  const { data, error } = await getSupabaseAdminClient().from("crm_staff").select("is_active").eq("user_id", userId).maybeSingle();
+  if (error) throw dbError(error);
+  if (!data?.is_active) throw new HttpError(400, "VALIDATION", { ownerId: "Aktif bir ekip üyesi seçin" });
+}
+
 const NO_LOSS_DETAIL: LossDetailColumns = { lost_note: null, competitor: null, recall_at: null };
 
 /**
@@ -319,6 +329,15 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
   Object.assign(update, planLossDetail(current, patch, finalStatus, finalReason));
   if (patch.status !== undefined) Object.assign(update, actorColumns(current.status, patch.status, staff));
 
+  // Sorumlu: yalnız ADMIN; hedef aktif bir ekip üyesi olmalı (null = sorumlusuz).
+  let ownerChange: { from: string | null; to: string | null } | null = null;
+  if (patch.ownerId !== undefined && patch.ownerId !== current.owner_id) {
+    if (staff.role !== "ADMIN") throw new HttpError(403, "FORBIDDEN");
+    if (patch.ownerId !== null) await requireActiveStaff(patch.ownerId);
+    update.owner_id = patch.ownerId;
+    ownerChange = { from: current.owner_id, to: patch.ownerId };
+  }
+
   const amounts: Record<string, number | null> = {};
   if (financial) {
     if (patch.offerAmount !== undefined && patch.offerAmount !== toNumber(current.offer_amount)) {
@@ -349,6 +368,15 @@ export async function updateLead(id: string, patch: LeadPatchValues, staff: Staf
         nextFollowUpAt: "next_follow_up_at" in update ? (update.next_follow_up_at as string | null) : current.next_follow_up_at,
         lostReason: "lost_reason" in update ? (update.lost_reason as string | null) : current.lost_reason,
       },
+    });
+  }
+  if (ownerChange) {
+    await recordAudit(staff, {
+      action: "LEAD_OWNER_CHANGED",
+      entityType: "lead",
+      entityId: id,
+      entityLabel: label,
+      details: ownerChange,
     });
   }
   const followUpChanged =

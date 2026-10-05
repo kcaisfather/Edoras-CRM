@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePermissions } from "@/features/auth";
-import { STORED_STATUSES } from "@/lib/domain/crm/signals";
+import { OWNER_NONE, STORED_STATUSES } from "@/lib/domain/crm/signals";
 import { LEAD_SOURCES } from "@/lib/domain/crm/types";
 import { CRM_VIEWS, FINANCIAL_VIEWS, type CrmQuickTab } from "@/lib/domain/crm/views";
 import { PAGE_SIZES } from "../hooks";
@@ -28,6 +28,10 @@ export function CrmListToolbar({
   quickTab,
   statusFilter,
   sourceFilter,
+  ownerFilter,
+  owners,
+  meId,
+  onOwner,
   onQuickTab,
   onStatus,
   onSource,
@@ -42,6 +46,10 @@ export function CrmListToolbar({
   quickTab: CrmQuickTab;
   statusFilter: string;
   sourceFilter: string;
+  ownerFilter: string;
+  owners: { id: string; name: string }[];
+  meId?: string;
+  onOwner: (owner: string) => void;
   onQuickTab: (tab: CrmQuickTab) => void;
   onStatus: (status: string) => void;
   onSource: (source: string) => void;
@@ -134,6 +142,23 @@ export function CrmListToolbar({
                 </Button>
               )}
             </div>
+            <Select value={ownerFilter || "__all__"} onValueChange={(v) => onOwner(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-[170px]" aria-label={t("filters.owner")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">{t("filters.ownerAll")}</SelectItem>
+                {meId && <SelectItem value={meId}>{t("filters.ownerMine")}</SelectItem>}
+                <SelectItem value={OWNER_NONE}>{t("filters.ownerNone")}</SelectItem>
+                {owners
+                  .filter((o) => o.id !== meId)
+                  .map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
             <Select value={String(pageSize)} onValueChange={onPageSize}>
               <SelectTrigger className="w-[80px]" aria-label={t("pagination.pageSize")}>
                 <SelectValue />

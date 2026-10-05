@@ -93,6 +93,7 @@
       "lead": "Aday",
       "note": "Not",
       "task": "Görev",
+      "appointment": "Randevu",
       "rules": "Takip kuralları",
       "prospect_list": "Soğuk liste",
       "prospect": "Soğuk liste kişisi",
@@ -120,6 +121,7 @@
       "INTERNAL_UNMARKED": "İç kurum işareti kaldırıldı",
       "LEAD_CREATED": "Aday eklendi",
       "LEAD_UPDATED": "Aday güncellendi",
+      "LEAD_OWNER_CHANGED": "Aday sorumlusu değişti",
       "LEAD_STATUS_CHANGED": "Adayın durumu değişti",
       "LEAD_DELETED": "Aday silindi",
       "LEAD_LINKED": "Aday kuruma bağlandı",
@@ -156,7 +158,10 @@
       "REPORT_SUBSCRIPTION_CREATED": "Rapor aboneliği eklendi",
       "REPORT_SUBSCRIPTION_UPDATED": "Rapor aboneliği güncellendi",
       "REPORT_SUBSCRIPTION_DELETED": "Rapor aboneliği silindi",
-      "REPORT_SENT": "Rapor e-postası gönderildi"
+      "REPORT_SENT": "Rapor e-postası gönderildi",
+      "APPOINTMENT_CREATED": "Randevu planlandı",
+      "APPOINTMENT_RESCHEDULED": "Randevu yeniden planlandı",
+      "APPOINTMENT_CLOSED": "Randevu kapatıldı"
     },
     "detailKeys": {
       "amount": "Tutar",

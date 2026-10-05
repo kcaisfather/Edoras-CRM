@@ -34,6 +34,10 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_BILLING_REQUIRED: [422, "BILLING_REQUIRED"],
   CRM_STATUS_INVALID: [400, "VALIDATION"],
   CRM_LAST_ADMIN: [409, "LAST_ADMIN"],
+  // 20261005130000_crm_appointments
+  CRM_APPOINTMENT_PAST: [400, "APPOINTMENT_PAST"],
+  CRM_APPOINTMENT_CLOSED: [409, "APPOINTMENT_CLOSED"],
+  CRM_APPOINTMENT_ASSIGNEE_INVALID: [400, "APPOINTMENT_ASSIGNEE_INVALID"],
   // 20261005110000_crm_super_admin
   CRM_SUPER_ADMIN_PROTECTED: [403, "FORBIDDEN"],
   // 20260929170000_crm_tasks
@@ -118,6 +122,14 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_tasks_assigned_fields_check: [400, "VALIDATION"],
   crm_tasks_done_check: [400, "VALIDATION"],
   crm_tasks_note_check: [400, "VALIDATION"],
+  // 20261005130000_crm_appointments
+  crm_appointments_lead_id_fkey: [404, "NOT_FOUND"],
+  crm_appointments_mode_check: [400, "VALIDATION"],
+  crm_appointments_status_check: [400, "VALIDATION"],
+  crm_appointments_where_check: [400, "VALIDATION"],
+  crm_appointments_link_check: [400, "VALIDATION"],
+  crm_appointments_length_check: [400, "VALIDATION"],
+  crm_appointments_resolved_check: [400, "VALIDATION"],
   crm_rules_id_check: [400, "VALIDATION"],
   crm_rules_days_check: [400, "VALIDATION"],
   crm_rules_scheduled_check: [400, "VALIDATION"],

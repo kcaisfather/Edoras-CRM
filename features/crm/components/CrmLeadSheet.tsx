@@ -19,6 +19,7 @@ import { CrmDeleteConfirmDialog, CrmUnsavedDialog } from "./crm-edit/CrmEditDial
 import { CrmEditSalesSection } from "./crm-edit/CrmEditSalesSection";
 import { useCrmEditActions } from "./crm-edit/useCrmEditActions";
 import { useCrmEditForm } from "./crm-edit/useCrmEditForm";
+import { LeadAppointments } from "./lead-sheet/LeadAppointments";
 import { LeadActionRow, LeadDetailsSection, LeadPurchaseHistory, LeadSection, NotesTimeline } from "./lead-sheet/LeadSheetSections";
 
 const FORM_ID = "crm-lead-sheet-form";
@@ -127,6 +128,7 @@ function CrmLeadSheetBody({ lead: leadProp, onOpenChange, actions = {}, onDelete
                 <CrmLeadInstitution lead={lead} onOpenDemo={actions.onOpenDemo} onLink={actions.onLink} showUsage />
               </LeadSection>
 
+              <LeadAppointments lead={lead} />
               <LeadDetailsSection lead={lead} />
               <LeadPurchaseHistory lead={lead} actions={actions} />
               <NotesTimeline lead={lead} onAllNotes={actions.onAddNote ? () => actions.onAddNote?.(lead) : undefined} />

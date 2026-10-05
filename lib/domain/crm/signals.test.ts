@@ -5,6 +5,7 @@ import {
   buildLeadIndex,
   demoEndDate,
   filterLeadsClient,
+  OWNER_NONE,
   isDemoEndedNoSale,
   leadBalance,
   pipelineByStatus,
@@ -123,5 +124,23 @@ describe("kurum ↔ aday eşlemesi", () => {
     const index = buildLeadIndex([lead({ id: "a", institutionId: "i1" }), lead({ id: "b" })]);
     expect(index.get("i1")?.id).toBe("a");
     expect(index.size).toBe(1);
+  });
+});
+
+describe("filterLeadsClient — sorumlu", () => {
+  const leads = [
+    { id: "a", ownerId: "u1" },
+    { id: "b", ownerId: "u2" },
+    { id: "c", ownerId: null },
+    { id: "d" },
+  ];
+  it("kişiye göre süzer", () => {
+    expect(filterLeadsClient(leads, { owner: "u1" }).map((l) => l.id)).toEqual(["a"]);
+  });
+  it("sorumlusuzları (null ve alansız) bulur", () => {
+    expect(filterLeadsClient(leads, { owner: OWNER_NONE }).map((l) => l.id)).toEqual(["c", "d"]);
+  });
+  it("boş süzgeç hepsini döndürür", () => {
+    expect(filterLeadsClient(leads, {})).toHaveLength(4);
   });
 });

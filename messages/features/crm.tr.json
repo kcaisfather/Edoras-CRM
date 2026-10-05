@@ -61,7 +61,11 @@
       "statusAll": "Tümü",
       "viewsGroup": "Görünümler",
       "statusGroup": "Durumlar",
-      "sourceGroup": "Kaynaklar"
+      "sourceGroup": "Kaynaklar",
+      "owner": "Sorumlu",
+      "ownerAll": "Tüm sorumlular",
+      "ownerMine": "Bana ait",
+      "ownerNone": "Atanmamış"
     },
     "table": {
       "customer": "Müşteri",
@@ -408,7 +412,55 @@
     },
     "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
   },
+  "appointment": {
+    "title": "Randevular",
+    "loading": "Randevular yükleniyor…",
+    "loadError": "Randevular yüklenemedi.",
+    "none": "Açık randevu yok.",
+    "next": "Sıradaki",
+    "overdue": "Saati geçti",
+    "assignee": "Sorumlu: {name}",
+    "add": "Randevu ekle",
+    "addTitle": "Randevu planla",
+    "editTitle": "Randevuyu düzenle",
+    "reschedule": "Kaydet",
+    "edit": "Düzenle",
+    "back": "Vazgeç",
+    "addToCalendar": "Takvime ekle",
+    "icsTitle": "Randevu: {name}",
+    "past": "Geçmiş randevular ({count})",
+    "created": "Randevu planlandı.",
+    "rescheduled": "Randevu güncellendi.",
+    "closed": "Randevu kapatıldı.",
+    "saveError": "Randevu kaydedilemedi.",
+    "date": "Tarih",
+    "time": "Saat",
+    "mode": "Görüşme türü",
+    "modes": { "ONLINE": "Online", "IN_PERSON": "Yüz yüze" },
+    "link": "Toplantı linki",
+    "linkPlaceholder": "https://meet.google.com/…",
+    "joinLink": "Toplantıya katıl",
+    "location": "Adres / yer",
+    "locationPlaceholder": "İlçe, il ya da adres",
+    "note": "Not",
+    "errors": {
+      "date": "Geçerli bir tarih seçin.",
+      "time": "Geçerli bir saat seçin.",
+      "past": "Randevu geçmişe planlanamaz.",
+      "link": "Geçerli bir link girin."
+    },
+    "outcomes": { "HELD": "Gerçekleşti", "NO_SHOW": "Gelmedi", "CANCELLED": "İptal et" },
+    "confirm": {
+      "HELD": { "title": "Randevu gerçekleşti mi?", "body": "Randevu \"Gerçekleşti\" olarak kapanır ve değiştirilemez." },
+      "NO_SHOW": { "title": "Müşteri gelmedi mi?", "body": "Randevu \"Gelmedi\" olarak kapanır ve değiştirilemez." },
+      "CANCELLED": { "title": "Randevu iptal edilsin mi?", "body": "Randevu iptal edilir ve değiştirilemez." }
+    }
+  },
   "detail": {
+    "owner": "Sorumlu",
+    "ownerNone": "Atanmadı",
+    "ownerChanged": "Sorumlu güncellendi.",
+    "ownerError": "Sorumlu değiştirilemedi.",
     "createdAt": "Kayıt tarihi",
     "details": "Ayrıntılar",
     "source": "Kaynak",

@@ -40,6 +40,9 @@ export function leadBalance(lead: Pick<CrmLead, "saleAmount" | "collectedAmount"
   return Math.max(0, (lead.saleAmount ?? 0) - (lead.collectedAmount ?? 0));
 }
 
+/** Sorumlu süzgecinde "sorumlusuz" değeri (?owner=none). */
+export const OWNER_NONE = "none";
+
 export interface ClientLeadFilter {
   status?: string;
   /** Aday kaynağı ("Tümü" menüsünün Kaynaklar grubu, ?source=). */
@@ -48,6 +51,8 @@ export interface ClientLeadFilter {
   dateTo?: number;
   search?: string;
   tab?: CrmClientTab;
+  /** Sorumlu: personel kimliği ya da "none" (sorumlusuz). Boş = tümü. */
+  owner?: string;
 }
 
 
@@ -61,6 +66,7 @@ export function filterLeadsClient(leads: CrmLead[], f: ClientLeadFilter, now = n
   return leads.filter((lead) => {
     if (f.status && lead.status !== f.status) return false;
     if (f.source && lead.source !== f.source) return false;
+    if (f.owner && (f.owner === OWNER_NONE ? lead.ownerId != null : lead.ownerId !== f.owner)) return false;
     if (f.dateFrom != null && (lead.createdAt ?? 0) < f.dateFrom) return false;
     if (f.dateTo != null && (lead.createdAt ?? 0) > f.dateTo) return false;
     if (f.tab === "demoEnded" && !isDemoEndedNoSale(lead, now)) return false;

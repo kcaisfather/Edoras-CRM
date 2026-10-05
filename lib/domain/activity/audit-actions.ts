@@ -20,6 +20,7 @@ export const AUDIT_ACTIONS = [
   "INTERNAL_UNMARKED",
   "LEAD_CREATED",
   "LEAD_UPDATED",
+  "LEAD_OWNER_CHANGED",
   "LEAD_STATUS_CHANGED",
   "LEAD_DELETED",
   "LEAD_LINKED",
@@ -62,6 +63,10 @@ export const AUDIT_ACTIONS = [
   "REPORT_SUBSCRIPTION_UPDATED",
   "REPORT_SUBSCRIPTION_DELETED",
   "REPORT_SENT",
+  // Randevular: tarih, saat, tür ve sonuç yazılır; link, yer ve not (serbest metin / adres) yazılmaz.
+  "APPOINTMENT_CREATED",
+  "APPOINTMENT_RESCHEDULED",
+  "APPOINTMENT_CLOSED",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -81,6 +86,7 @@ export const AUDIT_ENTITY_TYPES = [
   "cost_budget",
   "cost_settings",
   "report_subscription",
+  "appointment",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

@@ -113,6 +113,8 @@ export const leadPatchSchema = z
     ...followUpShape,
     offerAmount: amount,
     saleAmount: amount,
+    /** Sorumlu personel (crm_staff.user_id); null = sorumlusuz. Yalnız ADMIN değiştirir (sunucu). */
+    ownerId: z.uuid().nullable(),
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, { message: "Değişiklik yok" });

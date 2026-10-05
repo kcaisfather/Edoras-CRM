@@ -97,6 +97,9 @@ export interface CrmLeadDto {
   /** En son şikâyet kaydı (SIKAYET notu). */
   dissatisfaction: Dissatisfaction | null;
   programTags: ProgramTag[];
+  /** Aday sorumlusu (CRM ekibinden); değiştirmek yalnız ADMIN. */
+  ownerId: string | null;
+  ownerName: string | null;
   createdBy: string | null;
   createdByName: string | null;
   updatedBy: string | null;

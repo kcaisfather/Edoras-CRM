@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/lib/navigation";
-import { usePermissions } from "@/features/auth";
+import { useCurrentUser, usePermissions } from "@/features/auth";
 import { parsePeriodParam, periodToRange } from "@/lib/utils/date";
 import { parseSort, sortRows } from "@/lib/utils/sort";
 import { leadFunnel } from "@/lib/domain/crm/insights";
@@ -62,12 +62,14 @@ export function useCrmList(slots: CrmRowSlots = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { canSeeFinancials } = usePermissions();
+  const { data: me } = useCurrentUser();
 
   const search = searchParams.get("search") ?? "";
   const statusParam = searchParams.get("status") ?? "";
   const statusFilter = isCrmStatus(statusParam) ? statusParam : "";
   const sourceParam = searchParams.get("source") ?? "";
   const sourceFilter = isLeadSource(sourceParam) ? sourceParam : "";
+  const ownerFilter = searchParams.get("owner") ?? "";
   const tabParam = searchParams.get("tab") ?? "";
   // Tutar içeren görünüm (Bakiyesi olanlar) CRM_AGENT için varsayılana düşer.
   const quickTab = (
@@ -103,6 +105,13 @@ export function useCrmList(slots: CrmRowSlots = {}) {
 
   const all = useAllCrmLeads();
 
+  // Sorumlu seçenekleri: listedeki adayların sorumluları (adı alfabetik).
+  const owners = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of all.leads) if (l.ownerId) map.set(l.ownerId, l.ownerName ?? "—");
+    return [...map].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }, [all.leads]);
+
   // Seçili dönemdeki tüm adaylar (satış olanlar dahil).
   const rangeLeads = useMemo(() => filterLeadsClient(all.leads, { dateFrom, dateTo }), [all.leads, dateFrom, dateTo]);
 
@@ -110,6 +119,7 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     const filtered = filterLeadsClient(all.leads, {
       status: effectiveStatus || undefined,
       source: sourceFilter || undefined,
+      owner: ownerFilter || undefined,
       dateFrom,
       dateTo,
       tab: clientTab,
@@ -119,12 +129,12 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     // "Bakiyesi olanlar": en yüksek kalan bakiye önce; diğerleri en yeni kayıt önce (sunucu sırası).
     if (clientTab === "balance") return sortRows(filtered, { key: "balance", dir: "desc" }, CRM_SORT_ACCESSORS);
     return filtered;
-  }, [all.leads, effectiveStatus, sourceFilter, dateFrom, dateTo, clientTab, search, colSort]);
+  }, [all.leads, effectiveStatus, sourceFilter, ownerFilter, dateFrom, dateTo, clientTab, search, colSort]);
 
   // Statü şeridi (G35): dönemdeki aşamalar (statü seçiminden bağımsız).
   const pipeline = useMemo(() => pipelineByStatus(rangeLeads, STORED_STATUSES), [rangeLeads]);
   // Özet kartlar (G03): süzgeç varsa süzülen satırlar, yoksa seçili dönemin tamamı.
-  const hasFilter = !!effectiveStatus || !!sourceFilter || !!clientTab || !!search.trim();
+  const hasFilter = !!effectiveStatus || !!sourceFilter || !!ownerFilter || !!clientTab || !!search.trim();
   const summary = useMemo(() => summarizeLeads(hasFilter ? filteredLeads : rangeLeads), [rangeLeads, hasFilter, filteredLeads]);
   // G19: açık alacak — dönemdeki kayıtlar (satır formülüyle aynı).
   const openReceivables = useMemo(
@@ -185,6 +195,9 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     searchBox,
     statusFilter,
     sourceFilter,
+    ownerFilter,
+    owners,
+    meId: me?.id,
     quickTab,
     effectiveStatus,
     isSignupsTab,
@@ -204,6 +217,13 @@ export function useCrmList(slots: CrmRowSlots = {}) {
         else p.delete("source");
         p.delete("tab");
         p.delete("status");
+        p.delete("page");
+      }),
+    /** Sorumlu süzgeci diğerlerinden bağımsızdır (durum / görünüm / kaynakla birlikte çalışır). */
+    setOwnerFilter: (value: string) =>
+      replaceParams((p) => {
+        if (value) p.set("owner", value);
+        else p.delete("owner");
         p.delete("page");
       }),
     setQuickTab: (tab: CrmQuickTab) =>

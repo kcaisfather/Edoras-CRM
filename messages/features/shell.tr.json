@@ -1,4 +1,19 @@
 {
+  "notifications": {
+    "label": "Bildirimler",
+    "labelUnread": "Bildirimler, {count} okunmamış",
+    "title": "Bildirimler",
+    "loading": "Yükleniyor…",
+    "error": "Bildirimler yüklenemedi.",
+    "empty": "Yeni bildirim yok.",
+    "unknownName": "İsimsiz",
+    "tasksDue": "{count, plural, one {# görevin vadesi geldi ya da geçti} other {# görevin vadesi geldi ya da geçti}}",
+    "appointment": "Randevu: {name} · {when}",
+    "appointmentOverdue": "Randevu saati geçti: {name} · {when}",
+    "surveyResponses": "{count, plural, one {Son 7 günde # yeni anket yanıtı} other {Son 7 günde # yeni anket yanıtı}}",
+    "licenseEnding": "{name} lisansı {days, plural, =1 {yarın} other {# gün içinde}} bitiyor",
+    "demoEnding": "{name} demosu {days, plural, =1 {yarın} other {# gün içinde}} bitiyor"
+  },
   "settings": {
     "tabsLabel": "Ayar bölümleri",
     "tabs": {

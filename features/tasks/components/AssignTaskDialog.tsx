@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,20 +94,20 @@ export function AssignTaskDialog({ lead, open, onOpenChange, defaultType = "aram
   };
 
   return (
-    <Dialog
+    <SidePanel
       open={open}
       onOpenChange={(next) => {
         if (!busy) onOpenChange(next);
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
+      <SidePanelContent size="md">
+        <SidePanelHeader>
+          <SidePanelTitle>{t("title")}</SidePanelTitle>
+          <SidePanelDescription>
             {t("description")}
             <span className="mt-1 block font-medium text-foreground">{getLeadTitle(lead).title}</span>
-          </DialogDescription>
-        </DialogHeader>
+          </SidePanelDescription>
+        </SidePanelHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -182,7 +182,7 @@ export function AssignTaskDialog({ lead, open, onOpenChange, defaultType = "aram
           {open && <AssigneeField value={assigneeId} onChange={setAssigneeId} disabled={busy} />}
         </div>
 
-        <DialogFooter>
+        <SidePanelFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
             {tCommon("cancel")}
           </Button>
@@ -190,9 +190,9 @@ export function AssignTaskDialog({ lead, open, onOpenChange, defaultType = "aram
             {busy && <Loader2 className="animate-spin" />}
             {t("submit")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SidePanelFooter>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 

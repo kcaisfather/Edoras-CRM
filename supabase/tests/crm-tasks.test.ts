@@ -101,6 +101,8 @@ let agentB: string;
 
 beforeAll(async () => {
   db = await createTestDb();
+  // Teklif / satış tutarı ve satışta hesap şartı (20261005170000) bu dosyanın konusu değil: crm-lead-sale-rules.test.ts.
+  await db.exec("alter table crm_leads disable trigger crm_leads_sale_rules");
   admin = await staff("yonetici@edorasapp.ai", "ADMIN");
   agentA = await staff("a@edorasapp.ai");
   agentB = await staff("b@edorasapp.ai");

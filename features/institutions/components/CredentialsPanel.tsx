@@ -12,7 +12,14 @@ import { formatDate } from "../format";
  * Demo açılınca kurum yöneticisinin giriş bilgisi. Şifre yalnız bu ekranda görünür — hiçbir yerde
  * saklanmaz; pencere kapanınca yeniden gösterilemez (gerekirse edoras-admin'den şifre sıfırlanır).
  */
-export function CredentialsPanel({ credentials }: { credentials: DemoCredentials }) {
+export function CredentialsPanel({
+  credentials,
+  endsLabel,
+}: {
+  credentials: DemoCredentials;
+  /** Bitiş satırının etiketi (varsayılan "Demo bitişi"; satışla açılan hesapta lisans bitişi). */
+  endsLabel?: string;
+}) {
   const t = useTranslations("institutions.credentials");
 
   const copy = async (value: string, label: string) => {
@@ -56,7 +63,7 @@ export function CredentialsPanel({ credentials }: { credentials: DemoCredentials
           onCopy={() => copy(credentials.panelUrl, t("panel"))}
           copyLabel={t("copy")}
         />
-        <CopyItem icon={<CalendarClock className="h-4 w-4" />} label={t("demoEndsAt")} value={formatDate(credentials.demoEndsAt)} />
+        <CopyItem icon={<CalendarClock className="h-4 w-4" />} label={endsLabel ?? t("demoEndsAt")} value={formatDate(credentials.demoEndsAt)} />
       </div>
       <p className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">{t("onlyOnce")}</p>
       <Button variant="outline" size="sm" onClick={() => copy(block, t("all"))}>

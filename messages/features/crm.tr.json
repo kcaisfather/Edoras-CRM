@@ -25,7 +25,35 @@
     "saleAmount": "Satış tutarı (₺)",
     "offerWas": "Teklif tutarı: {amount}",
     "soldConfirm": "Satış oldu olarak işaretlenecek.",
-    "amountInvalid": "Geçerli bir tutar girin (ör. 45.000)"
+    "amountInvalid": "Geçerli bir tutar girin (ör. 45.000)",
+    "offerAmountRequired": "Teklif tutarı zorunlu (0'dan büyük)"
+  },
+  "sale": {
+    "title": "Satışı kaydet",
+    "description": "{name} · Satış tutarı ve fatura bilgileri zorunlu; kaydedince hesap aynı adımda açılır.",
+    "amountSection": "Satış",
+    "saleAmount": "Satış tutarı (₺)",
+    "offerWas": "Teklif tutarı: {amount}",
+    "accountSection": "Hesap",
+    "billingSection": "Firma / fatura bilgileri",
+    "institutionName": "Kurum adı (Edoras)",
+    "program": "Program",
+    "mode": {
+      "NEW": "Edoras'ta yeni kurum ve kurum yöneticisi hesabı açılır; kurum ücretli olur, lisans satış tutarıyla bugünden 1 yıl.",
+      "ENROLL": "Bağlı kurum CRM'e ücretli olarak eklenir; lisans satış tutarıyla bugünden 1 yıl.",
+      "CONVERT": "Demo kurum ({name}) ücretliye geçer; lisans satış tutarıyla bugünden 1 yıl.",
+      "PAID": "Kurum ({name}) zaten ücretli: fatura bilgileri güncellenir, lisansa dokunulmaz (yenileme kurum sayfasından)."
+    },
+    "submit": "Satışı kaydet",
+    "submitNew": "Satışı kaydet ve hesabı aç",
+    "saved": "Satış kaydedildi",
+    "error": "Satış kaydedilemedi",
+    "doneTitle": "Satış kaydedildi, hesap açıldı",
+    "doneDescription": "Kurum yöneticisinin giriş bilgisi aşağıda. Şifre yalnız bu ekranda görünür; kopyalayıp müşteriye iletin.",
+    "licenseEndsAt": "Lisans bitişi",
+    "continue": "Tamam",
+    "emailTaken": "Bu e-posta Edoras'ta kayıtlı; başka bir e-posta girin.",
+    "nameTaken": "Bu adla bir Edoras kurumu var; adayı o kuruma bağlayıp tekrar deneyin ya da adı değiştirin."
   },
   "source": {
     "MANUAL": "Elle girildi",
@@ -73,7 +101,9 @@
       "date": "Tarih",
       "salesStage": "Satış Aşaması",
       "score": "Skor",
-      "saleAmount": "Satış Tutarı",
+      "saleAmount": "Teklif / Satış Tutarı",
+      "offerTag": "teklif",
+      "offerTitle": "Teklif tutarı (satış henüz yok)",
       "collected": "Tahsil Edilen",
       "remainingDebt": "Kalan Borç",
       "actions": "İşlemler"
@@ -117,6 +147,7 @@
     "lastName": "Yetkili Soyadı",
     "email": "E-posta",
     "phone": "Telefon",
+    "whatsapp": "WhatsApp kullanıcı adı",
     "city": "İl",
     "district": "İlçe",
     "country": "Ülke",
@@ -283,6 +314,9 @@
     "call": "Ara",
     "email": "E-posta gönder",
     "whatsapp": "WhatsApp şablonu",
+    "whatsappUsername": "WhatsApp: {handle} · kopyala",
+    "whatsappCopied": "{handle} kopyalandı. WhatsApp'ta Yeni sohbet → kullanıcı adıyla ara.",
+    "copyFailed": "Kopyalanamadı",
     "phoneInvalid": "Telefon numarası geçersiz",
     "attemptNote": "İletişim denemesi başlatıldı."
   },

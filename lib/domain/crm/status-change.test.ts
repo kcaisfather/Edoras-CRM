@@ -71,20 +71,24 @@ describe("buildStatusChange", () => {
     expect(res).toEqual({ ok: true, patch: { status: "TEKLIF_VERILDI", offerAmount: 7500, nextFollowUpAt: "2026-10-12" } });
   });
 
-  it("offer / sale with an empty amount → 0 TL (same as the edit form)", () => {
-    const offer = build(lead({ offerAmount: null }), "TEKLIF_VERILDI", { offerAmount: "" });
-    expect(offer.ok && offer.patch.offerAmount).toBe(0);
+  it("offer requires an amount > 0 (empty or 0 is rejected); the recorded amount is kept when the field is empty", () => {
+    expect(build(lead({ offerAmount: null }), "TEKLIF_VERILDI", { offerAmount: "" })).toEqual({ ok: false, error: "offerAmountRequired" });
+    expect(build(lead({ offerAmount: null }), "TEKLIF_VERILDI", { offerAmount: "0" })).toEqual({ ok: false, error: "offerAmountRequired" });
+    const kept = build(lead({ offerAmount: 4000 }), "TEKLIF_VERILDI", { offerAmount: "" });
+    expect(kept.ok && kept.patch.offerAmount).toBe(4000);
     const sale = build(lead(), "SATIS_OLDU", { saleAmount: "" });
     expect(sale.ok && sale.patch.saleAmount).toBe(0);
   });
 
   it("unreadable amount is rejected", () => {
     expect(build(lead(), "SATIS_OLDU", { saleAmount: "abc" })).toEqual({ ok: false, error: "amountInvalid" });
+    expect(build(lead(), "TEKLIF_VERILDI", { offerAmount: "abc" })).toEqual({ ok: false, error: "amountInvalid" });
   });
 
-  it("CRM_AGENT never sends amounts", () => {
+  it("CRM_AGENT sends only the offer amount (required); never the sale amount", () => {
     const offer = build(lead(), "TEKLIF_VERILDI", { offerAmount: "999" }, false);
-    expect(offer).toEqual({ ok: true, patch: { status: "TEKLIF_VERILDI" } });
+    expect(offer).toEqual({ ok: true, patch: { status: "TEKLIF_VERILDI", offerAmount: 999 } });
+    expect(build(lead(), "TEKLIF_VERILDI", { offerAmount: "" }, false)).toEqual({ ok: false, error: "offerAmountRequired" });
     const sale = build(lead(), "SATIS_OLDU", { saleAmount: "999" }, false);
     expect(sale).toEqual({ ok: true, patch: { status: "SATIS_OLDU" } });
   });
@@ -102,7 +106,8 @@ describe("buildStatusChange", () => {
   });
 
   it("the next call is sent only for follow-up statuses and only when entered", () => {
-    expect(build(lead(), "ARANACAK", { nextCall: "2026-10-12" })).toEqual({ ok: true, patch: { status: "ARANACAK" } });
+    expect(build(lead(), "DEMO_TANIMLANDI", { nextCall: "2026-10-12" })).toEqual({ ok: true, patch: { status: "DEMO_TANIMLANDI" } });
+    expect(build(lead(), "ARANACAK", { nextCall: "2026-10-12" })).toEqual({ ok: true, patch: { status: "ARANACAK", nextFollowUpAt: "2026-10-12" } });
     expect(build(lead(), "TAKIPTE", { nextCall: "" })).toEqual({ ok: true, patch: { status: "TAKIPTE" } });
     expect(build(lead(), "TAKIPTE", { nextCall: "2026-10-12" })).toEqual({ ok: true, patch: { status: "TAKIPTE", nextFollowUpAt: "2026-10-12" } });
   });
@@ -113,7 +118,7 @@ describe("buildUndoPatch", () => {
     const prev = lead({ status: "TEKLIF_VERILDI", nextFollowUpAt: "2026-10-08", offerAmount: 5000 });
     expect(buildUndoPatch(prev, { status: "ARANACAK" }, true)).toEqual({ status: "TEKLIF_VERILDI", nextFollowUpAt: "2026-10-08" });
     expect(buildUndoPatch(lead({ status: "TAKIPTE" }), { status: "ARANACAK" }, true)).toEqual({ status: "TAKIPTE", nextFollowUpAt: null });
-    expect(buildUndoPatch(lead({ status: "ULASILAMADI" }), { status: "ARANACAK" }, true)).toEqual({ status: "ULASILAMADI" });
+    expect(buildUndoPatch(lead({ status: "RANDEVU_PLANLANDI" }), { status: "ARANACAK" }, true)).toEqual({ status: "RANDEVU_PLANLANDI" });
   });
 
   it("restores the loss reason and detail when leaving 'Satış olmadı'", () => {
@@ -136,10 +141,10 @@ describe("buildUndoPatch", () => {
   });
 
   it("restores amounts only when the forward write changed them and only with financial access", () => {
-    const prev = lead({ offerAmount: null, saleAmount: 100 });
-    expect(buildUndoPatch(prev, { status: "TEKLIF_VERILDI", offerAmount: 0 }, true)).toEqual({ status: "ARANACAK", offerAmount: null });
-    expect(buildUndoPatch(prev, { status: "SATIS_OLDU", saleAmount: 50 }, true)).toEqual({ status: "ARANACAK", saleAmount: 100 });
-    expect(buildUndoPatch(prev, { status: "SATIS_OLDU", saleAmount: 50 }, false)).toEqual({ status: "ARANACAK" });
+    const prev = lead({ status: "RANDEVU_PLANLANDI", offerAmount: null, saleAmount: 100 });
+    expect(buildUndoPatch(prev, { status: "TEKLIF_VERILDI", offerAmount: 0 }, true)).toEqual({ status: "RANDEVU_PLANLANDI", offerAmount: null });
+    expect(buildUndoPatch(prev, { status: "SATIS_OLDU", saleAmount: 50 }, true)).toEqual({ status: "RANDEVU_PLANLANDI", saleAmount: 100 });
+    expect(buildUndoPatch(prev, { status: "SATIS_OLDU", saleAmount: 50 }, false)).toEqual({ status: "RANDEVU_PLANLANDI" });
   });
 
   it("no previous status → no undo", () => {

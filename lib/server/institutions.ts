@@ -283,7 +283,11 @@ function enrollParams(
 export async function createDemoInstitution(
   input: NewDemoInput,
   staff: StaffContext,
-  options: { afterEnroll?: (institutionId: string) => Promise<void> } = {}
+  options: {
+    afterEnroll?: (institutionId: string) => Promise<void>;
+    /** İşlem kaydı eylemi: satışla açılan hesapta PAID_ACCOUNT_CREATED (crm_record_lead_sale ücretliye geçirir). */
+    auditAction?: "DEMO_CREATED" | "PAID_ACCOUNT_CREATED";
+  } = {}
 ): Promise<DemoCredentials> {
   const contact = toContact(input);
   const name = input.institutionName.trim().replace(/\s+/g, " ");
@@ -323,7 +327,7 @@ export async function createDemoInstitution(
 
     const { data: crm } = await crmDb.from("crm_institutions").select("demo_ends_at").eq("institution_id", institutionId).maybeSingle();
     await recordAudit(staff, {
-      action: "DEMO_CREATED",
+      action: options.auditAction ?? "DEMO_CREATED",
       entityType: "institution",
       entityId: institutionId,
       entityLabel: name,

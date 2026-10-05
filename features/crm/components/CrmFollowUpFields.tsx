@@ -16,7 +16,7 @@ const TEXTAREA_CLASS =
   "flex min-h-[64px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y";
 
 /**
- * Madde 4 — sonraki arama tarihi ve (Satış olmadı için) kayıp nedeni. Teklif verildi / Takipte /
+ * Madde 4 — sonraki arama tarihi ve (Satış olmadı için) kayıp nedeni. Aranacak / Ulaşılamadı / Teklif verildi / Takipte /
  * Satış olmadı statülerinde ekleme ve düzenleme formlarında gösterilir. Değerler crm_leads kolonlarına
  * yazılır (DeepSport'taki not yedeği yok).
  */

@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, MapPin, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -165,14 +165,14 @@ export function AppointmentDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t(appointment ? "editTitle" : "addTitle")}</DialogTitle>
-          <DialogDescription>{getLeadDisplayName(lead)}</DialogDescription>
-        </DialogHeader>
+    <SidePanel open onOpenChange={(o) => !o && !pending && onClose()}>
+      <SidePanelContent size="md">
+        <SidePanelHeader>
+          <SidePanelTitle>{t(appointment ? "editTitle" : "addTitle")}</SidePanelTitle>
+          <SidePanelDescription>{getLeadDisplayName(lead)}</SidePanelDescription>
+        </SidePanelHeader>
         <AppointmentForm idPrefix="appt" value={draft} onChange={setDraft} error={error} disabled={pending} />
-        <DialogFooter>
+        <SidePanelFooter>
           <Button variant="outline" onClick={onClose} disabled={pending}>
             {tCommon("cancel")}
           </Button>
@@ -180,9 +180,9 @@ export function AppointmentDialog({
             {pending && <Loader2 className="animate-spin" />}
             {t(appointment ? "reschedule" : "add")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SidePanelFooter>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 

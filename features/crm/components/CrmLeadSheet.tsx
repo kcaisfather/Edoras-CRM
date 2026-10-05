@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { SIDE_PANEL_SURFACE } from "@/components/ui/side-panel";
 import { Button } from "@/components/ui/button";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { formatCrmDate, getLeadTitle } from "@/lib/domain/crm/utils";
@@ -88,7 +90,7 @@ function CrmLeadSheetBody({ lead: leadProp, onOpenChange, actions = {}, onDelete
   return (
     <>
       <Sheet open onOpenChange={(next) => (next ? undefined : requestClose())}>
-        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+        <SheetContent className={cn("flex flex-col gap-0 overflow-hidden p-0 sm:max-w-xl", SIDE_PANEL_SURFACE)}>
           <div className="flex-1 overflow-y-auto">
             <SheetHeader className="space-y-1 border-b border-border px-5 pb-3 pr-12 pt-5 text-left">
               <SheetTitle className="flex flex-wrap items-center gap-2 text-lg leading-tight">

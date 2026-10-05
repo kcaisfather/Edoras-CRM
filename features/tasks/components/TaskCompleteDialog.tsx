@@ -12,6 +12,7 @@ import { CrmFollowUpFields } from "@/features/crm";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { isIsoDate, todayIso } from "@/lib/domain/institutions/rules";
 import { CRM_STATUSES, isLostReason, type CrmStatus } from "@/lib/domain/crm/types";
+import { requiredAmountField } from "@/lib/domain/crm/sale";
 import { getLeadTitle } from "@/lib/domain/crm/utils";
 import { RESULT_NOTE_MAX, type CompleteTaskInput } from "@/lib/domain/tasks/schemas";
 import { TASK_OUTCOMES, type TaskOutcome } from "@/lib/domain/tasks/types";
@@ -168,7 +169,9 @@ export function TaskCompleteDialog({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__keep__">{t("keepStatus", { status: currentStatus ? tStatus(currentStatus) : "-" })}</SelectItem>
-                      {CRM_STATUSES.filter((s) => s !== currentStatus).map((s) => (
+                      {/* Teklif verildi (tutar zorunlu) ve Satış oldu (tutar + fatura bilgisi + hesap) aday satırındaki
+                          satış aşaması menüsünden kaydedilir: lib/domain/crm/sale.ts. */}
+                      {CRM_STATUSES.filter((s) => s !== currentStatus && !requiredAmountField(s)).map((s) => (
                         <SelectItem key={s} value={s}>
                           {tStatus(s)}
                         </SelectItem>

@@ -145,7 +145,17 @@ export function CrmTable({
                 </TableCell>
                 {money && (
                   <TableCell className="text-right text-sm tabular-nums">
-                    {lead.saleAmount ? <Money value={lead.saleAmount} /> : <span className="text-muted-foreground">—</span>}
+                    {/* Satış yoksa teklif tutarı (soluk, "teklif" etiketiyle) — teklif aşamasında tutar listede görünsün. */}
+                    {lead.saleAmount ? (
+                      <Money value={lead.saleAmount} />
+                    ) : lead.offerAmount ? (
+                      <span className="inline-flex items-baseline gap-1 text-muted-foreground" title={t("table.offerTitle")}>
+                        <Money value={lead.offerAmount} />
+                        <span className="text-[11px]">{t("table.offerTag")}</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 )}
                 {money && (

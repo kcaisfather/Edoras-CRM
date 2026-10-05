@@ -73,7 +73,7 @@ export function filterLeadsClient(leads: CrmLead[], f: ClientLeadFilter, now = n
     if (f.tab === "balance" && !(leadBalance(lead) > 0)) return false;
     if (q) {
       const hay = foldTr(
-        [lead.organizationName, lead.contactFirstName, lead.contactLastName, lead.contactEmail, lead.institution?.name]
+        [lead.organizationName, lead.contactFirstName, lead.contactLastName, lead.contactEmail, lead.whatsappUsername, lead.institution?.name]
           .filter(Boolean)
           .join(" ")
       );

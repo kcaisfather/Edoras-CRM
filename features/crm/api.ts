@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api/client";
 import type { CollectionRecord } from "@/lib/domain/crm/collections";
 import type { LeadBatchInput, LeadBatchResult, LeadCreateInput, LeadMergeInput, LeadPatchInput } from "@/lib/domain/crm/schemas";
+import type { LeadSaleInput, LeadSaleResult } from "@/lib/domain/crm/sale";
 import type { CrmLeadDto } from "@/lib/domain/crm/types";
 import type { NewDemoInput, PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
@@ -22,6 +23,9 @@ export const crmApi = {
   unlink: (id: string) => apiRequest<CrmLeadDto>(`${base(id)}/link`, { method: "DELETE" }),
   openDemo: (id: string, input: NewDemoInput) =>
     apiRequest<DemoCredentials>(`${base(id)}/demo`, { method: "POST", body: input }),
+  /** Satış: tutar + fatura bilgisi + hesap tek adımda (lib/domain/crm/sale.ts). */
+  recordSale: (id: string, input: LeadSaleInput) =>
+    apiRequest<LeadSaleResult>(`${base(id)}/sale`, { method: "POST", body: input }),
   collections: (id: string, signal?: AbortSignal) => apiRequest<CollectionRecord[]>(`${base(id)}/collections`, { signal }),
   addCollection: (id: string, input: PaymentInput) =>
     apiRequest<{ ok: true }>(`${base(id)}/collections`, { method: "POST", body: input }),

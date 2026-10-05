@@ -8,6 +8,7 @@
 import { followUpSuggestDays, type RuleConfig } from "@/lib/domain/tasks/rules";
 import { parseAmount } from "@/lib/utils/money";
 import { planLossDetail } from "./loss-detail";
+import { positiveAmount } from "./sale";
 import { FOLLOW_UP_STATUSES, addDaysIso, applyStatusChange } from "./offer";
 import type { LeadPatchInput } from "./schemas";
 import { isLostReason, type CrmLead, type CrmLeadDto, type CrmStatus } from "./types";
@@ -39,7 +40,7 @@ export interface StatusChangeInput {
   saleAmount?: string;
 }
 
-export type StatusChangeError = "lostReasonRequired" | "amountInvalid";
+export type StatusChangeError = "lostReasonRequired" | "amountInvalid" | "offerAmountRequired";
 
 export type StatusChangeResult = { ok: true; patch: LeadPatchInput } | { ok: false; error: StatusChangeError };
 
@@ -71,15 +72,20 @@ export function buildStatusChange({
   }
   if (FOLLOW_UP_STATUSES.includes(target) && input.nextCall) patch.nextFollowUpAt = input.nextCall;
 
-  if (canSeeFinancials && (target === "TEKLIF_VERILDI" || target === "SATIS_OLDU")) {
-    const offer = target === "TEKLIF_VERILDI";
-    const text = (offer ? input.offerAmount : input.saleAmount) ?? "";
+  // Teklif verildi: teklif tutarı zorunlu (> 0) ve herkes girer — temsilci de (kurucu kararı, 2026-10-05; sunucu yalnız
+  // bu geçişte temsilcinin teklif tutarını yazar). Satış oldu buradan yazılmaz: satış penceresi (lib/domain/crm/sale.ts).
+  if (target === "TEKLIF_VERILDI") {
+    const text = input.offerAmount ?? "";
     if (text.trim() && parseAmount(text) === null) return { ok: false, error: "amountInvalid" };
-    const value = amountForSave(text, offer ? lead.offerAmount : lead.saleAmount, true);
-    if (value !== undefined) {
-      if (offer) patch.offerAmount = value;
-      else patch.saleAmount = value;
-    }
+    const value = positiveAmount(text) ?? (canSeeFinancials && !text.trim() ? positiveAmount(String(lead.offerAmount ?? "")) : null);
+    if (value === null) return { ok: false, error: "offerAmountRequired" };
+    patch.offerAmount = value;
+  }
+  if (canSeeFinancials && target === "SATIS_OLDU") {
+    const text = input.saleAmount ?? "";
+    if (text.trim() && parseAmount(text) === null) return { ok: false, error: "amountInvalid" };
+    const value = amountForSave(text, lead.saleAmount, true);
+    if (value !== undefined) patch.saleAmount = value;
   }
   return { ok: true, patch };
 }

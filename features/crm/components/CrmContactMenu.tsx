@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Mail, MessageCircle, Phone, PhoneOff } from "lucide-react";
+import { AtSign, Mail, MessageCircle, Phone, PhoneOff } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,6 +37,8 @@ export interface ContactTarget {
   leadId: string | null;
   phone?: string | null;
   email?: string | null;
+  /** WhatsApp kullanıcı adı ("@" olmadan); menüde kopyalanır. */
+  whatsappUsername?: string | null;
   name?: string | null;
   organization?: string | null;
   /** Demo ya da lisans bitişi (biçimli). */
@@ -56,6 +59,7 @@ export function contactTargetFor(lead: CrmLead, displayName: string, withBalance
     leadId: lead.id,
     phone: lead.contactPhone,
     email: lead.contactEmail,
+    whatsappUsername: lead.whatsappUsername,
     name: lead.contactFirstName || displayName,
     organization: lead.organizationName ?? inst?.name ?? null,
     endDate: end ? formatCrmDate(end) : null,
@@ -142,6 +146,20 @@ export function CrmContactMenuItems({
         </DropdownMenuItem>
       )}
       <DropdownMenuSeparator />
+      {target.whatsappUsername && (
+        <DropdownMenuItem
+          onSelect={() => {
+            const handle = `@${target.whatsappUsername}`;
+            navigator.clipboard?.writeText(handle).then(
+              () => toast.success(t("whatsappCopied", { handle })),
+              () => toast.error(t("copyFailed"))
+            );
+          }}
+        >
+          <AtSign />
+          {t("whatsappUsername", { handle: `@${target.whatsappUsername}` })}
+        </DropdownMenuItem>
+      )}
       <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{t("whatsapp")}</DropdownMenuLabel>
       {shownTemplates.map((tpl) => (
         <DropdownMenuItem

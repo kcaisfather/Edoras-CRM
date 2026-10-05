@@ -52,8 +52,8 @@ describe("applyStatusChange", () => {
       next_follow_up_at: "2026-12-25",
       lost_reason: "BUDGET_NOT_APPROVED",
     });
-    expect(applyStatusChange({ status: "OLUMSUZ" }, { status: "ARANACAK", nextDate: "2026-12-25", lostReason: "BUDGET_NOT_APPROVED" }, today)).toEqual({
-      status: "ARANACAK",
+    expect(applyStatusChange({ status: "OLUMSUZ" }, { status: "DEMO_TANIMLANDI", nextDate: "2026-12-25", lostReason: "BUDGET_NOT_APPROVED" }, today)).toEqual({
+      status: "DEMO_TANIMLANDI",
       next_follow_up_at: null,
       lost_reason: null,
       sold_at: null,

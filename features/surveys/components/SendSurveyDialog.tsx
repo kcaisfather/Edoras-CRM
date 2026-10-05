@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { QueryErrorState } from "@/components/query-error-state";
 import { useAllCrmLeads } from "@/features/crm";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
@@ -112,12 +112,12 @@ export function SendSurveyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
-        </DialogHeader>
+    <SidePanel open={open} onOpenChange={close}>
+      <SidePanelContent size="2xl">
+        <SidePanelHeader>
+          <SidePanelTitle>{t("title")}</SidePanelTitle>
+          <SidePanelDescription>{t("description")}</SidePanelDescription>
+        </SidePanelHeader>
 
         {outcome ? (
           <div className="space-y-3">
@@ -188,7 +188,7 @@ export function SendSurveyDialog({
           </div>
         )}
 
-        <DialogFooter>
+        <SidePanelFooter>
           {running ? (
             <Button variant="outline" onClick={() => (cancelRef.current = true)}>
               {t("stop")}
@@ -204,8 +204,8 @@ export function SendSurveyDialog({
               {channel === "EMAIL" ? t("confirmEmail", { count: eligible.length }) : t("confirmLinks", { count: eligible.length })}
             </Button>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SidePanelFooter>
+      </SidePanelContent>
+    </SidePanel>
   );
 }

@@ -107,6 +107,7 @@
     },
     "actions": {
       "DEMO_CREATED": "Demo kurum açıldı",
+      "PAID_ACCOUNT_CREATED": "Satışla hesap açıldı",
       "INSTITUTION_ENROLLED": "Kurum CRM'e eklendi",
       "CONVERTED_TO_PAID": "Ücretli hesaba geçirildi",
       "LICENSE_RENEWED": "Lisans yenilendi",
@@ -127,6 +128,7 @@
       "LEAD_STATUS_CHANGED": "Adayın durumu değişti",
       "LEAD_DELETED": "Aday silindi",
       "LEAD_LINKED": "Aday kuruma bağlandı",
+      "LEAD_SALE_RECORDED": "Satış kaydedildi",
       "LEAD_UNLINKED": "Adayın kurum bağı kaldırıldı",
       "NOTE_CREATED": "Not eklendi",
       "NOTE_UPDATED": "Not düzenlendi",

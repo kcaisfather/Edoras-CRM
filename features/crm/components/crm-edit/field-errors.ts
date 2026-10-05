@@ -9,6 +9,7 @@ const API_TO_FORM: Record<string, keyof LeadFormValues> = {
   contactLastName: "lastName",
   contactEmail: "email",
   contactPhone: "phone",
+  whatsappUsername: "whatsapp",
   city: "city",
   district: "district",
   country: "country",

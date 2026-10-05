@@ -8,7 +8,7 @@ import { Link } from "@/lib/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -71,11 +71,11 @@ export function InvoiceDialog({
   const { canSeeFinancials } = usePermissions();
   if (!open || !target || !canSeeFinancials) return null;
   return (
-    <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+    <SidePanel open onOpenChange={onOpenChange}>
+      <SidePanelContent size="xl">
         <InvoiceBody target={target} onClose={() => onOpenChange(false)} />
-      </DialogContent>
-    </Dialog>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 
@@ -126,10 +126,10 @@ function InvoiceBody({ target, onClose }: { target: InvoiceTarget; onClose: () =
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{t("title")}</DialogTitle>
-        <DialogDescription>{institution?.name ?? "…"}</DialogDescription>
-      </DialogHeader>
+      <SidePanelHeader>
+        <SidePanelTitle>{t("title")}</SidePanelTitle>
+        <SidePanelDescription>{institution?.name ?? "…"}</SidePanelDescription>
+      </SidePanelHeader>
 
       {query.isLoading || options.isLoading ? (
         <div className="space-y-3">
@@ -428,14 +428,14 @@ function InvoiceForm({
         ) : null}
       </div>
 
-      <DialogFooter>
+      <SidePanelFooter>
         <Button variant="outline" onClick={onClose}>
           {tCommon("cancel")}
         </Button>
         <Button onClick={() => setStep("confirm")} disabled={problems.length > 0}>
           {t("next")}
         </Button>
-      </DialogFooter>
+      </SidePanelFooter>
     </>
   );
 }
@@ -486,7 +486,7 @@ function ConfirmStep({
         </dl>
         <p className="text-xs text-muted-foreground">{t("confirmNote")}</p>
       </div>
-      <DialogFooter>
+      <SidePanelFooter>
         <Button variant="outline" onClick={onBack} disabled={pending}>
           {tCommon("back")}
         </Button>
@@ -494,7 +494,7 @@ function ConfirmStep({
           {pending ? <Loader2 className="animate-spin" /> : null}
           {mode === "EMAIL" ? t("confirmSend") : mode === "MANUAL" ? t("confirmSave") : t("confirmIssue")}
         </Button>
-      </DialogFooter>
+      </SidePanelFooter>
     </>
   );
 }

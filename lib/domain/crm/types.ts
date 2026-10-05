@@ -75,6 +75,8 @@ export interface CrmLeadDto {
   contactEmail: string | null;
   /** E.164 (+905XXXXXXXXX). */
   contactPhone: string | null;
+  /** WhatsApp kullanıcı adı, "@" olmadan. */
+  whatsappUsername: string | null;
   city: string | null;
   district: string | null;
   country: string | null;

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { normalizeTrPhone } from "@/lib/utils/phone";
 import { isIsoDate } from "@/lib/domain/institutions/rules";
 import { COMPETITOR_NAME_MAX, LOST_NOTE_MAX } from "./loss-detail";
+import { WHATSAPP_USERNAME_MESSAGE, isWhatsAppUsername, normalizeWhatsAppUsername } from "./whatsapp";
 import { CRM_STATUSES, LEAD_SOURCES, LOST_REASONS } from "./types";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -36,6 +37,10 @@ const email = z
   .trim()
   .max(254, MSG.tooLong)
   .refine((v) => v === "" || EMAIL.test(v), MSG.emailInvalid);
+const whatsappUsername = z
+  .string()
+  .trim()
+  .refine((v) => v === "" || isWhatsAppUsername(v), WHATSAPP_USERNAME_MESSAGE);
 const isoDateOrNull = z
   .string()
   .nullable()
@@ -54,6 +59,8 @@ const contactShape = {
   contactLastName: text(100),
   contactEmail: email,
   contactPhone: phone,
+  /** WhatsApp kullanıcı adı ("@" ile ya da olmadan; "@"siz küçük harf saklanır). */
+  whatsappUsername,
   city: text(100),
   district: text(100),
   country: text(100),
@@ -84,6 +91,7 @@ export const leadCreateSchema = z
     contactLastName: contactShape.contactLastName.default(""),
     contactEmail: contactShape.contactEmail.default(""),
     contactPhone: contactShape.contactPhone.default(""),
+    whatsappUsername: contactShape.whatsappUsername.default(""),
     city: contactShape.city.default(""),
     district: contactShape.district.default(""),
     country: contactShape.country.default(""),
@@ -133,7 +141,7 @@ export type NoteInput = z.input<typeof noteSchema>;
 
 type ContactValues = Partial<Record<keyof typeof contactShape, string>>;
 
-/** İletişim alanları → crm_leads kolonları: boş → null, telefon E.164, e-posta küçük harf. Verilmeyen alan yok. */
+/** İletişim alanları → crm_leads kolonları: boş → null, telefon E.164, e-posta ve WhatsApp kullanıcı adı küçük harf. Verilmeyen alan yok. */
 export function toContactColumns(v: ContactValues): Record<string, string | null> {
   const out: Record<string, string | null> = {};
   const set = (column: string, value: string | undefined, map: (s: string) => string | null = (s) => s) => {
@@ -146,6 +154,7 @@ export function toContactColumns(v: ContactValues): Record<string, string | null
   set("contact_last_name", v.contactLastName);
   set("contact_email", v.contactEmail, (s) => s.toLowerCase());
   set("contact_phone", v.contactPhone, (s) => normalizeTrPhone(s));
+  set("whatsapp_username", v.whatsappUsername, (s) => normalizeWhatsAppUsername(s) || null);
   set("city", v.city);
   set("district", v.district);
   set("country", v.country);

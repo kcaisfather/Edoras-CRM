@@ -8,7 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Link } from "@/lib/navigation";
 import { usePermissions } from "@/features/auth";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
@@ -41,12 +41,12 @@ export function CrmCollectionDialog({
   const { canSeeFinancials } = usePermissions();
   if (!lead || !canSeeFinancials) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <SidePanel open={open} onOpenChange={onOpenChange}>
+      <SidePanelContent size="md">
         {/* key: başka aday ya da yeniden açılış → form varsayılanlara döner */}
         {open && <CollectionForm key={lead.id} lead={lead} onClose={() => onOpenChange(false)} />}
-      </DialogContent>
-    </Dialog>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 
@@ -89,10 +89,10 @@ function CollectionForm({ lead, onClose }: { lead: CrmLead; onClose: () => void 
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{t("title")}</DialogTitle>
-        <DialogDescription>{title}</DialogDescription>
-      </DialogHeader>
+      <SidePanelHeader>
+        <SidePanelTitle>{t("title")}</SidePanelTitle>
+        <SidePanelDescription>{title}</SidePanelDescription>
+      </SidePanelHeader>
 
       <dl className="grid grid-cols-3 gap-2 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
         <div>
@@ -199,7 +199,7 @@ function CollectionForm({ lead, onClose }: { lead: CrmLead; onClose: () => void 
         </>
       )}
 
-      <DialogFooter>
+      <SidePanelFooter>
         <Button variant="outline" onClick={onClose} disabled={add.isPending}>
           {t("cancel")}
         </Button>
@@ -209,7 +209,7 @@ function CollectionForm({ lead, onClose }: { lead: CrmLead; onClose: () => void 
             {t("confirm", { amount: formatCurrency(amount) })}
           </Button>
         )}
-      </DialogFooter>
+      </SidePanelFooter>
     </>
   );
 }

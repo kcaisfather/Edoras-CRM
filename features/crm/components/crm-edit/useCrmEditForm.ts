@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { usePermissions } from "@/features/auth";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
-import { formToPatch, leadFormSchema, leadToForm, type LeadFormValues } from "@/lib/domain/crm/form";
+import { formToPatch, leadFormRuleErrors, leadFormSchema, leadToForm, type LeadFormValues } from "@/lib/domain/crm/form";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { useUpdateCrmLead } from "../../mutations";
 import { applyLeadFieldErrors } from "./field-errors";
@@ -42,6 +42,11 @@ export function useCrmEditForm({ lead, onSold }: { lead: CrmLead; onSold?: (lead
 
   const submit = form.handleSubmit((values) => {
     if (update.isPending) return;
+    // Teklif / satış tutarı zorunlu (lib/domain/crm/form.ts → leadFormRuleErrors; sunucu ve veritabanı da zorlar).
+    // Statü bu formdan değişmez (aday panelinde statü seçicisi ayrı), bu yüzden yalnız tutar hataları olur.
+    const { status: _status, ...ruleErrors } = leadFormRuleErrors(values, { financial: canSeeFinancials, previousStatus: lead.status ?? null });
+    for (const [field, message] of Object.entries(ruleErrors)) form.setError(field as keyof LeadFormValues, { type: "rule", message });
+    if (Object.keys(ruleErrors).length) return;
     update.mutate(
       { id: lead.id, data: formToPatch(values, lead, canSeeFinancials) },
       {

@@ -96,6 +96,9 @@ export function CrmLeadFields({
         <LeadField id={id("email")} label={t("email")} error={errors.email?.message}>
           <Input type="email" id={id("email")} {...register("email")} placeholder="Ör. ad@kurum.com" autoComplete="email" />
         </LeadField>
+        <LeadField id={id("whatsapp")} label={t("whatsapp")} error={errors.whatsapp?.message}>
+          <Input id={id("whatsapp")} {...register("whatsapp")} placeholder="@kullaniciadi" autoComplete="off" autoCapitalize="none" spellCheck={false} />
+        </LeadField>
         {!hideStatus && (
           <LeadField id={id("status")} label={t("status")}>
             <Controller

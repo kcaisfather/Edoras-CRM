@@ -45,7 +45,7 @@ const MSG = {
 
 // --- Alanlar ----------------------------------------------------------------------------------
 
-const contactShape = {
+export const contactShape = {
   contactName: z.string().trim().min(1, MSG.contactNameRequired).refine(isFullName, MSG.contactNameFull),
   contactPhone: z
     .string()
@@ -55,14 +55,14 @@ const contactShape = {
   contactEmail: z.string().trim().min(1, MSG.emailRequired).refine((v) => EMAIL.test(v), MSG.emailInvalid),
 };
 
-const billingShape = {
+export const billingShape = {
   address: z.string().trim(),
   idType: z.enum(["TC", "VKN"]),
   idNumber: z.string().trim(),
 };
 
 /** Fatura profili alanları (adres + kimlik `billingShape`'te). Kurumsal = Vergi No, bireysel = TC Kimlik No. */
-const profileShape = {
+export const profileShape = {
   legalName: z.string().trim().max(200),
   taxOffice: z.string().trim().max(100),
   city: z.string().trim().max(100),
@@ -84,14 +84,14 @@ const paymentShape = {
 
 type Ctx = z.RefinementCtx;
 
-function checkBilling(v: { address: string; idType: "TC" | "VKN"; idNumber: string }, ctx: Ctx) {
+export function checkBilling(v: { address: string; idType: "TC" | "VKN"; idNumber: string }, ctx: Ctx) {
   if (v.address.length < ADDRESS_MIN_LENGTH) ctx.addIssue({ code: "custom", path: ["address"], message: MSG.address });
   const digits = digitsOnly(v.idNumber);
   if (v.idType === "TC" && !isValidTckn(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.tcInvalid });
   if (v.idType === "VKN" && !isValidTaxNumber(digits)) ctx.addIssue({ code: "custom", path: ["idNumber"], message: MSG.vknInvalid });
 }
 
-function checkProfile(
+export function checkProfile(
   v: { idType: "TC" | "VKN"; legalName: string; taxOffice: string; city: string; district: string; postalCode: string; email: string },
   ctx: Ctx
 ) {

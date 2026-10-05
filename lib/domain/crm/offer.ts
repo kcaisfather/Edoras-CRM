@@ -9,7 +9,8 @@
 import type { CrmLead, CrmStatus, LostReason } from "./types";
 
 /** Sonraki arama alanının gösterildiği statüler (düzenleme ve ekleme formları). */
-export const FOLLOW_UP_STATUSES: CrmStatus[] = ["TEKLIF_VERILDI", "TAKIPTE", "OLUMSUZ"];
+/** Aranacak / Ulaşılamadı da dahil: aday eklenirken ya da ulaşılamayınca "ne zaman aranacak" girilir. */
+export const FOLLOW_UP_STATUSES: CrmStatus[] = ["ARANACAK", "ULASILAMADI", "TEKLIF_VERILDI", "TAKIPTE", "OLUMSUZ"];
 
 
 export interface LeadFollowUp {

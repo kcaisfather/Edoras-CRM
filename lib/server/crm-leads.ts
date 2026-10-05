@@ -2,12 +2,22 @@ import "server-only";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
-import { todayIso } from "@/lib/domain/institutions/rules";
-import type { NewDemoInput, PaymentInput } from "@/lib/domain/institutions/schemas";
+import { licenseEndDate, todayIso } from "@/lib/domain/institutions/rules";
+import { toBillingProfile, type NewDemoInput, type PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials, PaymentMethod } from "@/lib/domain/institutions/types";
 import { sumByInstitution, type CollectionRecord } from "@/lib/domain/crm/collections";
 import { planLossDetail, type LossDetailColumns } from "@/lib/domain/crm/loss-detail";
 import { applyStatusChange } from "@/lib/domain/crm/offer";
+import {
+  MSG as SALE_MSG,
+  accountIssues,
+  positiveAmount,
+  toSaleAccount,
+  toSaleContact,
+  type LeadSaleInput,
+  type LeadSaleResult,
+  type SaleAccountMode,
+} from "@/lib/domain/crm/sale";
 import {
   CONTACT_FIELDS,
   toContactColumns,
@@ -21,7 +31,7 @@ import type { CrmLeadDto, CrmStatus, LeadSource, LostReason } from "@/lib/domain
 import { COMPLAINT_PREFIX, PROGRAM_PREFIX, latestDissatisfaction, programTags } from "@/lib/domain/crm-notes/utils";
 import { recordAudit } from "./audit";
 import { fetchAll, getEdorasInstitution } from "./edoras";
-import { createDemoInstitution, recordPayment } from "./institutions";
+import { createDemoInstitution, enrollInstitution, recordPayment } from "./institutions";
 
 /**
  * CRM adayları (crm_leads) — yalnız CRM projesi; Edoras'a yalnız kurum doğrulaması ve demo açma
@@ -34,7 +44,7 @@ import { createDemoInstitution, recordPayment } from "./institutions";
  */
 
 const LEAD_COLUMNS =
-  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, city, district, country, status, source, offer_amount, sale_amount, lost_reason, lost_note, competitor, recall_at, next_follow_up_at, offer_sent_at, sold_at, institution_id, offer_by, sold_by, owner_id, created_by, updated_by, created_at, updated_at";
+  "id, organization_name, contact_first_name, contact_last_name, contact_email, contact_phone, whatsapp_username, city, district, country, status, source, offer_amount, sale_amount, lost_reason, lost_note, competitor, recall_at, next_follow_up_at, offer_sent_at, sold_at, institution_id, offer_by, sold_by, owner_id, created_by, updated_by, created_at, updated_at";
 
 interface LeadRow {
   id: string;
@@ -43,6 +53,7 @@ interface LeadRow {
   contact_last_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  whatsapp_username: string | null;
   city: string | null;
   district: string | null;
   country: string | null;
@@ -139,6 +150,7 @@ function toDto(row: LeadRow, ctx: DtoContext): CrmLeadDto {
     contactLastName: row.contact_last_name,
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
+    whatsappUsername: row.whatsapp_username,
     city: row.city,
     district: row.district,
     country: row.country,
@@ -226,6 +238,13 @@ async function leadDto(id: string, staff: StaffContext): Promise<CrmLeadDto> {
 export async function createLead(input: LeadCreateValues, staff: StaffContext): Promise<CrmLeadDto> {
   if (input.institutionId && !(await getEdorasInstitution(input.institutionId))) throw new HttpError(404, "NOT_FOUND");
   const financial = isFinancial(staff);
+  // Satış yalnız satış penceresinden (tutar + fatura bilgisi + hesap): yeni aday "Satış oldu" olarak açılamaz.
+  if (input.status === "SATIS_OLDU") throw new HttpError(409, "SALE_ACCOUNT_REQUIRED");
+  // Teklif verildi: teklif tutarı zorunlu; temsilci de girer (kurucu kararı, 2026-10-05) — diğer tutarlar EK-3.
+  const offerAmount = financial || input.status === "TEKLIF_VERILDI" ? (input.offerAmount ?? null) : null;
+  if (input.status === "TEKLIF_VERILDI" && !(offerAmount && offerAmount > 0)) {
+    throw new HttpError(400, "VALIDATION", { offerAmount: SALE_MSG.offerAmountRequired });
+  }
   const status = applyStatusChange({}, { status: input.status, nextDate: input.nextFollowUpAt, lostReason: input.lostReason }, todayIso());
   const loss = planLossDetail(NO_LOSS_DETAIL, input, input.status, status.lost_reason);
   const { data, error } = await getSupabaseAdminClient()
@@ -237,8 +256,8 @@ export async function createLead(input: LeadCreateValues, staff: StaffContext): 
       ...actorColumns(undefined, input.status, staff),
       source: input.source,
       institution_id: input.institutionId,
-      // EK-3: CRM_AGENT'ın gönderdiği tutarlar yok sayılır.
-      ...(financial ? { offer_amount: input.offerAmount ?? null, sale_amount: input.saleAmount ?? null } : {}),
+      // EK-3: CRM_AGENT'ın gönderdiği tutarlar yok sayılır (teklif statüsündeki teklif tutarı hariç).
+      ...(financial ? { offer_amount: offerAmount, sale_amount: input.saleAmount ?? null } : offerAmount ? { offer_amount: offerAmount } : {}),
       created_by: staff.userId,
       updated_by: staff.userId,
     })
@@ -288,6 +307,7 @@ const COLUMN_OF: Record<(typeof CONTACT_FIELDS)[number], keyof LeadRow> = {
   contactLastName: "contact_last_name",
   contactEmail: "contact_email",
   contactPhone: "contact_phone",
+  whatsappUsername: "whatsapp_username",
   city: "city",
   district: "district",
   country: "country",
@@ -347,13 +367,30 @@ async function patchLead(id: string, patch: LeadPatchValues, staff: StaffContext
   }
 
   const amounts: Record<string, number | null> = {};
-  if (financial) {
+  // Temsilci tutar göremez ve yazamaz (EK-3); tek istisna "Teklif verildi"ye geçerken girdiği teklif tutarı (kurucu
+  // kararı, 2026-10-05: teklif tutarı zorunlu, temsilci de girer).
+  const enteringOffer = finalStatus === "TEKLIF_VERILDI" && current.status !== "TEKLIF_VERILDI";
+  if (financial || enteringOffer) {
     if (patch.offerAmount !== undefined && patch.offerAmount !== toNumber(current.offer_amount)) {
       update.offer_amount = amounts.offerAmount = patch.offerAmount;
     }
+  }
+  if (financial) {
     if (patch.saleAmount !== undefined && patch.saleAmount !== toNumber(current.sale_amount)) {
       update.sale_amount = amounts.saleAmount = patch.saleAmount;
     }
+  }
+
+  // Teklif / satış tutarı zorunlu (lib/domain/crm/sale.ts; veritabanında crm_leads_sale_rules). Satışa geçişin hesap
+  // şartı (ücretli kurum + tam fatura profili) veritabanında: yoksa 409 SALE_ACCOUNT_REQUIRED → satış penceresi.
+  const finalOffer = "offer_amount" in update ? (update.offer_amount as number | null) : toNumber(current.offer_amount);
+  const finalSale = "sale_amount" in update ? (update.sale_amount as number | null) : toNumber(current.sale_amount);
+  if (finalStatus === "TEKLIF_VERILDI" && (enteringOffer || "offer_amount" in update) && !(finalOffer && finalOffer > 0)) {
+    throw new HttpError(400, "VALIDATION", { offerAmount: SALE_MSG.offerAmountRequired });
+  }
+  const enteringSale = finalStatus === "SATIS_OLDU" && current.status !== "SATIS_OLDU";
+  if (finalStatus === "SATIS_OLDU" && (enteringSale || "sale_amount" in update) && !(finalSale && finalSale > 0)) {
+    throw new HttpError(400, "VALIDATION", { saleAmount: SALE_MSG.saleAmountRequired });
   }
 
   if (Object.keys(update).length === 0) return;
@@ -521,6 +558,136 @@ export async function openLeadDemo(id: string, input: NewDemoInput, staff: Staff
     });
   }
   return credentials;
+}
+
+// --- Satış (tutar + fatura bilgisi + hesap tek adımda) ------------------------------------------------
+
+type SaleRpcResult = { licenseId: string | null; converted: boolean };
+
+/**
+ * Satışı kaydeder (her CRM kullanıcısı; kurucu kararı 2026-10-05: "satış yapıldıysa fiyat ve firma bilgileri zorunlu,
+ * direkt hesabı açmalı"). Hesap yolu adayın gerçek durumundan seçilir (lib/domain/crm/sale.ts → SaleAccountMode):
+ * - NEW: Edoras'ta yeni kurum + kurum yöneticisi (demo açmayla aynı zincir, createDemoInstitution); CRM kaydından sonra
+ *   AYNI geri alma zincirinde crm_record_lead_sale ücretliye geçirir (lisans = satış tutarı, bugünden 1 yıl) ve adayı
+ *   bağlar. Herhangi bir adım patlarsa Edoras'ta açılanlar da silinir. Geçici şifre yalnız bu yanıtta döner.
+ * - ENROLL: bağlı kurumun CRM kaydı yok → önce DEMO olarak kayda alınır, sonra aynı RPC ücretliye geçirir; RPC patlarsa
+ *   kayıt geri silinir.
+ * - CONVERT (DEMO) / PAID (ücretli): yalnız RPC — fatura profili, (DEMO ise) ücretliye geçiş + lisans, aday "Satış oldu".
+ * Ücretli kurumda lisansa dokunulmaz (yenileme kurum sayfasından).
+ */
+export async function recordLeadSale(id: string, input: LeadSaleInput, staff: StaffContext): Promise<LeadSaleResult> {
+  const current = await requireLeadRow(id);
+  const amount = positiveAmount(input.saleAmount) as number;
+  const billing = toBillingProfile(input);
+  const db = getSupabaseAdminClient();
+  const requireAccount = (mode: SaleAccountMode) => {
+    const issues = accountIssues(input, mode);
+    if (issues.length) throw new HttpError(400, "VALIDATION", Object.fromEntries(issues.map((i) => [i.path[0], i.message])));
+  };
+  const record = async (institutionId: string): Promise<SaleRpcResult> => {
+    const { data, error } = await db.rpc("crm_record_lead_sale", {
+      p_lead_id: id,
+      p_institution_id: institutionId,
+      p_sale_amount: amount,
+      p_address: billing.address,
+      p_tc_no: billing.tcNo,
+      p_tax_no: billing.taxNo,
+      p_billing_type: billing.billingType,
+      p_legal_name: billing.legalName,
+      p_tax_office: billing.taxOffice,
+      p_city: billing.city,
+      p_district: billing.district,
+      p_postal_code: billing.postalCode,
+      p_email: billing.email,
+      p_organization_name: input.institutionName.trim() || null,
+      p_actor: staff.userId,
+    });
+    if (error) throw dbError(error);
+    return data as SaleRpcResult;
+  };
+
+  let mode: SaleAccountMode;
+  let result: SaleRpcResult | null = null;
+  let credentials: DemoCredentials | null = null;
+  if (!current.institution_id) {
+    mode = "NEW";
+    requireAccount(mode);
+    const created = await createDemoInstitution(toSaleAccount(input), staff, {
+      auditAction: "PAID_ACCOUNT_CREATED",
+      afterEnroll: async (institutionId) => {
+        result = await record(institutionId);
+      },
+    });
+    // Satışla açılan hesap ücretlidir: gösterilen bitiş lisansın bitişi.
+    credentials = { ...created, demoEndsAt: licenseEndDate(todayIso()) };
+  } else {
+    const institutionId = current.institution_id;
+    const { data: crm, error } = await db.from("crm_institutions").select("status").eq("institution_id", institutionId).maybeSingle();
+    if (error) throw dbError(error);
+    if (!crm) {
+      mode = "ENROLL";
+      requireAccount(mode);
+      await enrollInstitution(
+        institutionId,
+        {
+          status: "DEMO",
+          ...toSaleContact(input),
+          demoStartsOn: todayIso(),
+          address: "",
+          idType: "TC",
+          idNumber: "",
+          licenseStartsOn: "",
+          licensePrice: "",
+        },
+        staff
+      );
+      try {
+        result = await record(institutionId);
+      } catch (err) {
+        // Yeni kaydın lisansı / ödemesi yok: satış yazılamadıysa kayıt da geri alınır (yarım iş kalmaz).
+        const { error: undoError } = await db.from("crm_institutions").delete().eq("institution_id", institutionId);
+        if (undoError) console.error("[api] satış: CRM kaydı geri alınamadı, elle temizlenmeli");
+        throw err;
+      }
+    } else {
+      mode = crm.status === "DEMO" ? "CONVERT" : "PAID";
+      result = await record(institutionId);
+    }
+  }
+
+  const sale = result as SaleRpcResult | null;
+  const institutionId = credentials?.institutionId ?? (current.institution_id as string);
+  const label = current.organization_name ?? (input.institutionName.trim() || null);
+  if (mode === "NEW") {
+    await recordAudit(staff, { action: "LEAD_LINKED", entityType: "lead", entityId: id, entityLabel: label, details: { institutionId, via: "sale" } });
+  }
+  if (sale?.converted && mode !== "NEW") {
+    await recordAudit(staff, {
+      action: "CONVERTED_TO_PAID",
+      entityType: "institution",
+      entityId: institutionId,
+      details: { licenseStartsOn: todayIso(), price: amount, firstPayment: null, via: "sale" },
+    });
+  }
+  // Değerler (adres, TC/VKN, unvan, e-posta) kayda yazılmaz; yalnız fatura türü.
+  await recordAudit(staff, { action: "BILLING_UPDATED", entityType: "institution", entityId: institutionId, details: { billingType: billing.billingType } });
+  if (current.status !== "SATIS_OLDU") {
+    await recordAudit(staff, {
+      action: "LEAD_STATUS_CHANGED",
+      entityType: "lead",
+      entityId: id,
+      entityLabel: label,
+      details: { from: current.status, to: "SATIS_OLDU", nextFollowUpAt: null, lostReason: null },
+    });
+  }
+  await recordAudit(staff, {
+    action: "LEAD_SALE_RECORDED",
+    entityType: "lead",
+    entityId: id,
+    entityLabel: label,
+    details: { saleAmount: amount, institutionId, mode, licenseId: sale?.licenseId ?? null },
+  });
+  return { lead: await leadDto(id, staff), credentials, mode };
 }
 
 // --- Tahsilat (bağlı kurumun ödemeleri) ------------------------------------------------------------

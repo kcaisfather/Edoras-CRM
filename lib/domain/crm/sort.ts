@@ -21,7 +21,8 @@ export const CRM_SORT_ACCESSORS: Record<CrmSortKey, (lead: CrmLead) => SortValue
   },
   /** Lead skoru; puanlanmayanlar (satış oldu / olumsuz) sıralamada sonda. */
   score: (l) => leadScore(l)?.score ?? null,
-  sale: (l) => l.saleAmount || null,
+  // Sütun satış yoksa teklif tutarını gösterir; sıralama da aynı değerle.
+  sale: (l) => l.saleAmount || l.offerAmount || null,
   collected: (l) => l.collectedAmount || null,
   balance: (l) => leadBalance(l) || null,
 };

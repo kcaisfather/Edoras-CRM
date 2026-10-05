@@ -34,6 +34,13 @@ const RAISED: Record<string, [number, ApiErrorCode]> = {
   CRM_BILLING_REQUIRED: [422, "BILLING_REQUIRED"],
   CRM_STATUS_INVALID: [400, "VALIDATION"],
   CRM_LAST_ADMIN: [409, "LAST_ADMIN"],
+  // 20261005170000_crm_lead_sale_rules
+  CRM_OFFER_AMOUNT_REQUIRED: [400, "OFFER_AMOUNT_REQUIRED"],
+  CRM_SALE_AMOUNT_REQUIRED: [400, "SALE_AMOUNT_REQUIRED"],
+  CRM_SALE_ACCOUNT_REQUIRED: [409, "SALE_ACCOUNT_REQUIRED"],
+  CRM_SALE_INVALID: [400, "VALIDATION"],
+  CRM_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_LEAD_ALREADY_LINKED: [409, "LEAD_ALREADY_LINKED"],
   // 20261005160000_crm_tickets (müşteri yolundaki hatalar da buradan: geçersiz bağlantı 404, sınır 429 — asla 401)
   CRM_TICKET_LINK_NOT_FOUND: [404, "NOT_FOUND"],
   CRM_TICKET_INVALID: [400, "VALIDATION"],
@@ -110,6 +117,7 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_leads_identity_check: [422, "LEAD_IDENTITY_REQUIRED"],
   crm_leads_contact_phone_check: [422, "CONTACT_INVALID"],
   crm_leads_contact_email_check: [422, "CONTACT_INVALID"],
+  crm_leads_whatsapp_username_check: [422, "CONTACT_INVALID"],
   crm_leads_status_check: [400, "VALIDATION"],
   crm_leads_source_check: [400, "VALIDATION"],
   crm_leads_offer_amount_check: [400, "VALIDATION"],
@@ -133,6 +141,13 @@ const CONSTRAINTS: Record<string, [number, ApiErrorCode]> = {
   crm_tasks_assigned_fields_check: [400, "VALIDATION"],
   crm_tasks_done_check: [400, "VALIDATION"],
   crm_tasks_note_check: [400, "VALIDATION"],
+  // 20261005170000_crm_lead_sale_rules
+  CRM_OFFER_AMOUNT_REQUIRED: [400, "OFFER_AMOUNT_REQUIRED"],
+  CRM_SALE_AMOUNT_REQUIRED: [400, "SALE_AMOUNT_REQUIRED"],
+  CRM_SALE_ACCOUNT_REQUIRED: [409, "SALE_ACCOUNT_REQUIRED"],
+  CRM_SALE_INVALID: [400, "VALIDATION"],
+  CRM_LEAD_NOT_FOUND: [404, "NOT_FOUND"],
+  CRM_LEAD_ALREADY_LINKED: [409, "LEAD_ALREADY_LINKED"],
   // 20261005160000_crm_tickets
   crm_tickets_institution_id_fkey: [404, "NOT_FOUND"],
   crm_tickets_status_check: [400, "VALIDATION"],

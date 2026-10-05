@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link2, Loader2, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,15 +37,15 @@ export function LinkInstitutionDialog({
   const t = useTranslations("crm.link");
   if (!lead) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] max-w-lg flex-col">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description", { name: getLeadDisplayName(lead) })}</DialogDescription>
-        </DialogHeader>
+    <SidePanel open={open} onOpenChange={onOpenChange}>
+      <SidePanelContent size="lg">
+        <SidePanelHeader>
+          <SidePanelTitle>{t("title")}</SidePanelTitle>
+          <SidePanelDescription>{t("description", { name: getLeadDisplayName(lead) })}</SidePanelDescription>
+        </SidePanelHeader>
         {open && <Picker key={lead.id} lead={lead} leads={leads} onDone={() => onOpenChange(false)} />}
-      </DialogContent>
-    </Dialog>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 

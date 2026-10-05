@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, SidePanelContent, SidePanelDescription, SidePanelFooter, SidePanelHeader, SidePanelTitle } from "@/components/ui/side-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,19 +52,19 @@ export interface CrmNoteModalProps {
 export function CrmNoteModal({ open, onOpenChange, lead, mode = "note" }: CrmNoteModalProps) {
   const t = useTranslations("crm.notes");
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-lg flex-col">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
+    <SidePanel open={open} onOpenChange={onOpenChange}>
+      <SidePanelContent size="lg">
+        <SidePanelHeader>
+          <SidePanelTitle>{t("title")}</SidePanelTitle>
+          <SidePanelDescription>
             {t("description")}
             {lead && <span className="mt-1 block font-medium text-foreground">{getLeadDisplayName(lead)}</span>}
-          </DialogDescription>
-        </DialogHeader>
+          </SidePanelDescription>
+        </SidePanelHeader>
         {/* key: her açılışta (başka aday / mod) form sıfırlanır */}
         {open && lead && <NoteBody key={`${lead.id}:${mode}`} lead={lead} initialMode={mode} onClose={() => onOpenChange(false)} />}
-      </DialogContent>
-    </Dialog>
+      </SidePanelContent>
+    </SidePanel>
   );
 }
 
@@ -256,7 +256,7 @@ function NoteBody({ lead, initialMode, onClose }: { lead: CrmLead; initialMode: 
             </p>
           )}
         </div>
-        <DialogFooter>
+        <SidePanelFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
             {tCommon("cancel")}
           </Button>
@@ -270,7 +270,7 @@ function NoteBody({ lead, initialMode, onClose }: { lead: CrmLead; initialMode: 
               t("submit")
             )}
           </Button>
-        </DialogFooter>
+        </SidePanelFooter>
       </form>
     </div>
   );

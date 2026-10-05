@@ -3,9 +3,10 @@
 /**
  * Satır içi "Satış aşaması" seçici (DeepSport StatusDropdown): rozet tıklanınca (satır / panel açılmaz) tüm CRM
  * statüleri — şeritle aynı sıra, renk ve etiket; mevcut statü işaretli. Basit statüler hemen kaydedilir ("Geri al"
- * ~5 sn); Teklif verildi (sonraki arama, tutar), Satış olmadı (kayıp nedeni zorunlu, sonraki arama) ve Satış oldu
- * (tutar) rozete bağlı küçük bir pencerede ek bilgi ister. Yazım: useLeadStatusUpdate (düzenleme formuyla aynı uç ve
- * kurallar; kayıp ayrıntısı, satış tarihi, teklifi veren / satışı yapan sunucuda).
+ * ~5 sn); Teklif verildi (sonraki arama, teklif tutarı ZORUNLU — temsilci de girer) ve Satış olmadı (kayıp nedeni
+ * zorunlu, sonraki arama) rozete bağlı küçük bir pencerede ek bilgi ister. Satış oldu satış penceresini açar
+ * (LeadSaleDialog: tutar + fatura bilgileri zorunlu, hesap aynı adımda açılır). Yazım: useLeadStatusUpdate (düzenleme
+ * formuyla aynı uç ve kurallar; kayıp ayrıntısı, satış tarihi, teklifi veren / satışı yapan sunucuda).
  */
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -26,10 +27,11 @@ import {
 import { cn } from "@/lib/utils";
 import { CRM_STATUSES, LOST_REASONS, type CrmLead, type CrmStatus } from "@/lib/domain/crm/types";
 import { statusNeedsContext, suggestedNextDate } from "@/lib/domain/crm/status-change";
-import { amountToInput, formatCurrency, getCrmStatusBadgeClass, getCrmStatusDotClass, getLeadDisplayName } from "@/lib/domain/crm/utils";
+import { amountToInput, getCrmStatusBadgeClass, getCrmStatusDotClass, getLeadDisplayName } from "@/lib/domain/crm/utils";
 import { useCrmRules } from "../queries";
 import { useLeadStatusUpdate } from "../useLeadStatusUpdate";
 import { AppointmentDialog } from "./AppointmentDialog";
+import { LeadSaleDialog } from "./LeadSaleDialog";
 
 /** Satır / kart tıklaması (aday paneli) tetiklenmesin — portal içindeki menü ve pencere olayları da dahil. */
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -80,11 +82,18 @@ export function StatusDropdown({
   // "Randevu planlandı": önce randevu penceresi; kaydedilince statü de yazılır (ilk randevuda sunucu zaten geçirir).
   const pendingAppointmentRef = useRef(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
+  // "Satış oldu": satış penceresi (tutar + fatura bilgileri + hesap).
+  const pendingSaleRef = useRef(false);
+  const [saleOpen, setSaleOpen] = useState(false);
 
   const pick = (target: CrmStatus) => {
     if (target === current) return;
     if (target === "RANDEVU_PLANLANDI") {
       pendingAppointmentRef.current = true;
+      return;
+    }
+    if (target === "SATIS_OLDU") {
+      pendingSaleRef.current = true;
       return;
     }
     if (statusNeedsContext(target)) {
@@ -127,6 +136,12 @@ export function StatusDropdown({
               setAppointmentOpen(true);
               return;
             }
+            if (pendingSaleRef.current) {
+              pendingSaleRef.current = false;
+              e.preventDefault();
+              setSaleOpen(true);
+              return;
+            }
             const target = pendingRef.current;
             if (!target) return;
             pendingRef.current = null;
@@ -158,6 +173,17 @@ export function StatusDropdown({
         />
       )}
 
+      {saleOpen && (
+        <LeadSaleDialog
+          lead={lead}
+          onClose={() => {
+            setSaleOpen(false);
+            triggerRef.current?.focus();
+          }}
+          onSold={onSold}
+        />
+      )}
+
       {popover && (
         <StatusContextPopover
           lead={lead}
@@ -172,7 +198,7 @@ export function StatusDropdown({
   );
 }
 
-/** Teklif verildi / Satış olmadı / Satış oldu için rozete bağlı küçük form (Kaydet / Vazgeç). */
+/** Teklif verildi / Satış olmadı için rozete bağlı küçük form (Kaydet / Vazgeç). */
 function StatusContextPopover({
   lead,
   target,
@@ -191,12 +217,11 @@ function StatusContextPopover({
   const t = useTranslations("crm.statusMenu");
   const tStatus = useTranslations("crm.status");
   const tOffer = useTranslations("crm.offer");
-  const { change, isSaving, canSeeFinancials } = useLeadStatusUpdate();
+  const { change, isSaving } = useLeadStatusUpdate();
   const { rules } = useCrmRules();
   const [nextCall, setNextCall] = useState(() => suggestedNextDate(target, lead.nextFollowUpAt ?? null, rules));
   const [lostReason, setLostReason] = useState<string>(lead.lostReason ?? "");
   const [offerAmount, setOfferAmount] = useState(amountToInput(lead.offerAmount));
-  const [saleAmount, setSaleAmount] = useState(amountToInput(lead.saleAmount));
   const [error, setError] = useState<{ field: "lostReason" | "offerAmount" | "saleAmount"; message: string } | null>(null);
   const id = `crm-status-${lead.id}`;
   const withDate = target === "TEKLIF_VERILDI" || target === "OLUMSUZ";
@@ -204,11 +229,12 @@ function StatusContextPopover({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSaving) return;
-    const res = await change(lead, target, { input: { nextCall, lostReason, offerAmount, saleAmount }, onSold });
+    const res = await change(lead, target, { input: { nextCall, lostReason, offerAmount }, onSold });
     if (res.error === "lostReasonRequired") return setError({ field: "lostReason", message: tOffer("lostReasonRequired") });
     if (res.error === "amountInvalid") {
       return setError({ field: target === "TEKLIF_VERILDI" ? "offerAmount" : "saleAmount", message: t("amountInvalid") });
     }
+    if (res.error === "offerAmountRequired") return setError({ field: "offerAmount", message: t("offerAmountRequired") });
     if (!res.ok) return;
     onClose();
   };
@@ -279,8 +305,8 @@ function StatusContextPopover({
               </div>
             )}
 
-            {/* Tutarlar yalnız finans yetkisiyle (CRM_AGENT statüyü değiştirir, tutar görmez / göndermez). */}
-            {canSeeFinancials && target === "TEKLIF_VERILDI" && (
+            {/* Teklif tutarı zorunlu ve herkese açık (temsilci de girer; listede yine tutar görmez). */}
+            {target === "TEKLIF_VERILDI" && (
               <AmountInput
                 id={`${id}-offerAmount`}
                 label={t("offerAmount")}
@@ -292,23 +318,6 @@ function StatusContextPopover({
                 error={error?.field === "offerAmount" ? error.message : undefined}
               />
             )}
-            {canSeeFinancials && target === "SATIS_OLDU" && (
-              <AmountInput
-                id={`${id}-saleAmount`}
-                label={t("saleAmount")}
-                value={saleAmount}
-                onChange={(v) => {
-                  setSaleAmount(v);
-                  setError(null);
-                }}
-                error={error?.field === "saleAmount" ? error.message : undefined}
-                hint={lead.offerAmount != null ? t("offerWas", { amount: formatCurrency(lead.offerAmount) }) : undefined}
-              />
-            )}
-            {canSeeFinancials && (target === "TEKLIF_VERILDI" || target === "SATIS_OLDU") && (
-              <p className="-mt-1 text-xs text-muted-foreground">{tOffer("amountHint")}</p>
-            )}
-            {!canSeeFinancials && target === "SATIS_OLDU" && <p className="text-xs text-muted-foreground">{t("soldConfirm")}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={isSaving}>

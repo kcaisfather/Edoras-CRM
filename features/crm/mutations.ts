@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { institutionKeys } from "@/features/institutions";
 import { BATCH_MAX, type LeadBatchInput, type LeadBatchResult, type LeadCreateInput, type LeadMergeInput, type LeadPatchInput } from "@/lib/domain/crm/schemas";
 import type { PaymentInput } from "@/lib/domain/institutions/schemas";
+import type { LeadSaleInput } from "@/lib/domain/crm/sale";
 import { crmApi } from "./api";
 import { crmKeys } from "./queries";
 
@@ -26,6 +27,19 @@ export function useUpdateCrmLead() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: LeadPatchInput }) => crmApi.update(id, data),
     onSuccess: () => invalidate(),
+  });
+}
+
+/** Satışı kaydeder; hesap açıldıysa / ücretliye geçtiyse kurum listesi de tazelenir. */
+export function useRecordSale() {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateCrm();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: LeadSaleInput }) => crmApi.recordSale(id, data),
+    onSuccess: () => {
+      invalidate();
+      void queryClient.invalidateQueries({ queryKey: institutionKeys.all });
+    },
   });
 }
 

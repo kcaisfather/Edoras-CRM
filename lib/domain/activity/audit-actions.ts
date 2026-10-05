@@ -5,6 +5,8 @@
  */
 export const AUDIT_ACTIONS = [
   "DEMO_CREATED",
+  // Satışla açılan hesap (Edoras kurumu + kurum yöneticisi; aynı işlemde ücretliye geçer).
+  "PAID_ACCOUNT_CREATED",
   "INSTITUTION_ENROLLED",
   "CONVERTED_TO_PAID",
   "LICENSE_RENEWED",
@@ -22,6 +24,8 @@ export const AUDIT_ACTIONS = [
   "LEAD_UPDATED",
   "LEAD_OWNER_CHANGED",
   "LEAD_STATUS_CHANGED",
+  // Satış kaydı: tutar, kurum kimliği, hesap yolu (yeni / ücretliye geçiş / kayda alma / mevcut) yazılır; fatura bilgisi yazılmaz.
+  "LEAD_SALE_RECORDED",
   "LEAD_DELETED",
   // Birleştirme: silinen adayın kimliği ve taşınan satır sayıları yazılır; ad, telefon, e-posta yazılmaz.
   "LEADS_MERGED",

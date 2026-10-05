@@ -27,8 +27,8 @@ describe("aday formu", () => {
   });
 
   it("düzenleme gövdesi API şemasından geçer; takip dışı statüde tarih ve neden gönderilmez", () => {
-    const body = formToPatch({ ...leadToForm(lead), status: "ARANACAK", lostReason: "PRICE" }, lead, true);
-    expect(body).toMatchObject({ status: "ARANACAK", nextFollowUpAt: null, lostReason: null, offerAmount: 12500.5 });
+    const body = formToPatch({ ...leadToForm(lead), status: "DEMO_TANIMLANDI", lostReason: "PRICE" }, lead, true);
+    expect(body).toMatchObject({ status: "DEMO_TANIMLANDI", nextFollowUpAt: null, lostReason: null, offerAmount: 12500.5 });
     expect("saleAmount" in body).toBe(false);
     expect(leadPatchSchema.safeParse(body).success).toBe(true);
   });

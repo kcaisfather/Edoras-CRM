@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QueryErrorState } from "@/components/query-error-state";
 import { useCurrentUser } from "@/features/auth";
 import { OpenReceivablesCard } from "@/features/crm";
+import { NpsOverviewCard } from "@/features/surveys";
 import { InstitutionStatusBadge, useInstitutions } from "@/features/institutions";
 import { cn } from "@/lib/utils";
 import { todayIso } from "@/lib/domain/institutions/rules";
@@ -90,6 +91,9 @@ export function Dashboard() {
 
       {/* Açık alacak (CRM adayları: satış − tahsilat) — yalnız yönetici; CRM_AGENT'a çizilmez, veri de çekilmez. */}
       <OpenReceivablesCard />
+
+      {/* Genel NPS özeti (tüm anketler) — yalnız sayılar; her iki rol görür. */}
+      <NpsOverviewCard />
 
       <Card className="glass-panel rounded-2xl border-border/50 p-6">
         <h2 className="mb-1 text-lg font-bold">{t("actionable.title")}</h2>

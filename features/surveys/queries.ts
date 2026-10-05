@@ -17,10 +17,16 @@ export const surveyKeys = {
   list: () => [...surveyKeys.all, "list"] as const,
   invitations: (surveyId: string) => [...surveyKeys.all, "invitations", surveyId] as const,
   responses: (surveyId: string) => [...surveyKeys.all, "responses", surveyId] as const,
+  overview: () => [...surveyKeys.all, "overview"] as const,
   summary: (surveyId: string) => [...surveyKeys.all, "summary", surveyId] as const,
   satisfactionIndex: () => [...surveyKeys.all, "satisfaction", "index"] as const,
   satisfaction: (leadId: string, institutionId: string) => [...surveyKeys.all, "satisfaction", leadId, institutionId] as const,
 };
+
+/** Genel NPS özeti (pano kartı). */
+export function useNpsOverview() {
+  return useQuery({ queryKey: surveyKeys.overview(), queryFn: ({ signal }) => surveysApi.overview(signal), staleTime: 5 * 60 * 1000 });
+}
 
 /** Varsayılan anket + e-posta gönderimi açık mı (sunucuda RESEND_API_KEY ve EMAIL_FROM). */
 export function useDefaultSurvey(enabled = true) {

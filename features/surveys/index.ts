@@ -12,6 +12,7 @@ export { InstitutionSatisfactionCard } from "./components/InstitutionSatisfactio
 // Herkese açık sayfa (PublicSurveyPage) bilinçli olarak burada YOK: app/s/[token] onu doğrudan alır, müşterinin
 // indirdiği sayfaya bu barrel'ın panel bileşenleri girmesin.
 export { SatisfactionBadge, SurveyReminderButton } from "./components/SatisfactionBadge";
+export { NpsOverviewCard } from "./components/NpsOverviewCard";
 export { SendSurveyDialog } from "./components/SendSurveyDialog";
 export { SurveysPage } from "./components/SurveysPage";
 export { useDefaultSurvey, surveyKeys } from "./queries";

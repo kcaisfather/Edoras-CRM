@@ -117,6 +117,14 @@ export interface SurveySummary {
   lastResponseAt?: number | null;
 }
 
+/** GET /api/crm/surveys/overview: tüm anketlerin son 90 günlük özeti ve aylık NPS eğilimi. */
+export interface NpsOverview {
+  /** Özetin kapsadığı gün sayısı. */
+  windowDays: number;
+  summary: SurveySummary;
+  trend: { month: string; nps: number | null; count: number }[];
+}
+
 /** Yanıt bekleyen son davet (rozet "yanıt bekliyor", anket araması / WhatsApp hatırlatması). */
 export interface PendingInvitation {
   id: string;

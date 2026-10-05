@@ -3,11 +3,13 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
+import { NPS_OVERVIEW_DAYS, npsByMonth, trendStartMs } from "@/lib/domain/surveys/overview";
 import { buildSatisfactionIndex, effectiveStatus, satisfactionFor, summarizeResponses } from "@/lib/domain/surveys/logic";
 import { buildSurveyEmail, buildSurveyLink } from "@/lib/domain/surveys/message";
 import type { CreateInvitationValues, InvitationQuery, ResponseQuery } from "@/lib/domain/surveys/schemas";
 import type {
   CreatedSurveyInvitation,
+  NpsOverview,
   Paged,
   SatisfactionIndex,
   Survey,
@@ -249,6 +251,36 @@ export async function surveySummary(surveyId: string): Promise<SurveySummary> {
     responses.map((r) => ({ nps: r.nps, csat: r.csat, createdAt: Date.parse(r.created_at) })),
     sent.count ?? 0
   );
+}
+
+/**
+ * Genel NPS özeti (tüm anketler): son 90 günün özeti (yanıt, oran, NPS, dağılım, memnuniyet) ve bu ay dahil son 6 ayın
+ * aylık NPS eğilimi. Salt okunur; kişisel veri taşımaz (yalnız sayılar).
+ */
+export async function npsOverview(now = Date.now()): Promise<NpsOverview> {
+  const db = getSupabaseAdminClient();
+  const windowStart = now - NPS_OVERVIEW_DAYS * 24 * 60 * 60 * 1000;
+  const from = Math.min(trendStartMs(now), windowStart);
+  const [responses, sent] = await Promise.all([
+    fetchAll<{ nps: number | null; csat: number | null; created_at: string }>((a, b) =>
+      db.from("crm_survey_responses").select("nps, csat, created_at").gte("created_at", new Date(from).toISOString()).order("id").range(a, b)
+    ),
+    db
+      .from("crm_survey_invitations")
+      .select("id", { count: "exact", head: true })
+      .not("sent_at", "is", null)
+      .gte("sent_at", new Date(windowStart).toISOString()),
+  ]);
+  if (sent.error) throw dbError(sent.error);
+  const rows = responses.map((r) => ({ nps: r.nps, csat: r.csat, createdAt: Date.parse(r.created_at) }));
+  return {
+    windowDays: NPS_OVERVIEW_DAYS,
+    summary: summarizeResponses(
+      rows.filter((r) => r.createdAt >= windowStart),
+      sent.count ?? 0
+    ),
+    trend: npsByMonth(rows, now),
+  };
 }
 
 type SubjectFilter = { leadIds: string[]; institutionIds: string[] };

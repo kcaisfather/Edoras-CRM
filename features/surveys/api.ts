@@ -3,6 +3,7 @@ import { isApiErrorCode, type ApiErrorBody } from "@/lib/api/error-codes";
 import type { CreateInvitationInput } from "@/lib/domain/surveys/schemas";
 import type {
   CreatedSurveyInvitation,
+  NpsOverview,
   Paged,
   PublicSurvey,
   PublicSurveyAnswer,
@@ -36,6 +37,7 @@ const qs = (params: Record<string, string | number | null | undefined>) => {
  *   POST /api/crm/surveys/invitations/{id}/resend            → davet (yalnız EMAIL)
  *   GET  /api/crm/surveys/{id}/responses?page&size           → { items, page, size, total }
  *   GET  /api/crm/surveys/{id}/summary                       → SurveySummary
+ *   GET  /api/crm/surveys/overview                           → NpsOverview (tüm anketler: son 90 gün + aylık eğilim)
  *   GET  /api/crm/surveys/satisfaction[?leadId|institutionId] → SatisfactionIndex | SurveySatisfaction
  */
 export const surveysApi = {
@@ -49,6 +51,7 @@ export const surveysApi = {
   ) => apiRequest<Paged<SurveyInvitation>>(`${surveyBase(surveyId)}/invitations${qs({ page, size, ...filters })}`, { signal }),
   responsesPage: (surveyId: string, page: number, size: number, signal?: AbortSignal) =>
     apiRequest<Paged<SurveyResponse>>(`${surveyBase(surveyId)}/responses${qs({ page, size })}`, { signal }),
+  overview: (signal?: AbortSignal) => apiRequest<NpsOverview>("/api/crm/surveys/overview", { signal }),
   summary: (surveyId: string, signal?: AbortSignal) => apiRequest<SurveySummary>(`${surveyBase(surveyId)}/summary`, { signal }),
   satisfactionIndex: (signal?: AbortSignal) => apiRequest<SatisfactionIndex>("/api/crm/surveys/satisfaction", { signal }),
   satisfaction: (ids: { leadId?: string | null; institutionId?: string | null }, signal?: AbortSignal) =>

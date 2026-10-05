@@ -134,7 +134,7 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
             {t("count", { count: list.totalElements, page: list.page + 1, totalPages: list.totalPages })}
           </p>
           <CrmTable leads={list.leads} actions={actions} sort={colSort.sort} onSort={colSort.toggle} selection={list.selection} />
-          <CrmMobileCards leads={list.leads} actions={actions} />
+          <CrmMobileCards leads={list.leads} actions={actions} selection={list.selection} />
           <VisionListPagination
             currentPage={list.page}
             totalPages={list.totalPages}

@@ -37,6 +37,25 @@
     "required": "zorunlu",
     "optional": "isteğe bağlı"
   },
+  "overview": {
+    "title": "NPS özeti",
+    "description": "Tüm anketler, son {days} gün; altta aylık eğilim.",
+    "link": "Anketler",
+    "nps": "NPS",
+    "responses": "{count} yanıt",
+    "rate": "yanıt oranı %{rate}",
+    "csat": "memnuniyet {avg}/5",
+    "distribution": "Dağılım",
+    "distributionLabel": "Destekçi {promoters}, pasif {passives}, eleştirmen {detractors}",
+    "promoters": "Destekçi (9–10): {count}",
+    "passives": "Pasif (7–8): {count}",
+    "detractors": "Eleştirmen (0–6): {count}",
+    "noScores": "Bu dönemde NPS puanı yok.",
+    "trend": "Aylık NPS",
+    "trendPoint": "{month}: NPS {nps} ({count} yanıt)",
+    "trendNone": "{month}: yanıt yok",
+    "empty": "Henüz anket yanıtı yok. Anket gönderildikçe NPS burada görünür."
+  },
   "summary": {
     "invitations": "Gönderilen",
     "responses": "Yanıt",

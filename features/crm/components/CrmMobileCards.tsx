@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { formatCrmDate, getLeadTitle } from "@/lib/domain/crm/utils";
 import type { CrmTableActions } from "../types";
@@ -10,8 +11,18 @@ import { CustomerBadge, LinkedMark } from "./CrmRowParts";
 import { StatusDropdown } from "./StatusDropdown";
 
 /** Mobil kart listesi — tabloyla aynı sade içerik (satır içi statü seçici + tek "İşlemler" menüsü); karta dokunmak aday panelini açar. */
-export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: CrmTableActions }) {
+export function CrmMobileCards({
+  leads,
+  actions,
+  selection,
+}: {
+  leads: CrmLead[];
+  actions: CrmTableActions;
+  /** Toplu işlem seçimi; verilmezse seçim kutusu çizilmez. */
+  selection?: { selected: ReadonlySet<string>; toggle: (id: string) => void };
+}) {
   const t = useTranslations("crm.list");
+  const tBulk = useTranslations("crm.bulk");
 
   return (
     <div className="space-y-3 p-3 md:hidden">
@@ -41,6 +52,15 @@ export function CrmMobileCards({ leads, actions }: { leads: CrmLead[]; actions: 
           >
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-3">
+                {selection && (
+                  <span className="pt-0.5" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selection.selected.has(lead.id)}
+                      onCheckedChange={() => selection.toggle(lead.id)}
+                      aria-label={tBulk("selectRow", { name: title })}
+                    />
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="truncate font-semibold">{title}</span>

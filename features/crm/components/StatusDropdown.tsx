@@ -29,6 +29,7 @@ import { statusNeedsContext, suggestedNextDate } from "@/lib/domain/crm/status-c
 import { amountToInput, formatCurrency, getCrmStatusBadgeClass, getCrmStatusDotClass, getLeadDisplayName } from "@/lib/domain/crm/utils";
 import { useCrmRules } from "../queries";
 import { useLeadStatusUpdate } from "../useLeadStatusUpdate";
+import { AppointmentDialog } from "./AppointmentDialog";
 
 /** Satır / kart tıklaması (aday paneli) tetiklenmesin — portal içindeki menü ve pencere olayları da dahil. */
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -76,9 +77,16 @@ export function StatusDropdown({
   // Menü kapanınca açılacak pencere (menünün odak iadesiyle çakışmasın diye kapanıştan sonra açılır).
   const pendingRef = useRef<CrmStatus | null>(null);
   const [popover, setPopover] = useState<{ target: CrmStatus; anchor: Anchor } | null>(null);
+  // "Randevu planlandı": önce randevu penceresi; kaydedilince statü de yazılır (ilk randevuda sunucu zaten geçirir).
+  const pendingAppointmentRef = useRef(false);
+  const [appointmentOpen, setAppointmentOpen] = useState(false);
 
   const pick = (target: CrmStatus) => {
     if (target === current) return;
+    if (target === "RANDEVU_PLANLANDI") {
+      pendingAppointmentRef.current = true;
+      return;
+    }
     if (statusNeedsContext(target)) {
       pendingRef.current = target;
       return;
@@ -113,6 +121,12 @@ export function StatusDropdown({
           align="start"
           className="min-w-[200px]"
           onCloseAutoFocus={(e) => {
+            if (pendingAppointmentRef.current) {
+              pendingAppointmentRef.current = false;
+              e.preventDefault();
+              setAppointmentOpen(true);
+              return;
+            }
             const target = pendingRef.current;
             if (!target) return;
             pendingRef.current = null;
@@ -131,6 +145,18 @@ export function StatusDropdown({
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {appointmentOpen && (
+        <AppointmentDialog
+          lead={lead}
+          appointment={null}
+          onClose={() => {
+            setAppointmentOpen(false);
+            triggerRef.current?.focus();
+          }}
+          onSaved={() => void change(lead, "RANDEVU_PLANLANDI")}
+        />
+      )}
 
       {popover && (
         <StatusContextPopover

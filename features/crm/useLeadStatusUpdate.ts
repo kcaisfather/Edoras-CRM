@@ -46,7 +46,7 @@ export function useLeadStatusUpdate() {
     const snapshot = qc.getQueriesData({ queryKey: crmKeys.all });
     const fields = optimisticLeadFields(lead, patch, todayIso());
     qc.setQueriesData({ queryKey: crmKeys.all }, (data: unknown) =>
-      patchLeadInCache(data, lead.id, (l) => applyFieldsToLead(l, fields))
+      patchLeadInCache(data, lead.id, (l) => ({ ...applyFieldsToLead(l, fields), updatedAt: Date.now() }))
     );
     return snapshot;
   };

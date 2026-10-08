@@ -82,15 +82,27 @@ function CrmCell({ p, matches }: { p: Prospect; matches: ExistingContact[] }) {
   );
 }
 
+/** Dar sütun: uzun kurum adı / not taşmasın, sağdaki "Sıcağa taşı" görünür kalsın (tam metin title'da). */
 function PersonCell({ p }: { p: Prospect }) {
   const name = prospectName(p);
+  const title = p.organization || prospectTitle(p);
   return (
-    <div className="flex flex-col">
-      <span className="font-medium">{p.organization || prospectTitle(p)}</span>
-      {p.organization && name && <span className="text-xs text-muted-foreground">{name}</span>}
-      {p.branch && <span className="text-xs text-muted-foreground">{p.branch}</span>}
+    <div className="flex w-64 flex-col">
+      <span className="truncate font-medium" title={title}>
+        {title}
+      </span>
+      {p.organization && name && (
+        <span className="truncate text-xs text-muted-foreground" title={name}>
+          {name}
+        </span>
+      )}
+      {p.branch && (
+        <span className="truncate text-xs text-muted-foreground" title={p.branch}>
+          {p.branch}
+        </span>
+      )}
       {p.note && (
-        <span className="max-w-xs truncate text-xs text-muted-foreground" title={p.note}>
+        <span className="truncate text-xs text-muted-foreground" title={p.note}>
           {p.note}
         </span>
       )}

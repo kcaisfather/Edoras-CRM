@@ -100,7 +100,6 @@
       "location": "Konum",
       "date": "Tarih",
       "salesStage": "Satış Aşaması",
-      "score": "Skor",
       "saleAmount": "Teklif / Satış Tutarı",
       "offerTag": "teklif",
       "offerTitle": "Teklif tutarı (satış henüz yok)",
@@ -447,20 +446,6 @@
       "institution": "Edoras kurumu"
     },
     "institutionsError": "Kurum listesi yüklenemedi; yalnız adaylar arasındaki eşleşmeler gösteriliyor."
-  },
-  "score": {
-    "aria": "Lead skoru {score}, {tier}",
-    "tiers": { "hot": "Sıcak", "warm": "Ilık", "cold": "Soğuk" },
-    "parts": {
-      "stage": "Aşama",
-      "freshness": "Tazelik",
-      "followUp": "Planlı takip",
-      "contact": "İletişim bilgisi",
-      "source": "Kaynak",
-      "linked": "Kuruma bağlı",
-      "complaint": "Açık şikâyet"
-    },
-    "followUpOverdue": "Takip günü geçmiş"
   },
   "performance": {
     "title": "Satış Performansı",

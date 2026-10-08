@@ -15,7 +15,6 @@ import type { CrmTableActions } from "../types";
 import { DissatisfiedBadge, ProgramBadges } from "./CrmBadges";
 import { CrmRowActionsMenu } from "./CrmRowActionsMenu";
 import { CustomerBadge, LinkedMark, stop } from "./CrmRowParts";
-import { LeadScoreBadge } from "./LeadScoreBadge";
 import { StatusDropdown } from "./StatusDropdown";
 
 /**
@@ -69,7 +68,6 @@ export function CrmTable({
             {head("location", t("table.location"))}
             {head("date", t("table.date"))}
             {head("stage", t("table.salesStage"))}
-            {head("score", t("table.score"))}
             {money && head("sale", t("table.saleAmount"), "right")}
             {money && head("collected", t("table.collected"), "right")}
             <TableHead className="w-px text-right">{t("table.actions")}</TableHead>
@@ -136,12 +134,9 @@ export function CrmTable({
                 <TableCell className="text-xs" title={locationTitle || undefined}>
                   {lead.city || lead.country || "—"}
                 </TableCell>
-                <TableCell className="text-xs tabular-nums">{formatCrmDate(lead.createdAt)}</TableCell>
+                <TableCell className="text-xs tabular-nums">{formatCrmDate(lead.updatedAt ?? lead.createdAt)}</TableCell>
                 <TableCell onClick={stop} onKeyDown={stop}>
                   <StatusDropdown lead={lead} onSold={actions.onStatusSold} />
-                </TableCell>
-                <TableCell>
-                  <LeadScoreBadge lead={lead} />
                 </TableCell>
                 {money && (
                   <TableCell className="text-right text-sm tabular-nums">

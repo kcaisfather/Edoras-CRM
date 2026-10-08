@@ -8,7 +8,6 @@ import type { CrmTableActions } from "../types";
 import { DissatisfiedBadge, ProgramBadges } from "./CrmBadges";
 import { CrmRowActionsMenu } from "./CrmRowActionsMenu";
 import { CustomerBadge, LinkedMark } from "./CrmRowParts";
-import { LeadScoreBadge } from "./LeadScoreBadge";
 import { StatusDropdown } from "./StatusDropdown";
 
 /** Mobil kart listesi — tabloyla aynı sade içerik (satır içi statü seçici + tek "İşlemler" menüsü); karta dokunmak aday panelini açar. */
@@ -77,7 +76,6 @@ export function CrmMobileCards({
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                <LeadScoreBadge lead={lead} />
                 <DissatisfiedBadge value={lead.dissatisfaction} />
                 {actions.renderSatisfaction?.(lead)}
                 <ProgramBadges tags={lead.programTags} />
@@ -85,7 +83,7 @@ export function CrmMobileCards({
 
               <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
                 <span>{location || "-"}</span>
-                <span>{formatCrmDate(lead.createdAt)}</span>
+                <span>{formatCrmDate(lead.updatedAt ?? lead.createdAt)}</span>
               </div>
             </div>
           </div>

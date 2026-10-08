@@ -4,14 +4,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getEdorasAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError } from "@/lib/api/server";
 import type { AcademicPeriod } from "@/lib/domain/institutions/rules";
+import {
+  mergePanelModules,
+  type InstitutionPanelModuleRow,
+  type PanelModuleCatalogRow,
+  type PanelModuleState,
+} from "@/lib/domain/institutions/panel-modules";
 import type { InstitutionAdmin, InstitutionProgram, InstitutionUsage } from "@/lib/domain/institutions/types";
 import type { Compensator } from "./compensation";
 
 /**
  * Edoras canlı veritabanına (edoras-admin + mobil) dokunan iki dosyadan biri (diğeri: edoras-usage.ts, salt okunur kullanım sinyalleri). Şema gerçeği edoras-admin'dedir
  * (Desktop/YKS → docs/memory/YKS/data-model.md); buradaki kolon adları oradan. Edoras şemasında hiçbir
- * değişiklik yapılmaz — yalnız okuma ve demo kurum açma (edoras-admin'in scripts/seed-demo-presentation.mjs
- * ile aynı sıra: kurum → aktif yıl/dönem → auth kullanıcısı → profil → kurum üyeliği).
+ * değişiklik yapılmaz — yalnız okuma, demo kurum açma (edoras-admin'in scripts/seed-demo-presentation.mjs
+ * ile aynı sıra: kurum → aktif yıl/dönem → auth kullanıcısı → profil → kurum üyeliği) ve kurumun panel modülü
+ * satırı (`institution_panel_modules` upsert — edoras-admin migration 300 sözleşmesi).
  */
 
 export interface EdorasInstitution {
@@ -232,4 +239,53 @@ export async function createEdorasDemo(input: EdorasDemoInput, compensator: Comp
   });
 
   return { institutionId };
+}
+
+// ─── Panel modülleri (edoras-admin migration 300) ───
+
+const PANEL_MODULE_CATALOG_COLUMNS = "key, label, description, default_enabled, sort_order";
+const INSTITUTION_PANEL_MODULE_COLUMNS = "module_key, enabled, updated_at, updated_by";
+
+/** Kurumun modül durumları (katalog ∪ kurum satırı). Kurum Edoras'ta yoksa 404. */
+export async function getEdorasPanelModules(institutionId: string): Promise<PanelModuleState[]> {
+  const db = getEdorasAdminClient();
+  const [institution, catalog, rows] = await Promise.all([
+    getEdorasInstitution(institutionId),
+    db.from("panel_modules").select(PANEL_MODULE_CATALOG_COLUMNS),
+    db.from("institution_panel_modules").select(INSTITUTION_PANEL_MODULE_COLUMNS).eq("institution_id", institutionId),
+  ]);
+  if (!institution) throw new HttpError(404, "NOT_FOUND");
+  if (catalog.error) throw dbError(catalog.error);
+  if (rows.error) throw dbError(rows.error);
+  return mergePanelModules(
+    (catalog.data ?? []) as PanelModuleCatalogRow[],
+    (rows.data ?? []) as InstitutionPanelModuleRow[]
+  );
+}
+
+/**
+ * Tek modülü kurumda açar / kapatır (satır yoksa ekler). Kapatmak Edoras'ta VERİ SİLMEZ — yalnız menü, sayfa ve
+ * veri uçları kapanır. `updatedBy` Edoras'taki iz alanıdır (`crm:<ad>`). Katalogda olmayan anahtar 404.
+ * Dönüş: kurumun güncel listesi.
+ */
+export async function setEdorasPanelModule(
+  institutionId: string,
+  key: string,
+  enabled: boolean,
+  updatedBy: string
+): Promise<PanelModuleState[]> {
+  const db = getEdorasAdminClient();
+  const { data: module, error: moduleError } = await db.from("panel_modules").select("key").eq("key", key).maybeSingle();
+  if (moduleError) throw dbError(moduleError);
+  if (!module) throw new HttpError(404, "NOT_FOUND");
+  if (!(await getEdorasInstitution(institutionId))) throw new HttpError(404, "NOT_FOUND");
+
+  const { error } = await db
+    .from("institution_panel_modules")
+    .upsert(
+      { institution_id: institutionId, module_key: key, enabled, updated_by: updatedBy },
+      { onConflict: "institution_id,module_key" }
+    );
+  if (error) throw dbError(error);
+  return getEdorasPanelModules(institutionId);
 }

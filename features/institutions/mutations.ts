@@ -12,6 +12,7 @@ import type {
   PaymentInput,
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
+import type { PanelModuleToggleInput } from "@/lib/domain/institutions/panel-modules";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
 import { institutionsApi } from "./api";
 import { institutionKeys } from "./queries";
@@ -129,5 +130,14 @@ export function useUpdateLicensePricing() {
   return useMutation({
     mutationFn: (input: LicenseListPriceInput) => institutionsApi.updateLicensePricing(input),
     onSuccess: (data) => queryClient.setQueryData(institutionKeys.licensePricing(), data),
+  });
+}
+
+/** Panel modülünü aç / kapat (yalnız ADMIN). Sunucu güncel listeyi döndürür → önbelleğe doğrudan yazılır. */
+export function useSetPanelModule(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PanelModuleToggleInput) => institutionsApi.setPanelModule(id, input),
+    onSuccess: (modules) => queryClient.setQueryData(institutionKeys.panelModules(id), modules),
   });
 }

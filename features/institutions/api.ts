@@ -10,6 +10,7 @@ import type {
   PaymentInput,
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
+import type { PanelModuleState, PanelModuleToggleInput } from "@/lib/domain/institutions/panel-modules";
 import type { DemoCredentials, InstitutionDetail, InstitutionListItem, LicensePricingSettings } from "@/lib/domain/institutions/types";
 
 const base = (id: string) => `/api/institutions/${encodeURIComponent(id)}`;
@@ -34,6 +35,9 @@ export const institutionsApi = {
     apiRequest(`${base(id)}/payments/${encodeURIComponent(paymentId)}`, { method: "PATCH", body: input }),
   deletePayment: (id: string, paymentId: string) =>
     apiRequest(`${base(id)}/payments/${encodeURIComponent(paymentId)}`, { method: "DELETE" }),
+  panelModules: (id: string, signal?: AbortSignal) => apiRequest<PanelModuleState[]>(`${base(id)}/modules`, { signal }),
+  setPanelModule: (id: string, input: PanelModuleToggleInput) =>
+    apiRequest<PanelModuleState[]>(`${base(id)}/modules`, { method: "PATCH", body: input }),
   licensePricing: (signal?: AbortSignal) => apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { signal }),
   updateLicensePricing: (input: LicenseListPriceInput) =>
     apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { method: "PUT", body: input }),

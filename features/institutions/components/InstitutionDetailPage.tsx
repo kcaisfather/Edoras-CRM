@@ -18,6 +18,7 @@ import { InstitutionStatusBadge } from "./InstitutionStatusBadge";
 import { BillingCard, ContactCard, DemoCard, LicensesCard, PaymentsCard, SectionCard, UsageCard } from "./detail-cards";
 import { ConvertDialog } from "./dialogs";
 import { EnrollDialog } from "./EnrollDialog";
+import { PanelModulesCard } from "./PanelModulesCard";
 
 /**
  * Kurum ayrıntısı. `aside`: sağ sütunun başına eklenen parça — başka modüllerin kartları (ör. CRM adayı)
@@ -69,6 +70,7 @@ export function InstitutionDetailPage({
           {aside}
           <DemoCard institution={institution} />
           <BillingCard institution={institution} />
+          <PanelModulesCard institution={institution} />
           <UsageCard institution={institution} />
         </div>
       </div>

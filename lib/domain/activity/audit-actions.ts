@@ -15,6 +15,8 @@ export const AUDIT_ACTIONS = [
   "LICENSE_PRICING_UPDATED",
   "CONTACT_UPDATED",
   "BILLING_UPDATED",
+  // Edoras panel modülü (ör. Muhasebe) kurumda açıldı / kapandı: modül anahtarı ve yeni durum yazılır.
+  "PANEL_MODULE_CHANGED",
   "PAYMENT_RECORDED",
   "PAYMENT_UPDATED",
   "PAYMENT_DELETED",

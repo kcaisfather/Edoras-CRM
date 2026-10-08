@@ -21,7 +21,8 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
 1. **İki veritabanı.** CRM verisi ve CRM girişleri EdorasCRM'in kendi projesinde (`orishbqniebbgdanazrp`,
    migration'lar `supabase/migrations/`). Edoras'ın canlı veritabanına (`bmjkpxbrmwxuildwakly`, edoras-admin
    `Desktop/YKS` + mobil `Desktop/EdorasApp`) yalnız sunucudan ve yalnız `lib/server/edoras.ts` ve `lib/server/edoras-usage.ts` (Müşteri analizleri: salt okunur `select` / `head` sayım; yazan ya da ağır RPC yok) üzerinden
-   gidilir: kurum listesi, kullanım sayıları, demo açarken kurum + dönem + kurum yöneticisi. **Edoras şeması
+   gidilir: kurum listesi, kullanım sayıları, demo açarken kurum + dönem + kurum yöneticisi, kurumun panel modülü
+   satırı (`institution_panel_modules` upsert — Muhasebe vb. aç/kapa). **Edoras şeması
    değiştirilmez**; şema gerçeği edoras-admin'dedir (`docs/memory/YKS/data-model.md`).
 2. **İki veritabanı arasında transaction yok.** Birden fazla adımlı yazım (demo açma) her adımın geri alma
    işini `createCompensator()`'a kaydeder; hata olursa `rollback()`.

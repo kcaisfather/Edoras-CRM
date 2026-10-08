@@ -116,6 +116,7 @@
       "LICENSE_PRICING_UPDATED": "Lisans liste fiyatı güncellendi",
       "CONTACT_UPDATED": "Yetkili bilgisi güncellendi",
       "BILLING_UPDATED": "Fatura bilgisi güncellendi",
+      "PANEL_MODULE_CHANGED": "Panel modülü açıldı / kapandı",
       "PAYMENT_RECORDED": "Ödeme alındı",
       "PAYMENT_UPDATED": "Ödeme düzeltildi",
       "PAYMENT_DELETED": "Ödeme silindi",

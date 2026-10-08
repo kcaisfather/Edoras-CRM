@@ -56,3 +56,19 @@ indirim yüzdesi olsun". Kurucu kararı: tek liste fiyatı, satışta indirim %,
 `GET/PUT /api/institutions/{id}/billing`. Tür kimlikten türetilir: TC → bireysel, VKN → kurumsal (+ vergi dairesi).
 Tam profil = unvan + il + ilçe + fatura e-postası + adres (+ vergi dairesi). E-posta ve Paraşüt faturası tam profil ister.
 TC/VKN kontrol hanesi SQL ve TS'te birebir aynı algoritma (test 3.000 örnek).
+
+## Panel modülleri — Edoras'a YAZAR (`GET/PATCH /api/institutions/{id}/modules`, 2026-10-08)
+
+Kurum ayrıntısı sağ sütunda "Panel modülleri" kartı (`features/institutions/components/PanelModulesCard.tsx`): Edoras
+panelinin ücretli / ek modülleri (ilk modül: Muhasebe, `accounting`) kurum bazında aç / kapa. Sözleşme edoras-admin
+migration 300: `panel_modules` katalog (CRM yalnız okur) + `institution_panel_modules` kurum satırı (CRM upsert eder,
+`updated_by = crm:<personel adı>`). Satır yoksa katalogdaki `default_enabled` geçerli (`mergePanelModules`,
+`lib/domain/institutions/panel-modules.ts` — Edoras `utils/supabase/panel-modules.ts` ile aynı kural).
+
+- Görmek her personel, değiştirmek yalnız ADMIN (`requireStaff({ role: "ADMIN" })`). CRM kaydı ŞART DEĞİL; kurum
+  Edoras'ta yoksa kart çizilmez / uç 404. Katalogda olmayan anahtar 404.
+- Kapatmak Edoras'ta VERİ SİLMEZ: menü, sayfalar, veri uçları, yetki grubu, mobil ekran ve otomatik hatırlatma kapanır.
+  Edoras istek başına önbellekler → değişiklik bir sonraki sayfa yüklemesinde görünür.
+- İşlem kaydı `PANEL_MODULE_CHANGED` (details: `module`, `enabled`). Sunucu: `lib/server/panel-modules.ts` →
+  `edoras.ts` `getEdorasPanelModules` / `setEdorasPanelModule`. Test: `panel-modules.test.ts`.
+- Yeni modül eklemek Edoras işidir (katalog satırı + kod kapısı); CRM kartı katalogdan kendiliğinden listeler.

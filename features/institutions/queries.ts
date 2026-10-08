@@ -11,6 +11,7 @@ export const institutionKeys = {
   list: () => [...institutionKeys.all, "list"] as const,
   detail: (id: string) => [...institutionKeys.all, "detail", id] as const,
   licensePricing: () => [...institutionKeys.all, "license-pricing"] as const,
+  panelModules: (id: string) => [...institutionKeys.all, "panel-modules", id] as const,
 };
 
 export function useInstitutions() {
@@ -25,6 +26,15 @@ export function useInstitution(id: string) {
     queryKey: institutionKeys.detail(id),
     queryFn: ({ signal }) => institutionsApi.get(id, signal),
     enabled: !!id,
+  });
+}
+
+/** Kurumun Edoras panel modülleri (ör. Muhasebe) — kurum ayrıntısı kartı. */
+export function useInstitutionPanelModules(id: string, enabled = true) {
+  return useQuery({
+    queryKey: institutionKeys.panelModules(id),
+    queryFn: ({ signal }) => institutionsApi.panelModules(id, signal),
+    enabled: !!id && enabled,
   });
 }
 

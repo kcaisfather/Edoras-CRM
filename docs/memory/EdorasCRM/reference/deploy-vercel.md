@@ -1,13 +1,28 @@
 # Vercel dağıtımı ve ortam değişkenleri
 
 Durum (2026-10-01): **dağıtıldı** — Vercel ekibi `kamil-nissas-projects`, proje `edorascrm`, adres
-`https://edorascrm.vercel.app` (GitHub `main`'e bağlı, her push üretime gider; yerel klasör `vercel link` ile bağlı,
-`.vercel/` git dışı). Production env'leri eklendi: Supabase CRM (3), Edoras (2), `NEXT_PUBLIC_EDORAS_PANEL_URL`,
+`https://edorascrm.vercel.app` (**GitHub push'u üretimi GÜNCELLEMEZ** — dağıtım CLI ile elle, bkz. "Yayın yöntemi";
+yerel klasör `vercel link` ile bağlı, `.vercel/` git dışı). Production env'leri eklendi: Supabase CRM (3), Edoras (2), `NEXT_PUBLIC_EDORAS_PANEL_URL`,
 `NEXT_PUBLIC_APP_URL=https://edorascrm.vercel.app`, `CRON_SECRET` (aynı değer yerel `.env.local`'da). **Eksik:** Resend
 (`RESEND_API_KEY`, `EMAIL_FROM`), `ACCOUNTANT_EMAIL`, `PARASUT_*`. Preview ortamına env eklenmedi (CLI dal adı istiyor).
 Özel alan adı bağlanınca `NEXT_PUBLIC_APP_URL`'i değiştirip yeniden dağıt. Framework: Next.js 16 (otomatik algılanır), build `next build`, Node 20+ (22 önerilir).
 `vercel.json` yalnız cron içerir. Tüm değişkenler **Production** (+ istenirse Preview) ortamına eklenir. `NEXT_PUBLIC_*`
 derlemeye gömülür → değiştirince yeniden dağıt.
+
+## Yayın yöntemi (2026-10-09 ölçüldü)
+
+Bu belge eskiden "GitHub `main`'e bağlı, her push üretime gider" diyordu — **yanlış**. `vercel ls`'teki deploy'ların
+hepsi CLI kaynaklı, GitHub commit durumu boş; `5bf36ac` ve `2ff502b` push'landıktan sonra da üretim 08.10 deploy'unda
+kaldı (yeni uçlar 404). Yayın:
+
+1. CLI **yerel klasörü** yükler — commit'siz dosya varsa o da gider. Temiz kaynak kullan:
+   `git worktree add --detach <yol> origin/main` → `.vercel/project.json`'ı ana klasörden kopyala.
+2. `<yol>` içinde: `npx vercel deploy --prod --yes --scope kamil-nissas-projects` (scope verilmezse kişisel takımda arar).
+3. Doğrula: yeni bir ucun kimliksiz isteği **404 → 401** olmalı; `vercel inspect <url> --scope kamil-nissas-projects`.
+4. `git worktree remove <yol>`.
+
+Örnek: 2026-10-09 `2ff502b` → `dpl_51LNioBq8wy4QE5pnhfnvDBxg6sd` (`/api/institutions/<id>/modules` ve
+`/api/growth/institutions/<id>/staff-activity` 401).
 
 ## Zorunlu
 

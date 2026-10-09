@@ -41,7 +41,7 @@
     "table": {
       "institution": "Kurum",
       "event": "Etkinlik",
-      "actor": "Kişi (rol)"
+      "actor": "Kişi"
     },
     "types": {
       "ATTENDANCE_TAKEN": "Yoklama alındı",
@@ -50,7 +50,29 @@
       "EXAM_RESULTS_PUBLISHED": "Deneme sonuçları yayınlandı",
       "LESSON_TOPIC_LOGGED": "Konu işlendi",
       "ANNOUNCEMENT_CREATED": "Duyuru yayınlandı",
-      "SMS_SENT": "SMS gönderildi (elle)"
+      "SMS_SENT": "SMS gönderildi (elle)",
+      "TEACHER_CREATED": "Öğretmen eklendi",
+      "TEACHER_REMOVED": "Öğretmen kurumdan çıkarıldı",
+      "TEACHER_ACTIVATED": "Öğretmen aktifleştirildi",
+      "TEACHER_DEACTIVATED": "Öğretmen pasifleştirildi",
+      "TEACHER_PERMISSIONS_CHANGED": "Öğretmen yetkisi değişti",
+      "PERMISSION_PRESET_CHANGED": "Yetki rolü düzenlendi",
+      "PERMISSION_PRESET_DELETED": "Yetki rolü silindi",
+      "TEACHER_CREDENTIALS_RESET": "Öğretmen şifresi yenilendi",
+      "STUDENT_DELETED": "Öğrenci silindi",
+      "STUDENT_ACTIVATED": "Öğrenci aktifleştirildi",
+      "STUDENT_DEACTIVATED": "Öğrenci pasifleştirildi",
+      "STUDENT_PASSWORD_RESET": "Öğrenci şifresi sıfırlandı",
+      "PARENT_PASSWORD_RESET": "Veli şifresi sıfırlandı",
+      "PARENT_CREDENTIALS_SENT": "Veli giriş bilgisi gönderildi",
+      "CLASS_DELETED": "Sınıf silindi",
+      "EXAM_DELETED": "Deneme silindi",
+      "EXAM_RESULTS_PUBLISHED_BY": "Deneme sonucu yayına alındı",
+      "EXAM_RESULTS_UNPUBLISHED": "Deneme sonucu yayından kaldırıldı",
+      "TIMETABLE_ACTIVATED": "Ders programı aktifleştirildi",
+      "TIMETABLE_DELETED": "Ders programı silindi",
+      "ATTENDANCE_OVERRIDDEN": "Geçmiş yoklama değiştirildi",
+      "ANNOUNCEMENT_DELETED": "Duyuru silindi"
     },
     "roles": {
       "admin": "Kurum yöneticisi",
@@ -67,10 +89,24 @@
       "lastDays": "Son {days} gün"
     },
     "window": "Gösterilen aralık: {from} – {to}",
-    "scopeNote": "Yalnız Edoras'ta kayıtlı öğretmen ve yönetici etkinlikleri; öğrenci adı ya da kişisel veri gösterilmez. İç / sunum kurumları kurum seçilmediğinde listelenmez.",
+    "scopeNote": "Edoras'taki öğretmen ve yönetici etkinlikleri ile önemli işlemler (silme, yetki, kurumdan çıkarma, şifre, yayın). Yalnız personel adı gösterilir; öğrenci / veli adı ya da kişisel veri gösterilmez. İç / sunum kurumları kurum seçilmediğinde listelenmez.",
     "clamped": "İstenen aralık en çok {days} gündür; en yeni {days} gün gösteriliyor.",
     "truncated": "Aralıkta çok kayıt var; yalnız en yeni {max} olay gezilebilir. Daha eskisi için aralığı daraltın.",
-    "unavailable": "Şu kaynaklar okunamadı, toplama dahil değil: {sources}."
+    "unavailable": "Şu kaynaklar okunamadı, toplama dahil değil: {sources}.",
+    "detail": {
+      "name": "{name}",
+      "studentNo": "Öğrenci no {no}",
+      "timetable": "\"{label}\" · {count} sınıf",
+      "attendance": "{date} · {hour}. ders",
+      "parents": "{count} veli"
+    },
+    "groups": {
+      "activity": "Etkinlik",
+      "important": "Önemli işlemler",
+      "allImportant": "Tüm önemli işlemler"
+    },
+    "importantSince": "Önemli işlemler 9 Ekim 2026'dan beri kaydediliyor; daha eskisi yok.",
+    "unavailableImportant": "Önemli işlemler"
   },
   "audit": {
     "table": {

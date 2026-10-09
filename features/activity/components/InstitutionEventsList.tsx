@@ -5,8 +5,17 @@ import { Activity } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { CoverageNote } from "@/components/ui/coverage-note";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { INSTITUTION_EVENT_TYPES, MAX_EVENT_WINDOW_DAYS, type InstitutionEvent, type InstitutionEventType } from "@/lib/domain/activity/events";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  ACTIVITY_EVENT_TYPES,
+  IMPORTANT_EVENT_TYPES,
+  IMPORTANT_GROUP,
+  INSTITUTION_EVENT_TYPES,
+  MAX_EVENT_WINDOW_DAYS,
+  isImportantEventType,
+  type InstitutionEvent,
+  type InstitutionEventType,
+} from "@/lib/domain/activity/events";
 import { addDays, todayIso } from "@/lib/domain/institutions/rules";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { useActivityInstitutions, useInstitutionEvents } from "../queries";
@@ -55,10 +64,14 @@ function EventsGrid({ items }: { items: InstitutionEvent[] }) {
             {e.count !== null && e.count > 0 ? (
               <p className="truncate text-xs text-muted-foreground">{t(e.type === "SMS_SENT" ? "events.countRecipients" : "events.countStudents", { count: e.count })}</p>
             ) : null}
+            {e.detail ? (
+              <p className="truncate text-xs text-muted-foreground">{t(`events.detail.${e.detail.kind}`, e.detail.values)}</p>
+            ) : null}
           </div>
-          <div className="hidden items-center lg:col-span-3 lg:flex">
+          <div className="hidden min-w-0 items-center gap-2 lg:col-span-3 lg:flex">
+            {e.actorName ? <span className="truncate text-sm font-medium">{e.actorName}</span> : null}
             {e.actorRole ? (
-              <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">{t(`events.roles.${e.actorRole}`)}</span>
+              <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">{t(`events.roles.${e.actorRole}`)}</span>
             ) : (
               <span className="text-xs text-muted-foreground">{t("events.roleUnknown")}</span>
             )}
@@ -83,7 +96,7 @@ export function InstitutionEventsList() {
   const mounted = useMounted();
   const institutionId = f.get("inst");
   const typeParam = f.get("type");
-  const type = (INSTITUTION_EVENT_TYPES as readonly string[]).includes(typeParam) ? typeParam : "";
+  const type = typeParam === IMPORTANT_GROUP || (INSTITUTION_EVENT_TYPES as readonly string[]).includes(typeParam) ? typeParam : "";
   const today = todayIso();
 
   const institutions = useActivityInstitutions(true);
@@ -133,11 +146,23 @@ export function InstitutionEventsList() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>{t("filters.logType.all")}</SelectItem>
-              {INSTITUTION_EVENT_TYPES.map((k: InstitutionEventType) => (
-                <SelectItem key={k} value={k}>
-                  {t(`events.types.${k}`)}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectLabel>{t("events.groups.activity")}</SelectLabel>
+                {ACTIVITY_EVENT_TYPES.map((k: InstitutionEventType) => (
+                  <SelectItem key={k} value={k}>
+                    {t(`events.types.${k}`)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>{t("events.groups.important")}</SelectLabel>
+                <SelectItem value={IMPORTANT_GROUP}>{t("events.groups.allImportant")}</SelectItem>
+                {IMPORTANT_EVENT_TYPES.map((k: InstitutionEventType) => (
+                  <SelectItem key={k} value={k}>
+                    {t(`events.types.${k}`)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
@@ -160,8 +185,17 @@ export function InstitutionEventsList() {
         <CoverageNote>{t("events.scopeNote")}</CoverageNote>
         {data?.window.clamped ? <CoverageNote>{t("events.clamped", { days: MAX_EVENT_WINDOW_DAYS })}</CoverageNote> : null}
         {data?.truncated ? <CoverageNote>{t("events.truncated", { max: 1000 })}</CoverageNote> : null}
+        {type === IMPORTANT_GROUP || isImportantEventType(type) ? <CoverageNote>{t("events.importantSince")}</CoverageNote> : null}
         {data && data.unavailable.length > 0 ? (
-          <CoverageNote>{t("events.unavailable", { sources: data.unavailable.map((k) => t(`events.types.${k}`)).join(", ") })}</CoverageNote>
+          <CoverageNote>
+            {t("events.unavailable", {
+              // 22 önemli işlem türü tek kaynaktan (activity_logs) gelir — okunamazsa tek ad yazılır.
+              sources: [
+                ...data.unavailable.filter((k) => !isImportantEventType(k)).map((k) => t(`events.types.${k}`)),
+                ...(data.unavailable.some(isImportantEventType) ? [t("events.unavailableImportant")] : []),
+              ].join(", "),
+            })}
+          </CoverageNote>
         ) : null}
       </div>
 

@@ -8,11 +8,18 @@ import { ACTIVITY_SOURCES, type ActivitySource, type SourceCounts, type SourceDa
 import { emptyCounts, emptyDates, latestDate, MAX_WINDOW_DAYS, toDay, windowStart } from "@/lib/domain/growth/usage";
 import { bucketByWeek, weekStarts } from "@/lib/domain/growth/weekly";
 import {
+  IMPORTANT_EVENT_TYPES,
   MAX_EVENT_ROWS,
+  actionToEventType,
+  buildEventDetail,
+  eventTypeToAction,
+  isImportantEventType,
   istanbulRange,
   mergeEventPage,
   resolveEventWindow,
   type EventActorRole,
+  type EventDetail,
+  type ImportantEventType,
   type InstitutionEvent,
   type InstitutionEventType,
   type InstitutionEventsQuery,
@@ -448,6 +455,8 @@ interface RawEvent {
   type: InstitutionEventType;
   actorId: string | null;
   count: number | null;
+  /** Yalnız önemli işlem (activity_logs) satırlarında. */
+  important?: { action: string; entityType: string; entityId: string | null; details: unknown };
 }
 
 async function sourceEvents(db: SupabaseClient, spec: EventSpec, f: EventFilters, rows: number): Promise<RawEvent[]> {
@@ -477,7 +486,90 @@ async function sourceEvents(db: SupabaseClient, spec: EventSpec, f: EventFilters
   return out;
 }
 
-/** Sayfadaki kişilerin kurumdaki rolü (ad okunmaz). Okunamazsa boş harita → rol "bilinmiyor". */
+/**
+ * Önemli işlemler (Edoras `activity_logs`, migration 312): tek istek, en yeniden en çok MAX_EVENT_ROWS satır. Tablo küçük
+ * (09.10 ölçümü: 4 kurumda günde birkaç satır) — tür sayıları da aynı satırlardan çıkar; satır sınıra dayanırsa sayılar alt
+ * sınırdır ve `truncated` döner. Tablo yoksa (312 uygulanmadan) / izin yoksa çağıran `unavailable`'a düşürür.
+ */
+async function importantEvents(
+  db: SupabaseClient,
+  types: readonly ImportantEventType[],
+  f: EventFilters
+): Promise<{ rows: RawEvent[]; counts: Partial<Record<ImportantEventType, number>>; capped: boolean }> {
+  const range = istanbulRange(f.window.from, f.window.to);
+  let q = db
+    .from("activity_logs")
+    .select("id, institution_id, created_at, actor_id, action, entity_type, entity_id, details")
+    .gte("created_at", range.start)
+    .lt("created_at", range.end)
+    .in("action", types.map(eventTypeToAction));
+  if (f.institutionId) q = q.eq("institution_id", f.institutionId);
+  else if (f.excludedInstitutionIds.length > 0) q = q.not("institution_id", "in", `(${f.excludedInstitutionIds.join(",")})`);
+  const { data, error } = await limit(async () => q.order("created_at", { ascending: false }).limit(MAX_EVENT_ROWS));
+  if (error) throw dbError(error);
+
+  const rows: RawEvent[] = [];
+  const counts: Partial<Record<ImportantEventType, number>> = {};
+  for (const row of (data ?? []) as Record<string, unknown>[]) {
+    const type = typeof row.action === "string" ? actionToEventType(row.action) : null;
+    if (!type || typeof row.created_at !== "string" || typeof row.institution_id !== "string") continue;
+    counts[type] = (counts[type] ?? 0) + 1;
+    rows.push({
+      id: `${type}:${String(row.id)}`,
+      at: new Date(row.created_at).toISOString(),
+      institutionId: row.institution_id,
+      type,
+      actorId: typeof row.actor_id === "string" ? row.actor_id : null,
+      count: null,
+      important: {
+        action: row.action as string,
+        entityType: typeof row.entity_type === "string" ? row.entity_type : "",
+        entityId: typeof row.entity_id === "string" ? row.entity_id : null,
+        details: row.details,
+      },
+    });
+  }
+  return { rows, counts, capped: (data ?? []).length >= MAX_EVENT_ROWS };
+}
+
+/**
+ * Sayfadaki PERSONELİN (işlemi yapan + önemli işlemin hedef öğretmeni) adları ve önemli işlemdeki denemelerin adları —
+ * yalnız sayfadaki kimlikler için en çok iki `in` sorgusu. Öğrenci / veli adı okunmaz (onların kimliği istenmez).
+ * Okunamazsa boş harita → ad gösterilmez.
+ */
+async function eventNames(db: SupabaseClient, events: readonly RawEvent[]): Promise<{ people: Map<string, string>; exams: Map<string, string> }> {
+  const people = new Map<string, string>();
+  const exams = new Map<string, string>();
+  const personIds = new Set<string>();
+  const examIds = new Set<string>();
+  for (const e of events) {
+    if (e.actorId) personIds.add(e.actorId);
+    const target = e.important;
+    if (target?.entityId && target.entityType === "teacher") personIds.add(target.entityId);
+    if (target?.entityId && target.entityType === "exam") examIds.add(target.entityId);
+  }
+  try {
+    await Promise.all([
+      personIds.size > 0
+        ? limit(async () => db.from("profiles").select("id, full_name").in("id", [...personIds]).limit(PAGE)).then(({ data, error }) => {
+            if (error) return;
+            for (const r of (data ?? []) as { id: string; full_name: string | null }[]) if (r.full_name?.trim()) people.set(r.id, r.full_name.trim());
+          })
+        : null,
+      examIds.size > 0
+        ? limit(async () => db.from("exams").select("id, name").in("id", [...examIds]).limit(PAGE)).then(({ data, error }) => {
+            if (error) return;
+            for (const r of (data ?? []) as { id: string; name: string | null }[]) if (r.name?.trim()) exams.set(r.id, r.name.trim());
+          })
+        : null,
+    ]);
+  } catch {
+    // ad bilinmiyor
+  }
+  return { people, exams };
+}
+
+/** Sayfadaki kişilerin kurumdaki rolü. Okunamazsa boş harita → rol "bilinmiyor". */
 async function actorRoles(db: SupabaseClient, events: readonly RawEvent[]): Promise<Map<string, EventActorRole>> {
   const ids = [...new Set(events.map((e) => e.actorId).filter((v): v is string => !!v))];
   const out = new Map<string, EventActorRole>();
@@ -504,7 +596,16 @@ export async function listInstitutionEvents(
   const window = resolveEventWindow(query.from, query.to);
   const filters: EventFilters = { institutionId: query.institutionId, excludedInstitutionIds, window };
   const specs = query.types.length > 0 ? EVENT_SPECS.filter((s) => query.types.includes(s.type)) : EVENT_SPECS;
+  const importantTypes = query.types.length > 0 ? query.types.filter(isImportantEventType) : [...IMPORTANT_EVENT_TYPES];
   const rowsNeeded = Math.min(MAX_EVENT_ROWS, (query.page + 1) * query.size);
+
+  const importantResult =
+    importantTypes.length > 0
+      ? importantEvents(db, importantTypes, filters).then(
+          (r) => ({ ...r, ok: true as const }),
+          () => ({ rows: [] as RawEvent[], counts: {} as Partial<Record<ImportantEventType, number>>, capped: false, ok: false as const })
+        )
+      : Promise.resolve(null);
 
   const results = await Promise.all(
     specs.map(async (spec) => {
@@ -523,6 +624,8 @@ export async function listInstitutionEvents(
     })
   );
 
+  const important = await importantResult;
+
   const countsByType: Partial<Record<InstitutionEventType, number>> = {};
   const unavailable: InstitutionEventType[] = [];
   let total = 0;
@@ -533,24 +636,46 @@ export async function listInstitutionEvents(
       total += r.count;
     }
   }
+  if (important && !important.ok) unavailable.push(...importantTypes);
+  else if (important) {
+    for (const type of importantTypes) {
+      const c = important.counts[type] ?? 0;
+      countsByType[type] = c;
+      total += c;
+    }
+  }
 
   const pageRows = mergeEventPage(
-    results.map((r) => r.rows.map((e) => ({ ...e }))),
+    [...results.map((r) => r.rows.map((e) => ({ ...e }))), important?.rows ?? []],
     query.page * query.size,
     query.size
   );
-  const [institutions, roles] = await Promise.all([listEdorasInstitutions(), actorRoles(db, pageRows)]);
-  const names = new Map(institutions.map((i) => [i.id, i.name]));
+  const [institutions, roles, names] = await Promise.all([listEdorasInstitutions(), actorRoles(db, pageRows), eventNames(db, pageRows)]);
+  const institutionNames = new Map(institutions.map((i) => [i.id, i.name]));
 
-  const items: InstitutionEvent[] = pageRows.map((e) => ({
-    id: e.id,
-    at: e.at,
-    institutionId: e.institutionId,
-    institutionName: names.get(e.institutionId) ?? "—",
-    type: e.type,
-    actorRole: e.actorId ? (roles.get(`${e.actorId}:${e.institutionId}`) ?? null) : null,
-    count: e.count,
-  }));
+  const items: InstitutionEvent[] = pageRows.map((e) => {
+    const role = e.actorId ? (roles.get(`${e.actorId}:${e.institutionId}`) ?? null) : null;
+    let detail: EventDetail | null = null;
+    if (e.important) {
+      const { action, entityType, entityId, details } = e.important;
+      const entityName = entityId
+        ? ((entityType === "teacher" ? names.people.get(entityId) : entityType === "exam" ? names.exams.get(entityId) : undefined) ?? null)
+        : null;
+      detail = buildEventDetail(action, details, entityName);
+    }
+    return {
+      id: e.id,
+      at: e.at,
+      institutionId: e.institutionId,
+      institutionName: institutionNames.get(e.institutionId) ?? "—",
+      type: e.type,
+      actorRole: role,
+      // Ad yalnız PERSONEL için (yönetici / öğretmen); rolü "diğer" ya da bilinmeyenin adı gösterilmez.
+      actorName: e.actorId && (role === "admin" || role === "teacher") ? (names.people.get(e.actorId) ?? null) : null,
+      count: e.count,
+      detail,
+    };
+  });
 
   return {
     items,
@@ -561,7 +686,7 @@ export async function listInstitutionEvents(
     lastPage: Math.max(0, Math.min(query.lastPage, Math.ceil(total / query.size) - 1)),
     window,
     unavailable,
-    truncated: total > MAX_EVENT_ROWS,
+    truncated: total > MAX_EVENT_ROWS || Boolean(important?.capped),
   };
 }
 

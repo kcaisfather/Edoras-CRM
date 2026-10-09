@@ -24,14 +24,17 @@ import { PanelModulesCard } from "./PanelModulesCard";
  * Kurum ayrıntısı. `aside`: sağ sütunun başına eklenen parça — başka modüllerin kartları (ör. CRM adayı)
  * route dosyasında verilir; kurumlar modülü onları import etmez (feature bağımlılığı tek yönlü kalır).
  * `renderPaymentAction`: ödeme satırlarına eklenen parça (ör. faturalar modülünün "Fatura kes"i) — aynı ilke.
+ * `footer`: ızgaranın altında tam genişlik parça (geniş tablolar, ör. büyüme modülünün "Öğretmen kullanımı") — aynı ilke.
  */
 export function InstitutionDetailPage({
   id,
   aside,
+  footer,
   renderPaymentAction,
 }: {
   id: string;
   aside?: React.ReactNode;
+  footer?: React.ReactNode;
   renderPaymentAction?: (payment: Payment, institution: InstitutionDetail) => React.ReactNode;
 }) {
   const t = useTranslations("institutions.detail");
@@ -74,6 +77,7 @@ export function InstitutionDetailPage({
           <UsageCard institution={institution} />
         </div>
       </div>
+      {institution.missingInEdoras ? null : footer}
     </div>
   );
 }

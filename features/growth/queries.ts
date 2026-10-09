@@ -14,6 +14,7 @@ export const growthKeys = {
   weekly: (weeks: number) => [...growthKeys.all, "weekly", weeks] as const,
   commitments: () => [...growthKeys.all, "commitments"] as const,
   usage: (id: string, windowDays: number) => [...growthKeys.all, "usage", id, windowDays] as const,
+  staffActivity: (id: string, windowDays: number) => [...growthKeys.all, "staffActivity", id, windowDays] as const,
 };
 
 /** Kurum başına lisans + kullanım. Sunucu Edoras okumasını 5 dk önbelleğe alır; burada da 2 dk taze sayılır. */
@@ -39,6 +40,16 @@ export function useInstitutionUsage(id: string, windowDays = DEFAULT_WINDOW_DAYS
   return useQuery({
     queryKey: growthKeys.usage(id, windowDays),
     queryFn: ({ signal }) => growthApi.institutionUsage(id, windowDays, signal),
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/** Kurumun öğretmen × işlem tablosu (kurum ayrıntısı). Sunucu 5 dk önbelleğe alır; burada da 2 dk taze sayılır. */
+export function useStaffActivity(id: string, windowDays = DEFAULT_WINDOW_DAYS) {
+  return useQuery({
+    queryKey: growthKeys.staffActivity(id, windowDays),
+    queryFn: ({ signal }) => growthApi.staffActivity(id, windowDays, signal),
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });

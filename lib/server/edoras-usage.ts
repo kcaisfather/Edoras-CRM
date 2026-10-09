@@ -18,12 +18,23 @@ import {
   type InstitutionEventsQuery,
   type InstitutionEventsResponse,
 } from "@/lib/domain/activity/events";
+import {
+  buildStaffActivityRows,
+  type StaffActivityResponse,
+  type StaffActivityRpcRow,
+  type StaffMember,
+  type StaffProfile,
+} from "@/lib/domain/growth/staff-activity";
+import { todayIso } from "@/lib/domain/institutions/rules";
 import { fetchAll, listEdorasInstitutions } from "./edoras";
 
 /**
  * Edoras KULLANIM sinyalleri (Müşteri analizleri). `edoras.ts` ile birlikte Edoras'a dokunan iki dosyadan biri; YALNIZ
  * OKUMA: `select` + `head:true` sayımlar. Yazan / yan etkili RPC yok; `institution_students_with_default_password` gibi ağır
  * RPC'ler çağrılmaz. Öğrenci kişisel verisi okunmaz — yalnız sayılar ve tarihler.
+ *
+ * Tek RPC istisnası: `staff_activity_summary` (Öğretmen kullanımı kartı, edoras-admin migration 305) — salt okunur,
+ * `stable`, indeksli; ayrıntı dosyanın sonunda.
  *
  * Sinyaller (Edoras'ta "son giriş" kolonu yok; etkinlik = öğretmen/yönetici işlemleri):
  *   attendance    attendance_sessions.date         (institution_id, date) indeksli; en iyi günlük kullanım sinyali
@@ -596,4 +607,78 @@ export async function getSmsRecipientsByInstitution(month: string): Promise<{ by
   const value = { byInstitution, truncated };
   smsCache.set(month, { at: Date.now(), value });
   return value;
+}
+
+// --- Öğretmen kullanımı (kurum ayrıntısı kartı) ----------------------------------------------------
+
+/**
+ * Kurumun personeli × işlem türü (kurum ayrıntısındaki "Öğretmen kullanımı" kartı). Kaynak: Edoras RPC
+ * `staff_activity_summary` (edoras-admin migration 305; YALNIZ OKUMA, `stable`, indeksli kaynaklar — en büyük kurumda
+ * 90 gün ≈ 0,1–0,2 sn). Edoras'a kart açılışı başına 3 istek: RPC (≤ 1000 satır/sayfa) + `institution_users` +
+ * `profiles` (ad, branş — yalnız bu kurumun personeli ve penceredeki aktörler). Öğrenci verisi okunmaz.
+ * 5 dakikalık bellek önbelleği; aynı anda gelen istekler tek çalışmada birleşir. Okunamazsa hata fırlatır (kart
+ * "okunamadı" gösterir) — RPC henüz uygulanmamışsa (PGRST202) da böyle.
+ */
+const staffCache = new Map<string, Cached<StaffActivityResponse>>();
+const staffInflight = new Map<string, Promise<StaffActivityResponse>>();
+const PROFILE_CHUNK = 200;
+
+async function collectStaffActivity(db: SupabaseClient, institutionId: string, days: number, since: string, until: string): Promise<StaffActivityResponse> {
+  const [summary, members] = await Promise.all([
+    limit(() =>
+      fetchAll<StaffActivityRpcRow>((a, b) =>
+        db
+          .rpc("staff_activity_summary", { p_institution_id: institutionId, p_since: since, p_until: until })
+          .order("user_id")
+          .order("action")
+          .range(a, b)
+      )
+    ),
+    limit(() =>
+      fetchAll<{ user_id: string; role: string | null; is_active: boolean | null; deactivated_at: string | null }>((a, b) =>
+        db
+          .from("institution_users")
+          .select("user_id, role, is_active, deactivated_at")
+          .eq("institution_id", institutionId)
+          .in("role", ["teacher", "admin"])
+          .is("deleted_at", null)
+          .order("user_id")
+          .range(a, b)
+      )
+    ),
+  ]);
+
+  const staff: StaffMember[] = members.map((m) => ({ userId: m.user_id, role: m.role, active: m.is_active !== false && !m.deactivated_at }));
+  const ids = [...new Set([...staff.map((s) => s.userId), ...summary.map((r) => r.user_id)].filter(Boolean))];
+  const profiles: StaffProfile[] = [];
+  for (let i = 0; i < ids.length; i += PROFILE_CHUNK) {
+    const chunk = ids.slice(i, i + PROFILE_CHUNK);
+    const { data, error } = await limit(async () => db.from("profiles").select("id, full_name, branch").in("id", chunk).limit(PROFILE_CHUNK));
+    if (error) throw dbError(error);
+    for (const p of (data ?? []) as { id: string; full_name: string | null; branch: string | null }[]) {
+      profiles.push({ id: p.id, fullName: p.full_name, branch: p.branch });
+    }
+  }
+
+  return { windowDays: days, since, until, rows: buildStaffActivityRows(summary, staff, profiles) };
+}
+
+export async function getStaffActivity(institutionId: string, windowDays: number): Promise<StaffActivityResponse> {
+  const days = clampWindow(windowDays);
+  const until = todayIso();
+  const since = windowStart(days);
+  const key = `${days}:${until}:${institutionId}`;
+  const hit = staffCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
+  const running = staffInflight.get(key);
+  if (running) return running;
+
+  const job = collectStaffActivity(getEdorasAdminClient(), institutionId, days, since, until)
+    .then((value) => {
+      staffCache.set(key, { at: Date.now(), value });
+      return value;
+    })
+    .finally(() => staffInflight.delete(key));
+  staffInflight.set(key, job);
+  return job;
 }

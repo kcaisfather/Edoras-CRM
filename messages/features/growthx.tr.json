@@ -402,5 +402,38 @@
       "retention": "Retention & Churn",
       "economics": "Birim ekonomisi"
     }
+  },
+  "staffActivity": {
+    "title": "Öğretmen kullanımı",
+    "description": "Öğretmen ve yöneticilerin sistemdeki önemli işlemleri. Hücre = işlem sayısı (aynı dakikadaki kayıtlar tek işlem).",
+    "unavailable": "Öğretmen kullanımı okunamadı.",
+    "summary": "Son {days} günde {total} personelden {active} kişi işlem yaptı.",
+    "idle": "{count} kişi hiç işlem yapmadı.",
+    "cellTitle": "{events} kayıt · {days} gün",
+    "never": "Hiç",
+    "unknown": "Adı bilinmiyor",
+    "inactive": "Pasif",
+    "activeDaysShort": "{days} aktif gün",
+    "role": {
+      "admin": "Yönetici",
+      "teacher": "Öğretmen",
+      "other": "Diğer"
+    },
+    "cols": {
+      "name": "Personel",
+      "branch": "Branş",
+      "role": "Rol",
+      "attendance": "Yoklama",
+      "assignment": "Ödev",
+      "review": "Ödev kontrolü",
+      "privateLesson": "Birebir",
+      "exam": "Deneme",
+      "announcement": "Duyuru",
+      "sms": "Elle SMS",
+      "lessonTopic": "Konu işleme",
+      "mobile": "Mobil oturum",
+      "activeDays": "Aktif gün",
+      "lastDay": "Son işlem"
+    }
   }
 }

@@ -14,4 +14,11 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
 - Yenileme / retention `crm_licenses`'tan kesin: bitişten sonra 30 gün içinde yeni lisans = yenilendi, yoksa churn; kohort
   ilk lisans ayı. Birim ekonomisi ve sızıntı yalnız ADMIN.
 - Kampanya: WhatsApp bağlantıları + CSV (e-posta kampanyası yok — onay / çıkış kaydı yok).
+- **Öğretmen kullanımı kartı (2026-10-09, dal `ogretmen-kullanim-2026-10-09`):** kurum ayrıntısının altında tam genişlik
+  (`InstitutionDetailPage` → `footer` yuvası), uç `/api/growth/institutions/{id}/staff-activity?window=7|30|90`, sunucu
+  `getStaffActivity` (`edoras-usage.ts` sonu), saf mantık `lib/domain/growth/staff-activity.ts` (+ test). Kaynak Edoras RPC
+  `staff_activity_summary` (edoras-admin migration 305 — CRM'den önce Edoras canlısına uygulanmalı; yoksa kart "okunamadı").
+  Personel × işlem (yoklama, ödev, ödev kontrolü, birebir, deneme, duyuru, elle SMS, konu, mobil oturum); hücre = işlem
+  (aynı dakika = 1), "Aktif gün" RPC'nin kişi başı `total` satırından (işlemler arasında toplanmaz). İşlemsiz etkin
+  personel de listelenir. Maliyet: kart başına 3 istek (RPC + `institution_users` + `profiles`), 5 dk önbellek.
 - Bırakılan: genişleme (koltuk), kanal sekmeleri, AWS / CAC-ROAS, telemetri `/analytics`. → [../reference/decisions.md](../reference/decisions.md)

@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 import type { CommitmentInput, RenewalCommitmentDto } from "@/lib/domain/growth/commitments";
+import type { StaffActivityResponse } from "@/lib/domain/growth/staff-activity";
 import type { GrowthCustomersResponse, UsageSignals, WeeklyActivityResponse } from "@/lib/domain/growth/types";
 
 export const growthApi = {
@@ -13,4 +14,6 @@ export const growthApi = {
     apiRequest<{ ok: true }>(`/api/crm/renewals/commitments/${encodeURIComponent(institutionId)}`, { method: "DELETE" }),
   institutionUsage: (id: string, windowDays: number, signal?: AbortSignal) =>
     apiRequest<UsageSignals | null>(`/api/growth/institutions/${encodeURIComponent(id)}/usage?window=${windowDays}`, { signal }),
+  staffActivity: (id: string, windowDays: number, signal?: AbortSignal) =>
+    apiRequest<StaffActivityResponse>(`/api/growth/institutions/${encodeURIComponent(id)}/staff-activity?window=${windowDays}`, { signal }),
 };

@@ -117,6 +117,9 @@
       "CONTACT_UPDATED": "Yetkili bilgisi güncellendi",
       "BILLING_UPDATED": "Fatura bilgisi güncellendi",
       "PANEL_MODULE_CHANGED": "Panel modülü açıldı / kapandı",
+      "EDORAS_ADMIN_EMAIL_CHANGED": "Kurum yöneticisinin giriş e-postası değişti",
+      "EDORAS_ADMIN_PASSWORD_RESET": "Kurum yöneticisinin şifresi sıfırlandı",
+      "EDORAS_ADMIN_ACTIVE_CHANGED": "Kurum yöneticisi aktif / pasif yapıldı",
       "PAYMENT_RECORDED": "Ödeme alındı",
       "PAYMENT_UPDATED": "Ödeme düzeltildi",
       "PAYMENT_DELETED": "Ödeme silindi",
@@ -232,6 +235,7 @@
       "softPct": "Yumuşak eşik (%)",
       "hardPct": "Sert eşik (%)",
       "active": "Aktif",
+      "userId": "Edoras kullanıcısı",
       "smsUnitPriceTry": "SMS birim fiyatı (TL)"
     }
   }

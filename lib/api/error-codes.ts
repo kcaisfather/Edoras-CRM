@@ -69,6 +69,10 @@ export const API_ERROR_CODES = [
   "RATE_LIMITED",
   "COST_BUDGET_EXISTS",
   "REPORT_RECIPIENT_INVALID",
+  // Edoras kurum yöneticisi hesapları (lib/server/edoras.ts → updateEdorasAdminEmail / setEdorasAdminActive).
+  "EDORAS_LOGIN_NOT_EMAIL",
+  "EDORAS_SUPER_ADMIN",
+  "EDORAS_LAST_ADMIN",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

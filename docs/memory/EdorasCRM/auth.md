@@ -32,4 +32,15 @@
 - `crm_audit_logs.details`'e TC, VKN, adres, telefon, e-posta, şifre yazılmaz.
 - DB hata metni istemciye / loga gitmez (`dbError`, `lib/api/db-errors.ts`); PostgREST `details` satırın tamamını taşır.
 - Dış sağlayıcı hata gövdeleri (Resend, Paraşüt) saklanmaz; yalnız kısa kod (`resend:422`, `parasut:invoice:422`).
-- Demo geçici şifresi yalnız açılış yanıtında bir kez gösterilir, saklanmaz.
+- Demo geçici şifresi yalnız açılış yanıtında bir kez gösterilir, saklanmaz. Kurum yöneticisi şifre sıfırlaması da öyle.
+
+## Edoras hesapları (kurum yöneticisi)
+
+- CRM, Edoras'taki kurum yöneticisinin giriş e-postasını, şifresini ve o kurumdaki aktifliğini değiştirebilir — yalnız
+  ADMIN (`requireStaff({ role: "ADMIN" })`, menü de yalnız ADMIN'e çizilir). Uçlar `/api/institutions/{id}/admins/{userId}…`
+  → [modules/institutions-demo.md](modules/institutions-demo.md).
+- Hedef yalnız o kurumda `role 'admin'` üyeliği olan kullanıcı (yoksa 404); Edoras süper yöneticisi 403. Telefon / TC ile
+  giren hesabın adresi değişmez; yeni adres `@edoras.com` / `@internal.local` olamaz (başkasının telefon / TC kimliğini
+  ele geçirme riski).
+- Edoras Auth hesabı tekildir: e-posta / şifre değişikliği kişinin tüm Edoras üyeliklerine işler.
+- ⚠️ Edoras web paneli pasif yöneticiyi engellemiyor (yalnız mobil engelliyor) — kesin kapatma = şifre sıfırla.

@@ -17,7 +17,7 @@ Spring API yerine Supabase. Panel yalnız Türkçedir.
 | CRM ne yapar | Okur ve yazar (migration bu projeye) | Kurum listesi ve kullanım sayılarını okur; demo açarken kurum + aktif dönem + kurum yöneticisi oluşturur |
 | Şema değişikliği | `supabase/migrations/` | **Yok.** Edoras şemasına dokunulmaz |
 
-- Edoras'a dokunan kodun tamamı `lib/server/edoras.ts` (kurumlar, demo açma) ve `lib/server/edoras-usage.ts` (salt okunur kullanım sinyalleri) içinde.
+- Edoras'a dokunan kodun tamamı `lib/server/edoras.ts` (kurumlar, demo açma, panel modülü, kurum yöneticisi hesapları) ve `lib/server/edoras-usage.ts` (salt okunur kullanım sinyalleri) içinde.
 - `crm_institutions.institution_id` Edoras kurumunun id'sidir (iki veritabanı arasında FK yok). Kurum adı kayıt
   anında saklanır. Edoras'ta silinen bir kurum CRM'den düşmez, "Edoras'ta yok" olarak görünür; lisans ve
   ödemeleri korunur.

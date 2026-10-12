@@ -28,7 +28,7 @@ Supabase'e taşındı. Bu klasör ajanlar ve ekip için **modüler hafızadır**
 
 ## Modüller (`modules/`)
 
-- Kurumlar, demo açma (Edoras'a yazar), lisans, ödeme, fatura profili → [modules/institutions-demo.md](modules/institutions-demo.md)
+- Kurumlar, demo açma ve kurum yöneticisi hesapları (Edoras'a yazar), lisans, ödeme, fatura profili → [modules/institutions-demo.md](modules/institutions-demo.md)
 - CRM adayları, notlar, Satış Analizleri → [modules/crm-leads.md](modules/crm-leads.md)
 - Görevler + kural motoru (zamanlayıcısız türetme) → [modules/tasks-rules.md](modules/tasks-rules.md)
 - Soğuk listeler + Excel/CSV içe aktarma → [modules/cold-lists-import.md](modules/cold-lists-import.md)

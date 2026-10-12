@@ -31,7 +31,10 @@ yalnız `service_role`'e grant, fonksiyonlar PUBLIC'ten revoke. Her dosyanın so
 | `institutions` | liste / ad çakışması okuma; demo: `insert (name, program 'yks'\|'lgs', is_active)` |
 | `academic_years`, `academic_terms` | demo: aktif yıl + dönem (`initialAcademicPeriod`, `lib/domain/institutions/rules.ts`) |
 | `auth.users` (admin API), `profiles`, `institution_users` (`role 'admin'`) | demo: kurum yöneticisi |
-| RPC `auth_user_email_taken` | e-posta çakışması (YKS migration 019) |
+| `auth.users` (`getUserById` / `updateUserById`), `profiles.email` / `is_active`, `institution_users.is_active` | kurum yöneticisi hesap işlemleri (yalnız ADMIN, 2026-10-12): giriş e-postası (Auth + `profiles.email` birlikte; Edoras'ta auth→profiles tetikleyicisi yok), şifre, bu kurumdaki üyeliğin aktifliği — yalnız `(kurum, kullanıcı, role 'admin')` üyeliği olan hesapta → [modules/institutions-demo.md](modules/institutions-demo.md) |
+| `institution_users` (okuma) | Kurum yöneticileri kartı: aynı hesabın başka kurumlardaki üyelik sayısı; `profiles.is_super_admin` okunur (süper yöneticiye işlem yok) |
+| `panel_modules` (okuma), `institution_panel_modules` (upsert) | panel modülleri (YKS migration 300) |
+| RPC `auth_user_email_taken(p_email, p_exclude_user_id)` | e-posta çakışması (YKS migration 019); e-posta değişikliğinde hesabın kendisi hariç |
 | RPC `delete_institution_guarded(id, ad)` | yalnız demo geri alma (YKS migration 192; 266 geri alma yolunu düzeltti) |
 | `students`, `attendance_sessions`, `lesson_topic_logs`, `assignments`, `exams`, `announcements`, `sms_logs`… | salt okunur kullanım sinyali → [modules/growth-analytics.md](modules/growth-analytics.md) |
 

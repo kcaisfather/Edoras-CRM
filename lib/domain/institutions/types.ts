@@ -1,4 +1,5 @@
 /** Kurum CRM alan tipleri — API yanıtları ve ekranlar bu şekilleri paylaşır. */
+import type { EdorasLoginKind } from "./edoras-accounts";
 
 export type CrmStatus = "DEMO" | "UCRETLI";
 export type InstitutionProgram = "yks" | "lgs";
@@ -101,8 +102,16 @@ export interface Payment {
 export interface InstitutionAdmin {
   userId: string;
   fullName: string | null;
+  /** Giriş e-postası (`profiles.email`; CRM'den değişince Auth ile birlikte yazılır). */
   email: string | null;
+  /** Bu kurumdaki yönetici üyeliği aktif mi (`institution_users.is_active`). */
   isActive: boolean;
+  /** E-posta / telefon (`@edoras.com`) / TC (`@internal.local`) — telefon / TC hesabının adresi CRM'den değişmez. */
+  loginKind: EdorasLoginKind;
+  /** Edoras süper yöneticisi: CRM'den hesap işlemi yapılmaz. */
+  isSuperAdmin: boolean;
+  /** Aynı hesabın BAŞKA kurumlardaki üyelik sayısı (e-posta / şifre değişikliği hepsinde geçerli). */
+  otherMembershipCount: number;
 }
 
 export interface InstitutionUsage {

@@ -83,7 +83,10 @@
         "INVOICE_NOT_RETRYABLE": "Yalnız başarısız e-posta ya da platform faturası yeniden denenebilir.",
         "INVOICE_PDF_NOT_READY": "Faturanın PDF'i Paraşüt'te henüz hazır değil; birkaç dakika sonra yeniden deneyin.",
         "PROVIDER_ERROR": "Fatura platformuna (Paraşüt) ulaşılamadı. Biraz sonra yeniden deneyin.",
-        "BILLING_PROFILE_INCOMPLETE": "Fatura profili eksik: unvan, il, ilçe, fatura e-postası (kurumsalda vergi dairesi) kurum sayfasından tamamlanmalı."
+        "BILLING_PROFILE_INCOMPLETE": "Fatura profili eksik: unvan, il, ilçe, fatura e-postası (kurumsalda vergi dairesi) kurum sayfasından tamamlanmalı.",
+        "EDORAS_LOGIN_NOT_EMAIL": "Bu yönetici Edoras'a telefon ya da TC ile giriyor; giriş adresi değiştirilirse girişi bozulur. Şifre sıfırlama ve aktif / pasif kullanılabilir.",
+        "EDORAS_SUPER_ADMIN": "Edoras süper yönetici hesabı CRM'den değiştirilemez.",
+        "EDORAS_LAST_ADMIN": "Kurumda başka aktif yönetici kalmıyor; pasife almak için bunu açıkça onaylayın."
       }
     },
     "cancel": "İptal",

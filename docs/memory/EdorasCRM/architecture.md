@@ -6,7 +6,7 @@ Tarayıcı (React Query, features/*) ──► /api/* (Next 16 route handler, ap
                                         ├──► CRM projesi orishbqniebbgdanazrp (service_role, lib/supabase/server.ts)
                                         │      crm_* tabloları, RPC'ler, CRM personel Auth'u
                                         ├──► Edoras canlı DB bmjkpxbrmwxuildwakly (service_role)
-                                        │      YALNIZ lib/server/edoras.ts (kurum listesi, demo açma)
+                                        │      YALNIZ lib/server/edoras.ts (kurum listesi, demo açma, panel modülü, kurum yöneticisi hesapları)
                                         │      ve lib/server/edoras-usage.ts (salt okunur kullanım sinyali)
                                         └──► Dış: Resend (lib/server/mail.ts), Paraşüt (lib/server/parasut-client.ts)
 ```
@@ -16,7 +16,7 @@ Tarayıcı (React Query, features/*) ──► /api/* (Next 16 route handler, ap
 | | CRM projesi | Edoras |
 | --- | --- | --- |
 | Kimin | EdorasCRM'in kendi Supabase projesi | edoras-admin (`Desktop/YKS`) + mobil (`Desktop/EdorasApp`) canlı DB |
-| CRM ne yapar | okur + yazar, migration buraya | okur; demo açarken kurum + yıl/dönem + yönetici yazar |
+| CRM ne yapar | okur + yazar, migration buraya | okur; demo açarken kurum + yıl/dönem + yönetici, panel modülü satırı ve (ADMIN) kurum yöneticisinin giriş e-postası / şifresi / aktifliğini yazar |
 | Şema | `supabase/migrations/` | **değiştirilmez** (şema gerçeği: YKS `docs/memory/YKS/data-model.md`) |
 
 - Bağ: `crm_institutions.institution_id` = Edoras `institutions.id` (FK yok). Edoras'ta silinen kurum CRM'de "Edoras'ta yok".

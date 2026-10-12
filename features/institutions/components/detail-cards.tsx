@@ -27,6 +27,7 @@ import { daysBetween, todayIso } from "@/lib/domain/institutions/rules";
 import type { InstitutionDetail, License, Payment } from "@/lib/domain/institutions/types";
 import { formatDate, formatDateTime, formatPhone } from "../format";
 import { BillingDialog, ContactDialog, LicenseEditDialog, PaymentDialog, PaymentEditDialog, RenewDialog } from "./dialogs";
+import { AdminAccountMenu, LoginKindBadge, SuperAdminBadge } from "./AdminAccountActions";
 
 export function SectionCard({
   icon: Icon,
@@ -354,9 +355,13 @@ export function PaymentsCard({
   );
 }
 
-/** Edoras'taki kurum yöneticisi hesapları (ad + giriş e-postası); pasif hesap soluk ve etiketli. */
+/**
+ * Edoras'taki kurum yöneticisi hesapları (ad + giriş e-postası + giriş türü); pasif hesap soluk ve etiketli. ADMIN her
+ * satırda hesap işlemleri menüsünü görür (AdminAccountActions: giriş e-postası, şifre, aktif / pasif).
+ */
 export function AdminsCard({ institution }: { institution: InstitutionDetail }) {
   const t = useTranslations("institutions.detail.admins");
+  const { isAdmin } = usePermissions();
   const admins = institution.admins;
   return (
     <SectionCard
@@ -380,14 +385,16 @@ export function AdminsCard({ institution }: { institution: InstitutionDetail }) 
                 {initials(a.fullName)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="truncate text-sm font-medium">{a.fullName ?? "—"}</span>
                   {!a.isActive ? (
                     <span className="shrink-0 rounded border border-border px-1.5 text-[10px] font-semibold text-muted-foreground">{t("inactive")}</span>
                   ) : null}
+                  {a.isSuperAdmin ? <SuperAdminBadge /> : <LoginKindBadge kind={a.loginKind} />}
                 </span>
                 {a.email ? <span className="block truncate text-xs text-muted-foreground" title={a.email}>{a.email}</span> : null}
               </span>
+              {isAdmin && !a.isSuperAdmin ? <AdminAccountMenu institution={institution} admin={a} /> : null}
             </li>
           ))}
         </ul>
@@ -397,7 +404,7 @@ export function AdminsCard({ institution }: { institution: InstitutionDetail }) 
 }
 
 function initials(name: string | null): string {
-  const parts = (name ?? "").trim().split(/s+/).filter(Boolean);
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   return (parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2)).toLocaleUpperCase("tr-TR");
 }

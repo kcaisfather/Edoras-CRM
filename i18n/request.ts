@@ -48,6 +48,8 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
     costs: (await import("@/messages/features/costs.tr.json")).default,
     // Destek talepleri: tickets.* (herkese açık form dahil: tickets.public).
     tickets: (await import("@/messages/features/tickets.tr.json")).default,
+    // Edoras kurum yöneticisi hesap işlemleri: tr.json'daki institutions.* ad alanına birleşir (institutions.adminAccounts).
+    institutions: (await import("@/messages/features/institution-accounts.tr.json")).default,
   };
 }
 

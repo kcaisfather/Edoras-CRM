@@ -89,3 +89,41 @@ migration 300: `panel_modules` katalog (CRM yalnız okur) + `institution_panel_m
 - İşlem kaydı `PANEL_MODULE_CHANGED` (details: `module`, `enabled`). Sunucu: `lib/server/panel-modules.ts` →
   `edoras.ts` `getEdorasPanelModules` / `setEdorasPanelModule`. Test: `panel-modules.test.ts`.
 - Yeni modül eklemek Edoras işidir (katalog satırı + kod kapısı); CRM kartı katalogdan kendiliğinden listeler.
+
+## Kurum yöneticisi hesapları — Edoras'a YAZAR (yalnız ADMIN, 2026-10-12)
+
+Sorun: demo açılırken yetkili e-postası kurum yöneticisinin Edoras giriş adresi oluyor (`createEdorasDemo`), ama Yetkili
+kartında e-posta sonradan değişince yalnız `crm_institutions.contact_email` yazılıyordu → Edoras Auth'ta eski adres
+kalıyordu. Kullanıcı kararı: giriş e-postası, şifre sıfırlama ve aktif / pasif CRM'den yönetilsin, yalnız ADMIN.
+
+- **Kart:** Genel bakış → "Kurum yöneticileri" (`AdminsCard`): her satırda giriş türü rozeti (E-posta / Telefon / TC —
+  `edorasLoginKind`, `profiles.email`'den), Pasif ve Süper yönetici rozeti; ADMIN'e "⋯" menüsü
+  (`features/institutions/components/AdminAccountActions.tsx`). Telefon / TC hesabında e-posta öğesi kapalı + açıklama.
+- **Uçlar** (`requireStaff({ role: "ADMIN" })`, ince; iş `lib/server/institution-admin-accounts.ts` → `edoras.ts`):
+  - `PATCH /api/institutions/{id}/admins/{userId}` `{ email }` → `updateEdorasAdminEmail`: üyelik kapısı → kurallar (Auth'taki
+    GÜNCEL adresle) → `auth_user_email_taken(email, userId)` → Auth `updateUserById({ email, email_confirm: true })` →
+    `profiles.email`. Profil yazılamazsa Auth eski adrese döndürülür. Aynı adres → `{ changed: false }` (profil geride kaldıysa
+    eşitlenir). Eski adresle giriş hemen biter; şifre ve CRM yetkili bilgisi değişmez.
+  - `POST …/admins/{userId}/password` `{}` → demo üreticisiyle 12 karakterlik geçici şifre; yanıtta bir kez
+    (`loginIdentifier` — telefonda 0'lı 11 hane, TC'de 11 hane — + şifre + panel adresi). Hiçbir yerde saklanmaz
+    (Edoras da `initial_password` saklamıyor).
+  - `PATCH …/admins/{userId}/active` `{ active, confirmLastAdmin? }` → `institution_users.is_active` (yalnız bu kurumun admin
+    satırı; silme / ban yok — Edoras `setTeacherActiveForAdmin` deseni) + `profiles.is_active` (açılınca true; kapanınca
+    yalnız başka aktif personel üyeliği yoksa false). Son aktif yönetici `confirmLastAdmin: true` olmadan 409
+    `EDORAS_LAST_ADMIN` (pencere kırmızı uyarı + onay kutusu ister).
+- **Kapılar:** `(kurum, kullanıcı, role 'admin')` üyeliği yoksa 404; `profiles.is_super_admin` → 403 `EDORAS_SUPER_ADMIN`;
+  Auth adresi `@edoras.com` / `@internal.local` → 409 `EDORAS_LOGIN_NOT_EMAIL`; yeni adres bu alan adlarında → 400
+  `VALIDATION` (alan mesajı); başka hesapta → 409 `EMAIL_TAKEN`. E-postalar trim + küçük harf.
+- **Kapsam:** Auth hesabı tekildir — değişiklik kişinin başka kurumlardaki üyeliklerine de işler (kart sayıyı gösterir,
+  pencere uyarır). Aynı kişi veliyse veli telefon girişi adresi aramayla bulduğu için kırılmaz.
+- ⚠️ **Pasif yönetici web paneline girebilir:** YKS `resolve_user_role` / `middleware.ts` / `getAdminInstitutionContext`
+  `is_active=false`'u yalnız öğretmende uygular; mobil (`institutionUser.js`) yöneticiyi de içeri almaz. Pencere bunu
+  söyler ve şifreyi de sıfırlamayı önerir. Kalıcı çözüm YKS'de (açık iş).
+- **Yetkili ↔ giriş eşlemesi:** Yetkili bilgisi penceresinde e-posta değişirken ESKİ yetkili e-postası e-postayla giren bir
+  yöneticinin giriş adresiyse (yalnız ADMIN'e) "Panel giriş e-postasını da güncelle" kutusu çıkar (varsayılan işaretli;
+  `ContactLoginSync.tsx`). Yetkili kaydından sonra yönetici e-posta ucu çağrılır; o patlarsa yetkili değişikliği kalır,
+  toast "Yetkili bilgisi kaydedildi, ama panel giriş e-postası değiştirilemedi: …" der.
+- İşlem kaydı (kayıt türü kurum): `EDORAS_ADMIN_EMAIL_CHANGED`, `EDORAS_ADMIN_PASSWORD_RESET` (details `{ userId }`),
+  `EDORAS_ADMIN_ACTIVE_CHANGED` (`{ userId, active }`); e-posta / şifre yazılmaz. Değişiklik yoksa kayıt yazılmaz.
+- Testler: `lib/domain/institutions/edoras-accounts.test.ts` (giriş türü, ayrılmış alan adları, engeller, son yönetici,
+  şemalar). Uç / Edoras istemcisi için sahte istemci deseni repoda yok — canlıda denenmedi.

@@ -1,0 +1,82 @@
+{
+  "adminAccounts": {
+    "menuFor": "Hesap işlemleri: {name}",
+    "changeEmail": "Giriş e-postasını değiştir",
+    "emailLocked": "Telefon / TC ile giriyor; adresi değiştirilemez",
+    "resetPassword": "Şifre sıfırla",
+    "deactivate": "Pasife al",
+    "activate": "Aktif et",
+    "superAdmin": "Süper yönetici",
+    "superAdminHint": "Edoras süper yöneticisi; CRM'den hesap işlemi yapılmaz.",
+    "loginKind": {
+      "email": "E-posta",
+      "phone": "Telefon",
+      "tc": "TC"
+    },
+    "loginKindHint": {
+      "email": "Edoras'a bu e-posta adresiyle girer.",
+      "phone": "Edoras'a telefon numarasıyla girer; giriş adresi telefondan hesaplanır, bu yüzden CRM'den değiştirilemez.",
+      "tc": "Edoras'a TC kimlik numarası (ya da sistem adresi) ile girer; giriş adresi CRM'den değiştirilemez."
+    },
+    "otherMemberships": "Bu hesap Edoras'ta {count} başka kurumda da kayıtlı; değişiklik hepsinde geçerli olur.",
+    "email": {
+      "title": "Giriş e-postasını değiştir",
+      "description": "{name} — Edoras paneli ve mobil uygulamanın giriş adresi.",
+      "current": "Şu anki giriş e-postası",
+      "next": "Yeni giriş e-postası",
+      "effectNow": "Yeni adres hemen giriş adresi olur; eski adresle giriş yapılamaz. Onay e-postası gönderilmez.",
+      "effectPassword": "Şifre değişmez.",
+      "effectContact": "CRM'deki yetkili bilgisi değişmez; gerekiyorsa ayrıca düzenleyin.",
+      "submit": "E-postayı değiştir",
+      "saved": "Giriş e-postası değişti",
+      "unchanged": "Adres zaten buydu; değişiklik yapılmadı"
+    },
+    "password": {
+      "title": "Şifre sıfırla",
+      "description": "{name} için yeni geçici şifre üretilir.",
+      "effectNow": "Eski şifreyle giriş hemen biter; giriş adresi değişmez.",
+      "effectOnce": "Yeni şifre yalnız bir kez gösterilir ve hiçbir yerde saklanmaz.",
+      "submit": "Yeni şifre üret",
+      "resultTitle": "Yeni giriş bilgisi",
+      "resultDescription": "{name} artık bu bilgilerle girer.",
+      "login": {
+        "email": "Giriş e-postası",
+        "phone": "Giriş telefonu",
+        "tc": "Giriş TC kimlik no"
+      },
+      "password": "Geçici şifre",
+      "panel": "Panel adresi",
+      "copy": "Kopyala",
+      "copyAll": "Tümünü kopyala",
+      "all": "Giriş bilgileri",
+      "copied": "{label} kopyalandı",
+      "copyFailed": "Kopyalanamadı",
+      "onlyOnce": "Şifre yalnız şimdi gösterilir ve hiçbir yerde saklanmaz. Pencereyi kapatmadan önce kopyalayıp yöneticiye iletin; ilk girişte değiştirmesini isteyin.",
+      "copyBlock": "Edoras paneli: {url}\nGiriş: {login}\nGeçici şifre: {password}",
+      "close": "Kapat",
+      "error": "Şifre sıfırlanamadı"
+    },
+    "active": {
+      "deactivateTitle": "Yöneticiyi pasife al",
+      "activateTitle": "Yöneticiyi aktif et",
+      "deactivateDescription": "{name} — yalnız bu kurumdaki yönetici üyeliği pasif olur.",
+      "activateDescription": "{name} bu kurumda yeniden aktif yönetici olur.",
+      "deactivateEffect": "Hesap silinmez, geçmiş kayıtlar kalır; istediğiniz an yeniden aktif edebilirsiniz.",
+      "deactivateMobile": "Mobil uygulama pasif yöneticiyi içeri almaz (aynı kişi veliyse veli olarak girer).",
+      "webGap": "Dikkat: Edoras web paneli bugün pasif yöneticinin girişini engellemiyor (yalnız pasif öğretmeni engelliyor). Girişi kesin kapatmak için şifreyi de sıfırlayın ve yeni şifreyi paylaşmayın.",
+      "lastAdmin": "Kurumda başka aktif yönetici kalmıyor — panele kimse yönetici olarak giremeyecek.",
+      "lastAdminConfirm": "Anladım, yine de pasife al",
+      "deactivateSubmit": "Pasife al",
+      "activateSubmit": "Aktif et",
+      "deactivated": "Yönetici pasife alındı",
+      "activated": "Yönetici aktif edildi",
+      "unchanged": "Durum zaten buydu; değişiklik yapılmadı"
+    },
+    "contactSync": {
+      "label": "Panel giriş e-postasını da güncelle",
+      "hint": "Eski yetkili e-postası, {name} adlı kurum yöneticisinin Edoras giriş adresi. İşaretliyse giriş adresi de yeni e-postaya taşınır (eski adresle giriş biter, şifre değişmez).",
+      "saved": "Yetkili bilgisi ve panel giriş e-postası güncellendi",
+      "failed": "Yetkili bilgisi kaydedildi, ama panel giriş e-postası değiştirilemedi: {error}"
+    }
+  }
+}

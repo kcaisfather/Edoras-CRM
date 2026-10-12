@@ -44,6 +44,7 @@ import {
 import { formatDate } from "../format";
 import { BillingFields, BillingProfileFields, ContactFields, LicenseFields, PaymentFields, SelectField, TextField, applyServerFieldErrors } from "./fields";
 import { FormDialog } from "./FormDialog";
+import { ContactLoginSyncField, useContactLoginSync } from "./ContactLoginSync";
 
 interface DialogProps {
   institution: InstitutionDetail;
@@ -61,6 +62,8 @@ function useResetOnOpen(open: boolean, reset: () => void) {
 
 export function ContactDialog({ institution, open, onOpenChange }: DialogProps) {
   const t = useTranslations("institutions.dialogs.contact");
+  const tSync = useTranslations("institutions.adminAccounts.contactSync");
+  const errorMessage = useApiErrorMessage();
   const mutation = useUpdateContact(institution.id);
   const initial = (): ContactInput => ({
     contactName: institution.crm?.contactName ?? "",
@@ -68,9 +71,13 @@ export function ContactDialog({ institution, open, onOpenChange }: DialogProps) 
     contactEmail: institution.crm?.contactEmail ?? "",
   });
   const form = useForm<ContactInput>({ resolver: zodResolver(contactSchema), defaultValues: initial() });
+  const contactEmail = useWatch({ control: form.control, name: "contactEmail" });
+  // Eski yetkili e-postası bir kurum yöneticisinin Edoras giriş adresiyse giriş adresi de taşınabilir (ContactLoginSync).
+  const loginSync = useContactLoginSync(institution, contactEmail);
   useResetOnOpen(open, () => {
     form.reset(initial());
     mutation.reset();
+    loginSync.reset();
   });
 
   return (
@@ -81,19 +88,31 @@ export function ContactDialog({ institution, open, onOpenChange }: DialogProps) 
       description={t("description")}
       form={form}
       submitLabel={t("submit")}
-      pending={mutation.isPending}
+      pending={mutation.isPending || loginSync.isPending}
       error={mutation.error}
-      onSubmit={(values) =>
+      onSubmit={(values) => {
+        const syncUserId = loginSync.targetUserId;
         mutation.mutate(values, {
-          onSuccess: () => {
-            toast.success(t("saved"));
+          onSuccess: async () => {
+            if (syncUserId) {
+              // Yetkili kaydı yazıldı; giriş adresi ayrı istek — patlarsa yetkili değişikliği kalır, hata ayrıca söylenir.
+              try {
+                await loginSync.sync(syncUserId, values.contactEmail);
+                toast.success(tSync("saved"));
+              } catch (err) {
+                toast.error(tSync("failed", { error: errorMessage(err) }));
+              }
+            } else {
+              toast.success(t("saved"));
+            }
             onOpenChange(false);
           },
           onError: (err) => applyServerFieldErrors(form, err),
-        })
-      }
+        });
+      }}
     >
       <ContactFields />
+      <ContactLoginSyncField sync={loginSync} />
     </FormDialog>
   );
 }

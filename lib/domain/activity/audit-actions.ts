@@ -17,6 +17,11 @@ export const AUDIT_ACTIONS = [
   "BILLING_UPDATED",
   // Edoras panel modülü (ör. Muhasebe) kurumda açıldı / kapandı: modül anahtarı ve yeni durum yazılır.
   "PANEL_MODULE_CHANGED",
+  // Edoras kurum yöneticisi hesabı (kayıt türü kurum): yalnız Edoras kullanıcı kimliği (+ yeni aktiflik) yazılır;
+  // eski / yeni e-posta ve şifre yazılmaz.
+  "EDORAS_ADMIN_EMAIL_CHANGED",
+  "EDORAS_ADMIN_PASSWORD_RESET",
+  "EDORAS_ADMIN_ACTIVE_CHANGED",
   "PAYMENT_RECORDED",
   "PAYMENT_UPDATED",
   "PAYMENT_DELETED",

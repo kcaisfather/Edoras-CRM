@@ -23,6 +23,11 @@ export interface CrmTableActions {
   onAssignTask?: (lead: CrmLead) => void;
   /** "Arama listesine ekle": bugüne "Arama" görevi (ekranı kuran bileşen yazar; mükerrer görev açmaz). */
   onAddToCallList?: (lead: CrmLead) => void;
+  /**
+   * "Soğuk listeye taşı" (soğuk listeler modülünün penceresi; ekranı kuran bileşen açar). Satışı olmuş müşteride
+   * menü öğesi çizilmez.
+   */
+  onReturnToColdList?: (lead: CrmLead) => void;
   /** Memnuniyet rozeti (anketler modülü; yalnız müşterinin anket yanıtından). */
   renderSatisfaction?: (lead: CrmLead) => ReactNode;
   /** "Anket gönder" (anketler modülünün penceresi; DeepSport onSendSurvey). */
@@ -33,20 +38,33 @@ export interface CrmTableActions {
    */
   onIssueInvoice?: (lead: CrmLead) => void;
   /**
-   * Aday panelinin eylem satırına başka modüllerin düğmeleri (ör. soğuk listeler → "Soğuk listeye geri gönder";
+   * Aday panelinin eylem satırına başka modüllerin düğmeleri (ör. soğuk listeler → "Soğuk listeye taşı";
    * crm → cold-lists bağımlılığı olmasın diye ekranı kuran bileşen verir). Yalnız panelde çizilir.
    */
   renderSheetActions?: (lead: CrmLead) => ReactNode;
 }
 
 /**
- * Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, Arama listesine ekle, memnuniyet rozeti, Anket gönder, Fatura
- * kes, panel eylem satırı düğmeleri).
+ * Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, Arama listesine ekle, Soğuk listeye taşı, memnuniyet rozeti,
+ * Anket gönder, Fatura kes, panel eylem satırı düğmeleri).
  */
 export type CrmRowSlots = Pick<
   CrmTableActions,
-  "onAssignTask" | "onAddToCallList" | "renderSatisfaction" | "onSendSurvey" | "onIssueInvoice" | "renderSheetActions"
+  | "onAssignTask"
+  | "onAddToCallList"
+  | "onReturnToColdList"
+  | "renderSatisfaction"
+  | "onSendSurvey"
+  | "onIssueInvoice"
+  | "renderSheetActions"
 >;
+
+/** Toplu işlem çubuğundaki başka modül düğmesine verilen seçim: süzülmüş listede GÖRÜNEN seçili adaylar. */
+export interface CrmBulkActionContext {
+  leads: CrmLead[];
+  /** İş bitince seçimi temizler. */
+  onDone: () => void;
+}
 
 /**
  * Ekranı kuran bileşenin verdiği parçalar: satır parçaları + üst satırdaki "İçe aktar (Excel/CSV)" düğmesi
@@ -54,4 +72,6 @@ export type CrmRowSlots = Pick<
  */
 export interface CrmScreenSlots extends CrmRowSlots {
   renderImport?: () => ReactNode;
+  /** Toplu işlem çubuğuna başka modüllerin düğmeleri (ör. soğuk listeler → "Seçilenleri soğuk listeye taşı"). */
+  renderBulkActions?: (ctx: CrmBulkActionContext) => ReactNode;
 }

@@ -4,8 +4,8 @@ Ekran: `/crm` (Adaylar), `/crm/analytics`. Uçlar: `/api/crm/leads/**`. Sunucu: 
 DB: `crm_leads`, `crm_notes` (migration `crm_leads`).
 
 - Liste: aşama şeridi, özet kartlar, görünümler (bekleyen demo, satış sürecinde, bakiyesi olanlar, demo bitti, yeni kayıtlar,
-  olası mükerrer), kaynak süzgeci (`?source=`; "Tümü" menüsünde Görünümler / Durumlar / Kaynaklar tek seçim), ekle (`CrmAddModal`, sağdan panel; Türkiye / İstanbul varsayılan), CSV, toplu işlem (`/api/crm/leads/bulk`).
-- Satır arayüzü: **StatusDropdown** (satır içi statü; `lib/domain/crm/status-change.ts` + `features/crm/useLeadStatusUpdate.ts`, aynı PATCH ucu — Teklif verildi: sonraki arama + teklif tutarı ZORUNLU (> 0, temsilci de girer), Satış olmadı: kayıp nedeni ZORUNLU (satır içi pencerede; formda hâlâ "Belirtilmedi" olabilir) + sonraki arama, Satış oldu: **satış penceresi** (`LeadSaleDialog`) + devir notu; basit statülerde ~5 sn "Geri al"; kayıp ayrıntısı, satış tarihi, offer_by/sold_by sunucuda), tek **İşlemler** menüsü (`CrmRowActionsMenu`: Düzenle, Not, Görev ata, Arama listesine ekle, Tahsilat, Fatura kes, Anket gönder, İletişim, Demo aç / Kuruma bağla, Şikâyet), **aday paneli** (`CrmLeadSheet`, sağdan, doğrudan düzenleme: satıra tıklama ya da "Düzenle" → `?lead=`; ayrı düzenleme penceresi yok; form `crm-edit/*`, salt okunur bölümler `lead-sheet/*`; kaydedilmemiş değişiklikle kapatınca onay).
+  olası mükerrer), kaynak süzgeci (`?source=`; "Tümü" menüsünde Görünümler / Durumlar / Kaynaklar tek seçim), ekle (`CrmAddModal`, sağdan panel; Türkiye / İstanbul varsayılan), CSV, toplu işlem (`/api/crm/leads/batch`: durum / sorumlu / sil; satır seçimi masaüstü tablo + mobil kart; başka modülün toplu düğmesi `renderBulkActions` yuvasıyla — "Seçilenleri soğuk listeye taşı").
+- Satır arayüzü: **StatusDropdown** (satır içi statü; `lib/domain/crm/status-change.ts` + `features/crm/useLeadStatusUpdate.ts`, aynı PATCH ucu — Teklif verildi: sonraki arama + teklif tutarı ZORUNLU (> 0, temsilci de girer), Satış olmadı: kayıp nedeni ZORUNLU (satır içi pencerede; formda hâlâ "Belirtilmedi" olabilir) + sonraki arama, Satış oldu: **satış penceresi** (`LeadSaleDialog`) + devir notu; basit statülerde ~5 sn "Geri al"; kayıp ayrıntısı, satış tarihi, offer_by/sold_by sunucuda), tek **İşlemler** menüsü (`CrmRowActionsMenu`: Düzenle, Not, Görev ata, Arama listesine ekle, Soğuk listeye taşı (müşteri değilse), Tahsilat, Fatura kes, Anket gönder, İletişim, Demo aç / Kuruma bağla, Şikâyet), **aday paneli** (`CrmLeadSheet`, sağdan, doğrudan düzenleme: satıra tıklama ya da "Düzenle" → `?lead=`; ayrı düzenleme penceresi yok; form `crm-edit/*`, salt okunur bölümler `lead-sheet/*`; kaydedilmemiş değişiklikle kapatınca onay).
 - Notlar: şikâyet (`SIKAYET`), devir, program etiketi.
 - Adaydan **demo aç** (`/api/crm/leads/{id}/demo` → aynı demo akışı, [institutions-demo.md](institutions-demo.md)) ya da
   var olan Edoras kurumuna **bağla** (`/link`; bir kuruma en fazla bir aday — kısmi benzersiz dizin).
@@ -19,7 +19,8 @@ DB: `crm_leads`, `crm_notes` (migration `crm_leads`).
 - Aktörler: statü TEKLIF_VERILDI / SATIS_OLDU'ya geçince sunucu oturumdaki personeli `offer_by` / `sold_by`'a yazar
   (gövdeden okunmaz; `crm_leads_actor` tetikleyicisi görev tamamlama gibi SQL yollarını da `updated_by`'dan doldurur,
   satıştan çıkınca `sold_by` silinir). DTO `offerBy/offerByName/soldBy/soldByName`; detayda "Teklifi veren / Satışı yapan".
-- Aday panelinde "Soğuk listeye geri gönder" (aday "Satış olmadı" olur, silinmez) → [cold-lists-import.md](cold-lists-import.md).
+- "Soğuk listeye taşı" — aday paneli, satır menüsü ve toplu (aday "Satış olmadı" olur, silinmez) →
+  [cold-lists-import.md](cold-lists-import.md). Soğuk listeden "Sıcağa taşı" Adaylar'a `?lead=<id>` ile döner.
 - İçe aktarma: Adaylar → "İçe aktar" (sunucu `dryRun` raporu, sonra onay) → [cold-lists-import.md](cold-lists-import.md).
 - Satış Analizleri: satış hunisi, aylık / müşteri kırılımları.
 - **Teklif / satış kuralları (kurucu, 2026-10-05):** teklif verildiyse teklif tutarı, satışta satış tutarı + firma / fatura

@@ -156,6 +156,7 @@
     "rowMenu": {
       "assignTask": "Görev ata",
       "addToCallList": "Arama listesine ekle",
+      "returnToColdList": "Soğuk listeye taşı",
       "complaint": "Şikâyet kaydı"
     }
   },

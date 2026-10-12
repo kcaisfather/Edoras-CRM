@@ -1,11 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { crmKeys } from "@/features/crm";
 import { crmNoteKeys } from "@/features/crm-notes";
+import { apiErrorCode } from "@/lib/api/errors";
 import type { ImportItem } from "@/lib/import/bulk";
+import { chunk } from "@/lib/import/run";
+import {
+  LEADS_TO_COLD_LIST_CHUNK,
+  emptyLeadsToColdListResult,
+  mergeLeadsToColdListResults,
+  type LeadsToColdListResult,
+} from "@/lib/domain/cold-lists/bulk-return";
 import type {
   LeadToColdListInput,
+  LeadsToColdListInput,
   ProspectConvertInput,
   ProspectCreateInput,
   ProspectListCreateInput,
@@ -76,7 +86,10 @@ export function useDeleteProspect() {
   });
 }
 
-/** Sıcağa taşı (sunucu, tek işlem): kişi işaretlenir ve CRM adayı oluşur → crmKeys.all (adaylar, görevler, listeler). */
+/**
+ * Sıcağa taşı (sunucu, tek işlem): kişi işaretlenir ve CRM adayı oluşur → crmKeys.all (adaylar, görevler, listeler).
+ * Tazeleme beklenir: pencere ardından Adaylar'a (/crm?lead=<id>) gider, yeni aday önbellekte hazır olsun.
+ */
 export function useConvertProspect() {
   const inv = useInvalidate();
   return useMutation({
@@ -96,6 +109,44 @@ export function useReturnLeadToColdList() {
     mutationFn: ({ leadId, body }: { leadId: string; body: LeadToColdListInput }) => coldListsApi.returnLead(leadId, body),
     onSuccess: (_data, { leadId }) => Promise.all([inv.crm(), qc.invalidateQueries({ queryKey: crmNoteKeys.lead(leadId) })]),
   });
+}
+
+/**
+ * Toplu "Soğuk listeye taşı" (Adaylar toplu işlem çubuğu): seçim LEADS_TO_COLD_LIST_CHUNK'lık parçalarla SIRAYLA
+ * gönderilir (her istek kısa sürer), ilerleme `progress`'te. Parça içinde hata veren aday atlanır (sunucu sayar). Bir
+ * parça bütünüyle reddedilirse (liste silindi, oturum düştü…) kalanlar gönderilmez ve o kodla atlanmış sayılır; ilk
+ * parça reddedilirse hata fırlatılır (hiçbir şey yazılmamıştır). Bitince adaylar, görevler, soğuk listeler ve notlar
+ * tazelenir.
+ */
+export function useReturnLeadsToColdList() {
+  const inv = useInvalidate();
+  const qc = useQueryClient();
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const mutation = useMutation({
+    mutationFn: async ({ leadIds, listId, lostReason }: LeadsToColdListInput): Promise<LeadsToColdListResult> => {
+      const ids = [...new Set(leadIds)];
+      let result = emptyLeadsToColdListResult();
+      let sent = 0;
+      setProgress({ done: 0, total: ids.length });
+      for (const part of chunk(ids, LEADS_TO_COLD_LIST_CHUNK)) {
+        try {
+          result = mergeLeadsToColdListResults(result, await coldListsApi.returnLeads({ leadIds: part, listId, lostReason }));
+        } catch (err) {
+          if (sent === 0) throw err;
+          const code = apiErrorCode(err) ?? "INTERNAL";
+          return { ...result, skipped: [...result.skipped, ...ids.slice(sent).map((id) => ({ id, code }))] };
+        }
+        sent += part.length;
+        setProgress({ done: sent, total: ids.length });
+      }
+      return result;
+    },
+    onSettled: async () => {
+      setProgress(null);
+      await Promise.all([inv.crm(), qc.invalidateQueries({ queryKey: crmNoteKeys.all })]);
+    },
+  });
+  return { ...mutation, progress };
 }
 
 /** Aday içe aktarma parçası (dryRun dahil); önbellek iş bitince bir kez tazelenir (useInvalidateAfterImport). */

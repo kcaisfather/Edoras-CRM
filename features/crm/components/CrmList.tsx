@@ -42,7 +42,7 @@ import { LinkInstitutionDialog } from "./LinkInstitutionDialog";
  * parçaları (Görev ata) ve üst satırdaki "İçe aktar" `slots` ile gelir (app/crm/_components/CrmScreen.tsx) —
  * crm → tasks / cold-lists bağımlılığı yok.
  */
-export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
+export function CrmList({ renderImport, renderBulkActions, ...slots }: CrmScreenSlots = {}) {
   const t = useTranslations("crm.list");
   const mounted = useMounted();
   const list = useCrmList(slots);
@@ -126,6 +126,7 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
         filteredCount={list.filteredLeads.length}
         onSelectAllFiltered={() => list.selection.setMany(list.filteredLeads.map((x) => x.id), true)}
         onClear={list.selection.clear}
+        extraActions={renderBulkActions?.({ leads: list.selection.selectedLeads, onDone: list.selection.clear })}
       />
 
       {list.isSignupsTab ? (

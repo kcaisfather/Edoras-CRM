@@ -3,6 +3,6 @@ export { ColdListsPage } from "./components/ColdListsPage";
 export { ImportButton, ImportDialog, ImportTemplateButton } from "./components/import/ImportDialog";
 export type { ImportDialogProps, ImportSummary, ImportTarget } from "./components/import/ImportDialog";
 export { ProspectContactActions } from "./components/ProspectContactActions";
-export { ReturnToColdListAction } from "./components/ReturnToColdListDialog";
+export { BulkReturnToColdListButton, ReturnToColdListAction, ReturnToColdListDialog } from "./components/ReturnToColdListDialog";
 export { usePatchProspect } from "./mutations";
 export { coldListKeys, useProspectLists } from "./queries";

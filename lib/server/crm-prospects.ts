@@ -13,15 +13,23 @@ import {
 } from "@/lib/import/bulk";
 import type {
   LeadToColdListInput,
+  LeadsToColdListInput,
   ProspectCreateValues,
   ProspectListCreateInput,
   ProspectPatchValues,
   ProspectTextField,
 } from "@/lib/domain/cold-lists/schemas";
-import { PROSPECT_TEXT_FIELDS, leadToColdListSchema, prospectListCreateSchema } from "@/lib/domain/cold-lists/schemas";
+import {
+  PROSPECT_TEXT_FIELDS,
+  leadToColdListSchema,
+  leadsToColdListSchema,
+  prospectListCreateSchema,
+} from "@/lib/domain/cold-lists/schemas";
+import { returnLeadsInTurn, type LeadsToColdListResult } from "@/lib/domain/cold-lists/bulk-return";
 import type { MoveStatus, Prospect, ProspectList, ProspectOutcome, ProspectsPage } from "@/lib/domain/cold-lists/types";
 import { convertNoteText, isMoved } from "@/lib/domain/cold-lists/utils";
 import { COLD_LIST_SCAN_LIMIT, type TaskProspectInput } from "@/lib/domain/tasks/cold";
+import type { CrmLeadDto, LostReason } from "@/lib/domain/crm/types";
 import { recordAudit } from "./audit";
 import { createCompensator } from "./compensation";
 import { loadContactIndex, skipCounts } from "./crm-import";
@@ -423,6 +431,38 @@ export async function returnLeadToColdList(
 ): Promise<{ prospect: Prospect; restored: boolean }> {
   const { listId, lostReason } = leadToColdListSchema.parse(input);
   const [[lead], list] = await Promise.all([listLeads(staff, { id: leadId }), getListRow(listId)]);
+  const { prospectId, restored } = await returnLeadToList(leadId, lead, list, lostReason, staff);
+  return { prospect: toProspect(await getProspectRow(prospectId)), restored };
+}
+
+/**
+ * Toplu "Soğuk listeye taşı" (POST /api/crm/leads/cold-list; Adaylar toplu işlem çubuğu): seçili adaylar SIRAYLA, her
+ * biri tekil yolla (returnLeadToList — aynı kurallar, aynı geri alma, aday başına işlem kaydı). Liste bir kez okunur
+ * (yoksa tümü 404). Bir aday hata verirse atlanır, kalanlar sürer: müşteri → LEAD_IS_CUSTOMER, listede başka adaya bağlı
+ * aynı telefon / e-posta → PROSPECT_DUPLICATE, silinmiş aday → NOT_FOUND. İstemci seçimi 25'erli parçalarla gönderir.
+ */
+export async function returnLeadsToColdList(input: LeadsToColdListInput, staff: StaffContext): Promise<LeadsToColdListResult> {
+  const { leadIds, listId, lostReason } = leadsToColdListSchema.parse(input);
+  const list = await getListRow(listId);
+  return returnLeadsInTurn(
+    leadIds,
+    async (leadId) => {
+      const [lead] = await listLeads(staff, { id: leadId });
+      return returnLeadToList(leadId, lead, list, lostReason, staff);
+    },
+    (error) => (error instanceof HttpError ? error.code : "INTERNAL")
+  );
+}
+
+/** Tek adayın listeye dönüşü (tekil ve toplu uç aynı yol); liste ve aday çağıran tarafından okunmuş. */
+async function returnLeadToList(
+  leadId: string,
+  lead: CrmLeadDto | undefined,
+  list: ListRow,
+  lostReason: LostReason,
+  staff: StaffContext
+): Promise<{ prospectId: string; restored: boolean }> {
+  const listId = list.id;
   if (!lead) throw new HttpError(404, "NOT_FOUND");
   if (lead.status === "SATIS_OLDU") throw new HttpError(409, "LEAD_IS_CUSTOMER");
 
@@ -495,7 +535,7 @@ export async function returnLeadToColdList(
       entityLabel: lead.organizationName,
       details: { listId, prospectId, restored, from: lead.status, lostReason },
     });
-    return { prospect: toProspect(await getProspectRow(prospectId)), restored };
+    return { prospectId, restored };
   } catch (e) {
     const failed = await compensator.rollback();
     if (failed.length) console.error(`[cold-list] geri gönderme geri alınamadı: ${failed.join(",")}`);

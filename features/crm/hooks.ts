@@ -177,7 +177,8 @@ export function useCrmList(slots: CrmRowSlots = {}) {
 
   // Toplu işlem seçimi. İşlem anında yalnız süzülmüş listede GÖRÜNEN seçimler sayılır (gizli satıra işlem yapılmaz).
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const selectedIds = useMemo(() => filteredLeads.filter((l) => selected.has(l.id)).map((l) => l.id), [filteredLeads, selected]);
+  const selectedLeads = useMemo(() => filteredLeads.filter((l) => selected.has(l.id)), [filteredLeads, selected]);
+  const selectedIds = useMemo(() => selectedLeads.map((l) => l.id), [selectedLeads]);
   const toggleSelected = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
@@ -313,6 +314,7 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     selection: {
       selected,
       selectedIds,
+      selectedLeads,
       toggle: toggleSelected,
       setMany: setManySelected,
       clear: () => setSelected(new Set()),

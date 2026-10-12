@@ -1,7 +1,9 @@
 import { apiRequest } from "@/lib/api/client";
 import type { BulkImportResult, ImportItem } from "@/lib/import/bulk";
+import type { LeadsToColdListResult } from "@/lib/domain/cold-lists/bulk-return";
 import type {
   LeadToColdListInput,
+  LeadsToColdListInput,
   ProspectConvertInput,
   ProspectCreateInput,
   ProspectListCreateInput,
@@ -26,7 +28,8 @@ const listBase = (id: string) => `/api/crm/prospect-lists/${encodeURIComponent(i
  *   POST   /api/crm/prospects/{id}/convert    { status, addNote } → { crmLeadId, prospect }
  *   POST   /api/crm/leads/bulk                { items, dryRun }   → { created, skipped, dryRun }
  *   GET    /api/crm/leads/{id}/cold-list                         → { listIds } (adayın geldiği listeler)
- *   POST   /api/crm/leads/{id}/cold-list      { listId, lostReason } → { prospect, restored } ("Soğuk listeye geri gönder")
+ *   POST   /api/crm/leads/{id}/cold-list      { listId, lostReason } → { prospect, restored } ("Soğuk listeye taşı", tek aday)
+ *   POST   /api/crm/leads/cold-list           { leadIds, listId, lostReason } → { moved, restored, skipped } (toplu, ≤ 200)
  */
 export const coldListsApi = {
   lists: (signal?: AbortSignal) => apiRequest<ProspectList[]>("/api/crm/prospect-lists", { signal }),
@@ -46,6 +49,8 @@ export const coldListsApi = {
     apiRequest<{ listIds: string[] }>(`/api/crm/leads/${encodeURIComponent(leadId)}/cold-list`, { signal }),
   returnLead: (leadId: string, body: LeadToColdListInput) =>
     apiRequest<{ prospect: Prospect; restored: boolean }>(`/api/crm/leads/${encodeURIComponent(leadId)}/cold-list`, { method: "POST", body }),
+  returnLeads: (body: LeadsToColdListInput) =>
+    apiRequest<LeadsToColdListResult>("/api/crm/leads/cold-list", { method: "POST", body }),
   importLeads: (items: ImportItem[], dryRun: boolean) =>
     apiRequest<BulkImportResult>("/api/crm/leads/bulk", { method: "POST", body: { items, dryRun } }),
 };

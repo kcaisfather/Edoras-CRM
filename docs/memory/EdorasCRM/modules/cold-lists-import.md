@@ -10,18 +10,31 @@ Sunucu: `lib/server/crm-prospects.ts`, `crm-import.ts`; saf kod `lib/import/`. D
 - Sunucu istemciye güvenmez: telefonu TR normalleştiriciyle (E.164), e-postayı DB kuralıyla yeniden hesaplar; mükerreri
   (aynı istek, aynı liste, CRM adayı, kurum yetkilisi) eklemez, `skipped`'te nedeniyle döner.
 - "Sıcağa taşı" tek transaction (`crm_convert_prospect`): aday (kaynak COLD_LIST) + not + taşındı işareti; ikinci kez taşınmaz.
+  Görev YAZMAZ, adayı gizlemez (sorumlusuz, sonraki arama yok — Adaylar'da en üstte). Kaydedince `MoveToCrmDialog` Adaylar'a
+  gider ve adayın panelini açar (`/crm?lead=<id>`, 12.10); listede kaydedilmemiş arama sonucu varsa sayfada kalır, toast'ta
+  "Adaylar'da aç". Aranacak / Takipte açılan aday Görevlerim'de de hemen görünür: kural motorunun "Tarihsiz Aranacak /
+  Takipte" görevi (`undatedFollowUp`, varsayılan +0 gün, istekte türetilir — [tasks-rules.md](tasks-rules.md)); bu tasarım
+  gereği, kapatmak / ertelemek Ayarlar → Kurallar (ADMIN) ya da adaya sonraki arama tarihi girmek.
 - **"Kişi ekle"** (araç çubuğu, `AddProspectDialog`): seçili listeye tek kişi — `POST /api/crm/prospect-lists/{id}/prospects`
   (`createProspect`, şema `prospectCreateSchema`). İçe aktarmadan farkı: en az bir kimlik alanı ve GEÇERLİ telefon / e-posta
   zorunlu (geçersiz ham değer saklanmaz); aynı listede aynı telefon / e-posta → 409 `PROSPECT_DUPLICATE`; CRM / kurum
   mükerreri engellemez. İşlem kaydı `PROSPECT_CREATED`.
-- **"Soğuk listeye geri gönder"** (aday paneli eylem satırı, `ReturnToColdListAction`; crm → cold-lists bağımlılığı olmasın
-  diye `CrmScreen` → `renderSheetActions` yuvası): `POST /api/crm/leads/{id}/cold-list { listId, lostReason }`
+- **"Soğuk listeye taşı"** (eski adı "Soğuk listeye geri gönder"; aday paneli eylem satırı `ReturnToColdListAction`, satırın
+  İşlemler menüsü → `onReturnToColdList` → `ReturnToColdListDialog`; crm → cold-lists bağımlılığı olmasın diye `CrmScreen`
+  yuvaları): `POST /api/crm/leads/{id}/cold-list { listId, lostReason }`
   (`returnLeadToColdList`), `GET` aynı yol → adayın geldiği listeler (pencere varsayılan seçer). Aday SİLİNMEZ: "Satış
   olmadı" (OLUMSUZ, seçilen kayıp nedeni, sonraki arama null — `updateLead` ile aynı statü yolu) + "Soğuk listeye geri
   gönderildi: <liste>" notu. Listede adaya bağlı (ya da aynı telefon / e-postalı) kişi varsa taşındı işareti ve sonucu
   temizlenir (`NOT_CALLED`), yoksa adaydan yeni kişi eklenir; başka adaya bağlı eşleşme → 409 `PROSPECT_DUPLICATE`;
   müşteri (SATIS_OLDU) → 409 `LEAD_IS_CUSTOMER`. Migration YOK: kişi → not → statü sırayla, `createCompensator()` ile
   geri alınır. İşlem kaydı `LEAD_RETURNED_TO_COLD_LIST`.
+- **Toplu "Soğuk listeye taşı"** (12.10; Adaylar toplu işlem çubuğu → "Seçilenleri soğuk listeye taşı (N)",
+  `BulkReturnToColdListButton`, yuva `renderBulkActions`): `POST /api/crm/leads/cold-list { leadIds (≤ 200), listId,
+  lostReason }` → `{ moved, restored, skipped: [{ id, code }] }` (`returnLeadsToColdList`, şema `leadsToColdListSchema`).
+  Liste bir kez okunur (yoksa 404); adaylar SIRAYLA tekil yolla (`returnLeadToList` — aynı kurallar, aynı geri alma, aday
+  başına işlem kaydı); hata veren atlanır (müşteri `LEAD_IS_CUSTOMER`, mükerrer `PROSPECT_DUPLICATE`, silinmiş `NOT_FOUND`).
+  İstemci seçimi 25'erli parçalarla gönderir, düğmede ilerleme; toast "N aday taşındı, M atlandı" + neden dökümü.
+  Saf parçalar + test: `lib/domain/cold-lists/bulk-return.ts`. Tek aday seçiliyse tekil uç kullanılır. Migration YOK.
 - KVKK envanterinde listelidir (Ayarlar → KVKK).
 
 ## Detaylı filtre (12.10)

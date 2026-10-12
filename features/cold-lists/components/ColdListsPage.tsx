@@ -126,7 +126,12 @@ export function ColdListsPage() {
       {view.truncated && <CoverageNote>{t("truncated", view.truncated)}</CoverageNote>}
       {view.institutionsError && <CoverageNote>{t("institutionsError")}</CoverageNote>}
 
-      <MoveToCrmDialog prospect={moving} crmMatches={moving ? view.crmMatchesFor(moving) : []} onOpenChange={(o) => !o && setMoving(null)} />
+      <MoveToCrmDialog
+        prospect={moving}
+        crmMatches={moving ? view.crmMatchesFor(moving) : []}
+        stayOnList={pendingCount > 0}
+        onOpenChange={(o) => !o && setMoving(null)}
+      />
       <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onListDeleted={() => view.selectList("")} />
       <SavePendingDialog open={confirmSave} pending={view.pending} onOpenChange={setConfirmSave} onSaved={view.clearPending} />
     </div>

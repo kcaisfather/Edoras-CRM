@@ -3,9 +3,10 @@
 /**
  * Toplu işlem çubuğu: tabloda seçilen adaylar için durum (Aranacak / Ulaşılamadı), sorumlu atama ve silme.
  * Durum her CRM kullanıcısına açık; sorumlu atama ve silme yalnız ADMIN (sunucu da 403 döner). Her aday ayrı işlenir;
- * hata verenler atlanır ve toast'ta sayılır. Silme onay penceresinden geçer.
+ * hata verenler atlanır ve toast'ta sayılır. Silme onay penceresinden geçer. Başka modüllerin toplu düğmeleri
+ * (ör. "Seçilenleri soğuk listeye taşı") `extraActions` ile gelir (CrmScreen → renderBulkActions).
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, Trash2, X } from "lucide-react";
@@ -25,6 +26,7 @@ export function CrmBulkBar({
   filteredCount,
   onSelectAllFiltered,
   onClear,
+  extraActions,
 }: {
   /** Süzülmüş listede görünen seçili adaylar. */
   ids: string[];
@@ -32,6 +34,8 @@ export function CrmBulkBar({
   filteredCount: number;
   onSelectAllFiltered: () => void;
   onClear: () => void;
+  /** Başka modüllerin toplu işlem düğmeleri (crm → cold-lists bağımlılığı olmasın diye ekranı kuran bileşen verir). */
+  extraActions?: ReactNode;
 }) {
   const t = useTranslations("crm.bulk");
   const tStatus = useTranslations("crm.status");
@@ -69,6 +73,7 @@ export function CrmBulkBar({
         </Button>
       )}
       <div className="ml-auto flex flex-wrap items-center gap-2">
+        {extraActions}
         <Select value="" onValueChange={(v) => run({ type: "status", status: v as (typeof BATCH_STATUSES)[number] }, "statusDone")} disabled={batch.isPending}>
           <SelectTrigger className="h-8 w-44" aria-label={t("setStatus")}>
             <SelectValue placeholder={t("setStatus")} />

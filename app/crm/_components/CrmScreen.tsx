@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { CrmList } from "@/features/crm/components/CrmList";
+import type { CrmBulkActionContext } from "@/features/crm";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { AssignTaskDialog, useAddToCallList } from "@/features/tasks";
-import { ImportButton, ReturnToColdListAction } from "@/features/cold-lists";
+import { BulkReturnToColdListButton, ImportButton, ReturnToColdListAction, ReturnToColdListDialog } from "@/features/cold-lists";
 import { SatisfactionBadge, SendSurveyDialog, leadRecipient } from "@/features/surveys";
 import { InvoiceDialog } from "@/features/invoices";
 
@@ -20,8 +21,12 @@ const renderSatisfaction = (lead: CrmLead) => <SatisfactionBadge leadId={lead.id
  */
 const renderImport = () => <ImportButton targets={["crm", "coldList"]} defaultTarget="crm" />;
 
-/** Aday panelinde "Soğuk listeye geri gönder" ("Sıcağa taşı"nın tersi; crm → cold-lists bağımlılığı olmasın diye burada). */
+/**
+ * "Soğuk listeye taşı" ("Sıcağa taşı"nın tersi; crm → cold-lists bağımlılığı olmasın diye burada): aday panelinin eylem
+ * satırı, satırın İşlemler menüsü (pencere aşağıda) ve toplu işlem çubuğu ("Seçilenleri soğuk listeye taşı (N)").
+ */
 const renderSheetActions = (lead: CrmLead) => <ReturnToColdListAction lead={lead} />;
+const renderBulkActions = ({ leads, onDone }: CrmBulkActionContext) => <BulkReturnToColdListButton leads={leads} onDone={onDone} />;
 
 /**
  * Adaylar ekranı + başka modüllerin parçaları (DeepSport app/[locale]/crm/_components/CrmList.tsx): "Görev ata" (görev
@@ -33,17 +38,27 @@ export function CrmScreen() {
   const [surveyLead, setSurveyLead] = useState<CrmLead | null>(null);
   const [invoiceLead, setInvoiceLead] = useState<CrmLead | null>(null);
   const [taskLead, setTaskLead] = useState<CrmLead | null>(null);
+  const [coldListLead, setColdListLead] = useState<CrmLead | null>(null);
   const callList = useAddToCallList();
   return (
     <>
       <CrmList
         onAssignTask={setTaskLead}
         onAddToCallList={(lead) => void callList.add(lead)}
+        onReturnToColdList={setColdListLead}
         renderSatisfaction={renderSatisfaction}
         onSendSurvey={setSurveyLead}
         onIssueInvoice={setInvoiceLead}
         renderImport={renderImport}
         renderSheetActions={renderSheetActions}
+        renderBulkActions={renderBulkActions}
+      />
+      <ReturnToColdListDialog
+        leads={coldListLead ? [coldListLead] : []}
+        open={coldListLead != null}
+        onOpenChange={(next) => {
+          if (!next) setColdListLead(null);
+        }}
       />
       <AssignTaskDialog
         lead={taskLead}

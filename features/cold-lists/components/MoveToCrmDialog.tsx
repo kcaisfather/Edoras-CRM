@@ -4,6 +4,10 @@
  * "Sıcağa taşı" (DeepSport MoveToCrmDialog): soğuk liste kişisinden CRM adayı oluşturur — tek uç
  * POST /api/crm/prospects/{id}/convert (aday + isteğe bağlı not + kişinin taşındı işareti tek transaction; DeepSport'ta
  * bayrak kapalıyken aday, not ve işaret ayrı isteklerdi). Aynı telefon / e-posta CRM'de varsa açık onay ister.
+ * Kaydedince Adaylar ekranına gidilir ve yeni adayın paneli açılır (/crm?lead=<id>): kişi artık soğuk listenin değil
+ * aday hattının parçasıdır (sonraki arama tarihi, sorumlu vb. orada girilir). Önbellek tazelemesi mutasyonda beklenir,
+ * yeni aday Adaylar listesinde hemen bulunur. Listede kaydedilmemiş arama sonuçları varsa (`stayOnList`) sayfadan
+ * çıkılmaz — o sonuçlar bellektedir; toast'taki "Adaylar'da aç" aynı yere götürür.
  */
 import { useState } from "react";
 import { useTranslations } from "next-intl";
@@ -15,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatPhone } from "@/features/institutions";
+import { useRouter } from "@/lib/navigation";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { isCrmStatus } from "@/lib/domain/crm/types";
 import type { ExistingContact } from "@/lib/import/duplicates";
@@ -26,10 +31,13 @@ export function MoveToCrmDialog({
   prospect,
   crmMatches,
   onOpenChange,
+  stayOnList = false,
 }: {
   prospect: Prospect | null;
   crmMatches: ExistingContact[];
   onOpenChange: (open: boolean) => void;
+  /** Kaydedilmemiş arama sonucu var: taşıdıktan sonra Adaylar'a gidilmez (toast bağlantısı verilir). */
+  stayOnList?: boolean;
 }) {
   const t = useTranslations("growth.coldLists.move");
   return (
@@ -39,17 +47,30 @@ export function MoveToCrmDialog({
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
-        {prospect && <MoveForm key={prospect.id} prospect={prospect} crmMatches={crmMatches} onDone={() => onOpenChange(false)} />}
+        {prospect && (
+          <MoveForm key={prospect.id} prospect={prospect} crmMatches={crmMatches} stayOnList={stayOnList} onDone={() => onOpenChange(false)} />
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function MoveForm({ prospect: p, crmMatches, onDone }: { prospect: Prospect; crmMatches: ExistingContact[]; onDone: () => void }) {
+function MoveForm({
+  prospect: p,
+  crmMatches,
+  stayOnList,
+  onDone,
+}: {
+  prospect: Prospect;
+  crmMatches: ExistingContact[];
+  stayOnList: boolean;
+  onDone: () => void;
+}) {
   const t = useTranslations("growth.coldLists.move");
   const tStatus = useTranslations("crm.status");
   const errorText = useApiErrorMessage();
   const convert = useConvertProspect();
+  const router = useRouter();
   const [status, setStatus] = useState<MoveStatus>(p.outcome === "TALKED" ? "TAKIPTE" : "ARANACAK");
   const [ackDuplicate, setAckDuplicate] = useState(false);
   const noteText = convertNoteText(p);
@@ -59,9 +80,18 @@ function MoveForm({ prospect: p, crmMatches, onDone }: { prospect: Prospect; crm
 
   const submit = async () => {
     try {
-      await convert.mutateAsync({ id: p.id, body: { status, addNote: addNote && !!noteText } });
-      toast.success(t("success", { name: prospectTitle(p) }));
+      const { crmLeadId } = await convert.mutateAsync({ id: p.id, body: { status, addNote: addNote && !!noteText } });
+      const leadHref = `/crm?lead=${encodeURIComponent(crmLeadId)}`;
       onDone();
+      if (stayOnList) {
+        toast.success(t("success", { name: prospectTitle(p) }), {
+          duration: 8000,
+          action: { label: t("openLead"), onClick: () => router.push(leadHref) },
+        });
+      } else {
+        toast.success(t("success", { name: prospectTitle(p) }));
+        router.push(leadHref);
+      }
     } catch (e) {
       toast.error(t("failed", { error: errorText(e) }));
     }

@@ -94,7 +94,7 @@
     },
     "move": {
       "title": "Sıcağa taşı → CRM adayı",
-      "description": "Bu kişi için CRM'de yeni bir aday oluşturulacak (kaynak: soğuk liste). Tutar alanları boş açılır.",
+      "description": "Bu kişi için CRM'de yeni bir aday oluşturulacak (kaynak: soğuk liste). Tutar alanları boş açılır. Kaydedince Adaylar ekranında adayın paneli açılır (kaydedilmemiş arama sonucu varken bu sayfada kalınır).",
       "fields": {
         "name": "Ad Soyad",
         "organization": "Kurum",
@@ -111,7 +111,8 @@
       "writeNote": "Onayladığınızda aday, not ve kişinin \"CRM'e taşındı\" işareti tek işlemde kaydedilir.",
       "cancel": "Vazgeç",
       "confirm": "Aday oluştur",
-      "success": "{name} CRM'e taşındı.",
+      "success": "{name} Adaylar'a taşındı.",
+      "openLead": "Adaylar'da aç",
       "failed": "Aday oluşturulamadı: {error}"
     },
     "add": {
@@ -138,8 +139,22 @@
       "failed": "Kişi eklenemedi: {error}"
     },
     "returnToList": {
-      "button": "Soğuk listeye geri gönder",
-      "title": "Soğuk listeye geri gönder",
+      "button": "Soğuk listeye taşı",
+      "title": "Soğuk listeye taşı",
+      "bulkButton": "Seçilenleri soğuk listeye taşı ({count})",
+      "bulkTitle": "{count} adayı soğuk listeye taşı",
+      "bulkListNote": "Listede adaydan gelen ya da aynı telefon / e-postalı kişi varsa o satır yeniden aranacaklara döner; yoksa adayın bilgileriyle yeni kişi eklenir.",
+      "bulkCustomers": "Seçimdeki {count} müşteri (Satış oldu) taşınmaz, atlanır.",
+      "bulkConfirm": "Taşı ({count})",
+      "bulkProgress": "Taşınıyor… {done} / {total}",
+      "bulkSuccess": "{count} aday \"{list}\" listesine taşındı.",
+      "bulkPartial": "{moved} aday taşındı, {skipped} aday atlandı.",
+      "skipReasons": {
+        "LEAD_IS_CUSTOMER": "Müşteri (Satış oldu): {count}",
+        "PROSPECT_DUPLICATE": "Listede aynı telefon / e-posta başka adaya bağlı: {count}",
+        "NOT_FOUND": "Aday bulunamadı: {count}",
+        "OTHER": "Diğer hata: {count}"
+      },
       "description": "Aday silinmez: statüsü \"Satış olmadı\" olur, notları ve geçmişi kalır. Kişi seçtiğiniz listeye \"Aranmadı\" olarak döner ve Görevlerim'deki soğuk liste aramalarına girer.",
       "list": "Soğuk liste",
       "listPlaceholder": "Liste seçin",
@@ -151,9 +166,9 @@
       "lostReason": "Kayıp nedeni",
       "lostReasonPlaceholder": "Neden seçin",
       "cancel": "Vazgeç",
-      "confirm": "Geri gönder",
-      "success": "{name} \"{list}\" listesine geri gönderildi.",
-      "failed": "Geri gönderilemedi: {error}"
+      "confirm": "Taşı",
+      "success": "{name} \"{list}\" listesine taşındı.",
+      "failed": "Soğuk listeye taşınamadı: {error}"
     }
   },
   "import": {

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { IMPORT_FIELD_LIMITS } from "@/lib/import/bulk";
 import { normalizeImportEmail, normalizeImportPhone } from "@/lib/import/normalize";
 import { LOST_REASONS } from "@/lib/domain/crm/types";
+import { LEADS_TO_COLD_LIST_MAX } from "./bulk-return";
 import { MOVE_STATUSES, PROSPECT_OUTCOMES } from "./types";
 
 const MSG = {
@@ -19,6 +20,7 @@ const MSG = {
   email: "Geçerli bir e-posta adresi girin",
   list: "Bir soğuk liste seçin",
   lostReason: "Kayıp nedeni seçin",
+  leads: `En az 1, en çok ${LEADS_TO_COLD_LIST_MAX} aday seçin`,
 } as const;
 
 /** Liste adı sınırı (SQL: crm_prospect_lists_name_check). */
@@ -124,6 +126,15 @@ export const leadToColdListSchema = z.object({
   lostReason: z.enum(LOST_REASONS, MSG.lostReason),
 });
 export type LeadToColdListInput = z.input<typeof leadToColdListSchema>;
+
+/**
+ * POST /api/crm/leads/cold-list — toplu "Soğuk listeye taşı" (Adaylar toplu işlem çubuğu): seçili adaylar tek listeye,
+ * tek kayıp nedeniyle. Her aday tekil yolla ayrı işlenir; müşteri / mükerrer atlanır (lib/domain/cold-lists/bulk-return.ts).
+ */
+export const leadsToColdListSchema = leadToColdListSchema.extend({
+  leadIds: z.array(z.uuid()).min(1, MSG.leads).max(LEADS_TO_COLD_LIST_MAX, MSG.leads),
+});
+export type LeadsToColdListInput = z.input<typeof leadsToColdListSchema>;
 
 /** GET /api/crm/prospects?listId&page&size */
 export const PROSPECT_PAGE_MAX = 1000;

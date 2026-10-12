@@ -14,6 +14,7 @@ import {
   Pencil,
   Phone,
   PhoneCall,
+  Snowflake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +37,7 @@ import { canIssueInvoice, canSendSurvey, stop } from "./CrmRowParts";
 
 /**
  * Satır / kart tek "İşlemler" menüsü (DeepSport CrmRowActionsMenu): Düzenle (aday panelini açar), Not ekle, Görev ata,
- * Arama listesine ekle, Tahsilat ekle (satışı olan, yalnız finans yetkisi), Fatura kes (ücretli kurum, yalnız finans),
+ * Arama listesine ekle, Soğuk listeye taşı (müşteri değilse), Tahsilat ekle (satışı olan, yalnız finans yetkisi), Fatura kes (ücretli kurum, yalnız finans),
  * Anket gönder, İletişim (alt menü: Ara / E-posta / WhatsApp — "iletişim denemesi" notuyla), Demo aç / Kuruma bağla
  * (kuruma bağlı değilse), Şikâyet kaydı. Öğeler ekranı kuran bileşenin verdiği eylemleri çağırır (CrmTableActions);
  * verilmeyen eylem çizilmez.
@@ -77,6 +78,12 @@ export function CrmRowActionsMenu({ lead, actions, className }: { lead: CrmLead;
             <DropdownMenuItem onSelect={() => actions.onAddToCallList?.(lead)}>
               <PhoneCall />
               {tMenu("addToCallList")}
+            </DropdownMenuItem>
+          )}
+          {actions.onReturnToColdList && lead.status !== "SATIS_OLDU" && (
+            <DropdownMenuItem onSelect={() => actions.onReturnToColdList?.(lead)}>
+              <Snowflake />
+              {tMenu("returnToColdList")}
             </DropdownMenuItem>
           )}
           {actions.onAddCollection && canSeeFinancials && !!lead.saleAmount && (

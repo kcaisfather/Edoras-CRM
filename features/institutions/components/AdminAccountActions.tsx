@@ -374,7 +374,7 @@ function AdminActiveDialog({ institution, admin, name, onOpenChange }: AccountDi
           <DialogTitle>{deactivate ? t("deactivateTitle") : t("activateTitle")}</DialogTitle>
           <DialogDescription>{deactivate ? t("deactivateDescription", { name }) : t("activateDescription", { name })}</DialogDescription>
         </DialogHeader>
-        {deactivate ? <Effects items={[t("deactivateEffect"), t("deactivateMobile")]} warning={t("webGap")} /> : null}
+        {deactivate ? <Effects items={[t("deactivateEffect"), t("deactivateAccess")]} /> : null}
         {needsConfirm ? (
           <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
             <p className="flex items-start gap-2 text-sm font-medium text-destructive">

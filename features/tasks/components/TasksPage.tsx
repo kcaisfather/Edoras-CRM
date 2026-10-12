@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowLeft, RotateCcw, Search, SlidersHorizontal, Snowflake } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, RotateCcw, Search, SlidersHorizontal, Snowflake } from "lucide-react";
 import { Link, useRouter } from "@/lib/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -19,13 +19,15 @@ import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import type { CrmLead, CrmNoteMode } from "@/lib/domain/crm/types";
 import { COLD_LIST_NEW_TASK_CAP } from "@/lib/domain/tasks/cold";
-import { bucketTasks, type TaskBuckets } from "@/lib/domain/tasks/derive";
-import { ruleMap } from "@/lib/domain/tasks/rules";
+import { bucketTasks, canRemoveTask, type TaskBuckets } from "@/lib/domain/tasks/derive";
+import { RULE_TASKS_ENABLED, ruleMap } from "@/lib/domain/tasks/rules";
 import { taskMatches, type CrmTask } from "@/lib/domain/tasks/view";
 import { useReopenTask } from "../mutations";
 import { useCrmTaskList } from "../queries";
+import { AssignTaskDialog } from "./AssignTaskDialog";
 import { ColdOutcomeDialog } from "./ColdOutcomeDialog";
 import { TaskCompleteDialog } from "./TaskCompleteDialog";
+import { TaskRemoveDialog } from "./TaskRemoveDialog";
 import { TaskCard, TaskRow, type TaskRowProps } from "./TaskRows";
 
 type Bucket = keyof TaskBuckets<CrmTask>;
@@ -126,7 +128,9 @@ function TaskList({ rows, rowProps }: { rows: CrmTask[]; rowProps: (task: CrmTas
 
 /**
  * Madde 11 — Görevlerim (DeepSport TasksPage): gecikmiş / bugün / yaklaşan; kaynak (CRM / soğuk liste); arama;
- * tamamlananları göster ve geri al. Görevler sunucuda kurallardan türetilir ve ekiple paylaşılır. Soğuk liste
+ * tamamlananları göster ve geri al; "Görev ekle" (aday seçtirerek, AssignTaskDialog) ve elle eklenen açık görevi "Kaldır"
+ * (ekleyen, atanan kişi ya da yönetici). 2026-10-12'den beri kural görevleri KAPALI (RULE_TASKS_ENABLED): liste yalnız
+ * elle eklenen görevlerdir. Anahtar açıkken görevler sunucuda kurallardan türetilir ve ekiple paylaşılır. Soğuk liste
  * görevleri kişinin arama sonucu girilerek kapanır (ColdOutcomeDialog); aynı anda en çok COLD_LIST_NEW_TASK_CAP
  * aranmamış kişi görev olur ve menü rozeti onları saymaz. DeepSport'taki tarayıcıya özel tamamlanma, not taraması ve
  * "en iyi arama saati" yok — bkz. README.
@@ -143,6 +147,8 @@ export function TasksPage() {
   const { data: me } = useCurrentUser();
   const reopen = useReopenTask();
   const errorMessage = useApiErrorMessage();
+  const [addOpen, setAddOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<CrmTask | null>(null);
   const [q, setQ] = useState(() => searchParams.get("q") ?? "");
   const [showDone, setShowDone] = useState(false);
   const [completeTask, setCompleteTask] = useState<CrmTask | null>(null);
@@ -176,8 +182,11 @@ export function TasksPage() {
     today: data.today,
     canUndo: !!task.taskId && (isAdmin || (!!me?.id && task.completedBy === me.id)),
     undoing: reopen.isPending,
+    // Sunucu da aynı kuralla denetler (403 TASK_NOT_REMOVER); oturum kimliği yüklenmeden yalnız yönetici görür.
+    canRemove: !!task.taskId && canRemoveTask(task, { id: me?.id ?? "", isAdmin }),
     onComplete: () => (task.prospect ? setColdTask(task) : setCompleteTask(task)),
     onUndo: () => undo(task),
+    onRemove: () => setRemoveTarget(task),
     onNote: () => {
       if (!task.lead) return;
       setNoteMode("note");
@@ -191,7 +200,7 @@ export function TasksPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
+          <p className="text-sm text-muted-foreground">{t(RULE_TASKS_ENABLED ? "description" : "descriptionManual")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/crm" className={buttonVariants({ size: "sm", variant: "ghost" })}>
@@ -204,6 +213,10 @@ export function TasksPage() {
               {t("rulesLink")}
             </Link>
           )}
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus />
+            {t("add")}
+          </Button>
         </div>
       </div>
 
@@ -230,7 +243,7 @@ export function TasksPage() {
             </Alert>
           ) : null}
           <div className="space-y-1">
-            <CoverageNote>{t("sharedNote")}</CoverageNote>
+            <CoverageNote>{t(RULE_TASKS_ENABLED ? "sharedNote" : "manualNote")}</CoverageNote>
             {filters.source !== "crm" && filters.sourceCounts.coldList > 0 && (
               <CoverageNote>{t("cold.capNote", { cap: COLD_LIST_NEW_TASK_CAP })}</CoverageNote>
             )}
@@ -268,6 +281,8 @@ export function TasksPage() {
       )}
 
       <TaskCompleteDialog task={completeTask} open={!!completeTask} onOpenChange={(open) => !open && setCompleteTask(null)} />
+      <AssignTaskDialog lead={null} pickLead open={addOpen} onOpenChange={setAddOpen} />
+      <TaskRemoveDialog task={removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)} />
       <ColdOutcomeDialog
         task={coldTask}
         retryDays={ruleMap(rules).coldList.days}

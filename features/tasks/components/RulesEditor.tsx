@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ArrowLeft, ListChecks, Loader2, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Info, ListChecks, Loader2, RotateCcw, Save } from "lucide-react";
 import { Link } from "@/lib/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CoverageNote } from "@/components/ui/coverage-note";
@@ -18,6 +19,7 @@ import { useCrmRules } from "@/features/crm";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import {
   DEFAULT_RULES,
+  RULE_TASKS_ENABLED,
   RULES_NEEDING_MODULE,
   RULES_WITHOUT_DAYS,
   isDefaultRules,
@@ -38,7 +40,8 @@ const sameRules = (a: RuleConfig[], b: RuleConfig[]) => JSON.stringify(normalize
 /**
  * Madde 12 — takip kuralları (DeepSport RulesEditor): gün sayısı ve aktiflik. Kurallar ekip geneli (crm_rules);
  * yalnız yönetici değiştirir, kaydetmeden önce onay istenir. `embedded`: Ayarlar → Kurallar sekmesinde başlık ve
- * bağlantılar çizilmez.
+ * bağlantılar çizilmez. Otomatik görev kapalıyken (RULE_TASKS_ENABLED, 2026-10-12) üstte not gösterilir: kurallar Görevlerim'e
+ * görev üretmez; ekran yine çalışır, çünkü bazı değerler başka yerde kullanılıyor (önerilen sonraki arama, anket eşiği).
  */
 export function RulesEditor({ embedded = false }: { embedded?: boolean }) {
   const t = useTranslations("crm.rules");
@@ -79,7 +82,7 @@ export function RulesEditor({ embedded = false }: { embedded?: boolean }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-            <p className="text-sm text-muted-foreground">{t("description")}</p>
+            <p className="text-sm text-muted-foreground">{t(RULE_TASKS_ENABLED ? "description" : "descriptionManual")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href="/crm" className={buttonVariants({ size: "sm", variant: "ghost" })}>
@@ -93,7 +96,14 @@ export function RulesEditor({ embedded = false }: { embedded?: boolean }) {
           </div>
         </div>
       )}
-      {embedded && <p className="text-sm text-muted-foreground">{t("description")}</p>}
+      {embedded && <p className="text-sm text-muted-foreground">{t(RULE_TASKS_ENABLED ? "description" : "descriptionManual")}</p>}
+      {!RULE_TASKS_ENABLED && (
+        <Alert role="note">
+          <Info className="h-4 w-4" />
+          <AlertTitle>{t("autoOff.title")}</AlertTitle>
+          <AlertDescription>{t("autoOff.body")}</AlertDescription>
+        </Alert>
+      )}
       {!canEdit && <CoverageNote>{t("adminOnly")}</CoverageNote>}
 
       {isLoading ? (
@@ -152,7 +162,7 @@ export function RulesEditor({ embedded = false }: { embedded?: boolean }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{t("confirmTitle")}</DialogTitle>
-            <DialogDescription>{t("confirmBody")}</DialogDescription>
+            <DialogDescription>{t(RULE_TASKS_ENABLED ? "confirmBody" : "confirmBodyManual")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isSaving}>

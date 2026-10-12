@@ -8,6 +8,7 @@ import type { CrmTaskDto, TaskStatus, TeamMember } from "@/lib/domain/tasks/type
  *   POST /api/crm/tasks                       → CrmTaskDto ("Görev ata")
  *   POST /api/crm/tasks/complete              → { taskId } (tek transaction: görev + not + aday)
  *   POST /api/crm/tasks/reopen { taskId }     → "Geri al"
+ *   DELETE /api/crm/tasks/{id}                → "Kaldır" (elle eklenen açık görev; ekleyen, atanan ya da ADMIN)
  *   GET  /api/crm/tasks/due-count             → { count } (menü rozeti)
  *   GET  /api/crm/tasks/assignees             → TeamMember[] ("Atanan kişi")
  * Kurallar (GET/PUT /api/crm/rules) crm modülünde (useCrmRules).
@@ -26,4 +27,5 @@ export const tasksApi = {
   assign: (body: AssignTaskInput) => apiRequest<CrmTaskDto>("/api/crm/tasks", { method: "POST", body }),
   complete: (body: CompleteTaskInput) => apiRequest<{ taskId: string }>("/api/crm/tasks/complete", { method: "POST", body }),
   reopen: (taskId: string) => apiRequest<{ ok: true }>("/api/crm/tasks/reopen", { method: "POST", body: { taskId } }),
+  remove: (taskId: string) => apiRequest<{ ok: true }>(`/api/crm/tasks/${encodeURIComponent(taskId)}`, { method: "DELETE" }),
 };

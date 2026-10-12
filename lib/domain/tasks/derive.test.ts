@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import type { InstitutionListItem } from "@/lib/domain/institutions/types";
 import {
   bucketTasks,
+  canRemoveTask,
+  composeTasks,
   countDueOpenTasks,
   deriveTasks,
   filterTasks,
@@ -15,7 +17,7 @@ import {
   type TaskInstitutionInput,
   type TaskLeadInput,
 } from "./derive";
-import { DEFAULT_RULES, RULES_NEEDING_MODULE, normalizeRules } from "./rules";
+import { DEFAULT_RULES, RULE_TASKS_ENABLED, RULES_NEEDING_MODULE, normalizeRules } from "./rules";
 import type { CrmTaskDto } from "./types";
 import { attachTaskSubjects, taskMatches } from "./view";
 
@@ -352,6 +354,110 @@ describe("mergeTasks + filterTasks", () => {
     expect(countDueOpenTasks(visible, TODAY)).toBe(1);
     expect(countDueOpenTasks(filterTasks(merged, { viewer: AGENT_A, today: TODAY, to: TODAY }), TODAY)).toBe(2);
     expect(countDueOpenTasks([], TODAY)).toBe(0);
+  });
+});
+
+// --- 2026-10-12: Görevlerim tamamen elle ------------------------------------------------------
+
+describe("RULE_TASKS_ENABLED — otomatik görev kapalı (kullanıcı kararı 2026-10-12)", () => {
+  const names = new Map([[ADMIN.id, "Yönetici"]]);
+  const ctx = { names, leadOfInstitution: new Map([[I1, L2]]) };
+  // Kuralların hepsi açıkken bile görev üretecek girdi: teklif, yeniden temas, tarihsiz takip, bakiye, demo bitişi, anket.
+  const ruleInput = input({
+    leads: [
+      lead({ status: "TEKLIF_VERILDI", offerSentAt: "2026-09-22" }),
+      lead({ id: L2, status: "OLUMSUZ", updatedOn: "2026-06-28", institutionId: I1 }),
+      lead({ id: uuid(3), status: "ARANACAK", saleAmount: 1000, nextFollowUpAt: "2026-09-26" }),
+    ],
+    institutions: [inst({ institutionId: I2, status: "DEMO", demoEndsAt: "2026-10-10" })],
+    surveys: new Map([[L1, "2026-09-20"]]),
+  });
+  const manualOpen = stored({ id: uuid(601), assigneeId: AGENT_A.id, createdBy: AGENT_B.id });
+  const manualDone = stored({
+    id: uuid(602),
+    status: "DONE",
+    outcome: "ulasildi",
+    completedAt: Date.parse("2026-09-26T08:00:00Z"),
+    completedBy: AGENT_A.id,
+  });
+  const ruleDone = stored({
+    id: uuid(603),
+    kind: "offer",
+    type: null,
+    key: `offer:${L1}:2026-09-25`,
+    dueDate: "2026-09-25",
+    status: "DONE",
+    outcome: "ulasildi",
+    completedAt: Date.parse("2026-09-26T08:00:00Z"),
+    completedBy: AGENT_A.id,
+  });
+  const rows = [manualOpen, manualDone, ruleDone];
+
+  it("anahtar kapalı: varsayılan değer false", () => {
+    expect(RULE_TASKS_ENABLED).toBe(false);
+  });
+
+  it("kapalıyken türetme çağrılmaz; yalnız elle eklenen görevler kalır (tamamlanmış kural görevi satırı da atılır)", () => {
+    const derive = vi.fn(() => deriveTasks(ruleInput, DEFAULT_RULES, TODAY));
+    const out = composeTasks(rows, derive, ctx);
+    expect(derive).not.toHaveBeenCalled();
+    expect(out.map((t) => t.id).sort()).toEqual([uuid(601), uuid(602)]);
+    expect(out.every((t) => t.kind === "assigned")).toBe(true);
+    // Açıkça false verilince de aynı.
+    expect(composeTasks(rows, derive, ctx, false).map((t) => t.id).sort()).toEqual([uuid(601), uuid(602)]);
+  });
+
+  it("rozet ve liste yalnız elle eklenenleri sayar", () => {
+    const out = composeTasks(rows, () => deriveTasks(ruleInput, DEFAULT_RULES, TODAY), ctx);
+    expect(countDueOpenTasks(filterTasks(out, { viewer: ADMIN, today: TODAY, to: TODAY }), TODAY)).toBe(1);
+    expect(filterTasks(out, { viewer: ADMIN, today: TODAY, to: "2026-10-10", status: "OPEN" }).map((t) => t.id)).toEqual([uuid(601)]);
+  });
+
+  it("anahtar yeniden açılırsa eski davranış: türetilen + saklı (mergeTasks ile aynı)", () => {
+    const derived = deriveTasks(ruleInput, DEFAULT_RULES, TODAY);
+    expect(derived.length).toBeGreaterThan(3);
+    const on = composeTasks(rows, () => derived, ctx, true);
+    expect(on).toEqual(mergeTasks(derived, rows, ctx));
+    expect(on.some((t) => t.kind !== "assigned" && t.status === "OPEN")).toBe(true);
+  });
+});
+
+describe("canRemoveTask — Kaldır: ekleyen, atanan ve yönetici (2026-10-12)", () => {
+  const task = (over: Partial<Pick<CrmTaskDto, "kind" | "status" | "createdBy" | "assigneeId">> = {}) => ({
+    kind: "assigned" as CrmTaskDto["kind"],
+    status: "OPEN" as CrmTaskDto["status"],
+    createdBy: AGENT_B.id,
+    assigneeId: AGENT_A.id,
+    ...over,
+  });
+  const OTHER = { id: uuid(903), isAdmin: false };
+
+  it("yönetici, ekleyen ve atanan kaldırır; başkası kaldıramaz", () => {
+    expect(canRemoveTask(task(), ADMIN)).toBe(true);
+    expect(canRemoveTask(task(), AGENT_B)).toBe(true); // ekleyen
+    expect(canRemoveTask(task(), AGENT_A)).toBe(true); // atanan
+    expect(canRemoveTask(task(), OTHER)).toBe(false);
+  });
+
+  it("ekip havuzundaki (atanmamış) görevi yalnız ekleyen ve yönetici kaldırır", () => {
+    const pool = task({ assigneeId: null });
+    expect(canRemoveTask(pool, AGENT_B)).toBe(true);
+    expect(canRemoveTask(pool, ADMIN)).toBe(true);
+    expect(canRemoveTask(pool, AGENT_A)).toBe(false);
+    expect(canRemoveTask(pool, OTHER)).toBe(false);
+  });
+
+  it("ekleyeni bilinmeyen görev (personel silinmiş): atanan ya da yönetici", () => {
+    expect(canRemoveTask(task({ createdBy: null }), AGENT_A)).toBe(true);
+    expect(canRemoveTask(task({ createdBy: null, assigneeId: null }), { id: "", isAdmin: false })).toBe(false);
+    expect(canRemoveTask(task({ createdBy: null, assigneeId: null }), ADMIN)).toBe(true);
+  });
+
+  it("tamamlanmış görev ve kural görevi kaldırılmaz (yönetici de)", () => {
+    expect(canRemoveTask(task({ status: "DONE" }), ADMIN)).toBe(false);
+    expect(canRemoveTask(task({ status: "DONE" }), AGENT_B)).toBe(false);
+    expect(canRemoveTask(task({ kind: "offer", createdBy: null, assigneeId: null }), ADMIN)).toBe(false);
+    expect(canRemoveTask(task({ kind: "coldList" }), AGENT_A)).toBe(false);
   });
 });
 

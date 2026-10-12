@@ -11,6 +11,7 @@ import { usePermissions } from "@/features/auth";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
 import { csvDate } from "@/lib/utils/csv";
 import { listSlug } from "@/lib/domain/cold-lists/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { OUTCOME_FILTERS, type ColdListView, type OutcomeFilter } from "../hooks";
 import { AddProspectButton } from "./AddProspectDialog";
 import { ImportButton, ImportTemplateButton } from "./import/ImportDialog";
@@ -115,7 +116,7 @@ export function ColdListFilters({ view }: { view: ColdListView }) {
             />
           </div>
           <InfoTip label={t("outcomeFilter")} align="end">
-            {t("queueNote")}
+            {t(RULE_TASKS_ENABLED ? "queueNote" : "queueNoteManual")}
           </InfoTip>
         </div>
         <div className="flex items-center gap-2 lg:shrink-0">

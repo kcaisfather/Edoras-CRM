@@ -13,4 +13,7 @@ Ekran: `/crm/surveys`, herkese açık `/s/[token]`. Uçlar: `/api/crm/surveys/**
 - Herkese açık uçlar asla 401 dönmez (404 / 410 süresi dolmuş / 409 yanıtlanmış / 429); oran sınırı bellek içi
   (`lib/server/rate-limit.ts`) — Vercel'de örnek başına çalışır, paylaşılan depo yok (kabul edilmiş zayıflık).
 - Zamanlayıcı yok: süre dolumu okurken hesaplanır.
-- Memnuniyet rozeti (adaylar, kurum ayrıntısı); Görevlerim'de "Anket araması". Eleştirmen yanıtında otomatik ticket yok.
+- Memnuniyet rozeti (adaylar, kurum ayrıntısı). Eleştirmen yanıtında otomatik ticket yok.
+- Görevlerim'deki otomatik "Anket araması" (`surveyNoResponse`) **2026-10-12'den beri kapalı** (`RULE_TASKS_ENABLED`,
+  [tasks-rules.md](tasks-rules.md)); kuralın günü hâlâ Anketler'deki "yanıt bekliyor" eşiği. Elle "Anket araması" amaçlı
+  görev eklenebilir (satırda WhatsApp hatırlatması çıkar).

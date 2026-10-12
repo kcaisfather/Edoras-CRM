@@ -14,6 +14,8 @@
 ## Uyarlamalar (DeepSport → Edoras)
 
 - Zamanlayıcı yok → görevler istekte türetilir; tek cron rapor dağıtıcısı.
+- **2026-10-12: Görevlerim tamamen elle.** Kurallar görev üretmez (`RULE_TASKS_ENABLED = false`, motor duruyor); görev
+  yalnız elle eklenir / kaldırılır (kaldırma: ekleyen, atanan, ADMIN). → [modules/tasks-rules.md](../modules/tasks-rules.md)
 - E-posta AWS SES yerine Resend REST.
 - Soğuk listeler tarayıcıdan veritabanına (ekipçe paylaşılır).
 - Rapor alıcıları serbest e-posta değil, aktif personel.

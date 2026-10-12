@@ -24,6 +24,7 @@ import { countSkipReasons } from "@/lib/domain/cold-lists/bulk-return";
 import type { ProspectList } from "@/lib/domain/cold-lists/types";
 import { LOST_REASONS, isLostReason, type CrmLead, type LostReason } from "@/lib/domain/crm/types";
 import { getLeadTitle } from "@/lib/domain/crm/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useReturnLeadToColdList, useReturnLeadsToColdList } from "../mutations";
 import { useLeadOriginLists, useProspectLists } from "../queries";
 
@@ -88,7 +89,7 @@ export function ReturnToColdListDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{bulk ? t("bulkTitle", { count: leads.length }) : t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogDescription>{t(RULE_TASKS_ENABLED ? "description" : "descriptionManual")}</DialogDescription>
         </DialogHeader>
         {visible &&
           (bulk ? (

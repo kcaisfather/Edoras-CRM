@@ -32,6 +32,23 @@ export function isTaskKind(value: unknown): value is TaskKind {
   return typeof value === "string" && (TASK_KINDS as readonly string[]).includes(value);
 }
 
+/**
+ * OTOMATİK GÖREV ANAHTARI — kurallar Görevlerim'e görev üretir mi (tek anahtar; motor silinmedi).
+ *
+ * KAPALI — kullanıcı kararı 2026-10-12: "görevlerim'e otomatik taşıma olmasın sadece kullanıcı görevlerim kısmına
+ * ekleme yapabilir veya kaldırabilir"; kapsam "Hepsi — Görevlerim tamamen elle". Yukarıdaki 10 kuralın HİÇBİRİ görev
+ * üretmez (planlanan arama, teklif, demo bitişi, lisans bitişi, süresi doldu, açık bakiye, satış olmadı, tarihsiz takip,
+ * soğuk liste, anket araması). Görevlerim, menü rozeti, bildirim zili ve rapor e-postasındaki "Bugünkü görevler" yalnız
+ * elle eklenen görevleri (crm_tasks, kind 'assigned') gösterir; tamamlanmış kural görevi satırları (tarihçe) listeye
+ * girmez, kural görevi tamamlanamaz / geri alınamaz. crm_rules verisi DEĞİŞMEDİ: kuralların başka yerde kullanılan
+ * değerleri çalışmaya devam eder — statü seçilince önerilen sonraki arama (offer, lostRecontact →
+ * followUpSuggestDays) ve Anketler'deki "yanıt bekliyor" eşiği (surveyNoResponse).
+ *
+ * Yeniden açmak için `true` yapın (sunucu: lib/server/crm-tasks.ts; ekran: Kurallar notu, Görevlerim açıklaması).
+ * → docs/memory/EdorasCRM/modules/tasks-rules.md
+ */
+export const RULE_TASKS_ENABLED: boolean = false;
+
 export interface RuleConfig {
   id: TaskKind;
   enabled: boolean;

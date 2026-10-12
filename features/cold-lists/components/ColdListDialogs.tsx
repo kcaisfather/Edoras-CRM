@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { runSequential } from "@/lib/import/run";
 import type { ProspectOutcome } from "@/lib/domain/cold-lists/types";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useDeleteProspect, useDeleteProspectList, useInvalidateAfterImport, usePatchProspect } from "../mutations";
 
 export interface DeleteTarget {
@@ -113,7 +114,7 @@ export function SavePendingDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("saveTitle")}</DialogTitle>
-          <DialogDescription>{t("saveBody", { count })}</DialogDescription>
+          <DialogDescription>{t(RULE_TASKS_ENABLED ? "saveBody" : "saveBodyManual", { count })}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

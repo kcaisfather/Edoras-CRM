@@ -7,6 +7,8 @@ import type { CrmStatus } from "@/lib/domain/crm/types";
 import { planLeadPatch } from "@/lib/domain/tasks/complete";
 import {
   UPCOMING_WINDOW_DAYS,
+  canRemoveTask,
+  composeTasks,
   countDueOpenTasks,
   deriveTasks,
   filterTasks,
@@ -17,7 +19,7 @@ import {
   type StoredTask,
   type Viewer,
 } from "@/lib/domain/tasks/derive";
-import { isInstitutionRule, type RuleConfig } from "@/lib/domain/tasks/rules";
+import { RULE_TASKS_ENABLED, isInstitutionRule, type RuleConfig } from "@/lib/domain/tasks/rules";
 import { deriveColdListTasks } from "@/lib/domain/tasks/cold";
 import { awaitingSurveyByLead } from "@/lib/domain/surveys/logic";
 import { crmContactSets } from "@/lib/domain/cold-lists/utils";
@@ -34,6 +36,11 @@ import { internalInstitutionIds } from "./internal-institutions";
  * Görevler (Madde 11). Zamanlayıcı yok: açık kural görevleri her istekte CRM tablolarından türetilir
  * (lib/domain/tasks/derive.ts); crm_tasks'ta yalnız elle atananlar ve tamamlanan kural görevleri durur.
  * Edoras'a gidilmez — kurum durumu CRM kaydından (crm_institutions, crm_licenses, crm_payments) okunur.
+ *
+ * ⚠️ 2026-10-12: OTOMATİK GÖREV KAPALI (RULE_TASKS_ENABLED, lib/domain/tasks/rules.ts). Liste, rozet, bildirim zili ve
+ * rapor yalnız elle eklenen görevleri okur (`allTasks` → `loadManualTasks`; türetme girdisi hiç okunmaz); kural görevi
+ * tamamlanamaz / geri alınamaz (404). Elle eklenen açık görev "Kaldır" ile silinir (`removeTask`). Aşağıdaki türetme
+ * notları anahtar yeniden açılırsa geçerlidir.
  *
  * - Aktör her zaman oturumdan (requireStaff); gövdedeki kimliklere güvenilmez. Kural görevi tamamlanmadan önce
  *   sunucuda yeniden türetilir: istemcinin gönderdiği anahtar bugün gerçekten açık bir görev olmalı.
@@ -239,19 +246,43 @@ async function coldProspects() {
 }
 
 /**
- * Çağıranın gördüğü görevler. `cold`: soğuk liste görevleri de türetilir (yalnız Görevlerim listesi; rozet saymaz —
- * DeepSport'taki gibi, yüzlerce aranmamış kişi rozeti anlamsızlaştırır).
+ * Kural görevleri kapalıyken (RULE_TASKS_ENABLED; 2026-10-12) listenin tek kaynağı: elle eklenen görevler (crm_tasks,
+ * kind 'assigned'). Türetme girdisi (adaylar, kurumlar, lisanslar, ödemeler, anket davetleri, soğuk liste kişileri) ve
+ * kurallar hiç okunmaz. `openOnly`: yalnız açık görevler (rozet, rapor).
  */
+async function loadManualTasks({ openOnly }: { openOnly: boolean }): Promise<CrmTaskDto[]> {
+  const db = getSupabaseAdminClient();
+  const [rows, names] = await Promise.all([
+    fetchAll<TaskRow>((a, b) => {
+      const q = db.from("crm_tasks").select(TASK_COLUMNS).eq("kind", "assigned");
+      return (openOnly ? q.eq("status", "OPEN") : q).order("id").range(a, b);
+    }),
+    staffNames(),
+  ]);
+  return composeTasks(rows.map(toStored), () => [], { names, leadOfInstitution: new Map() });
+}
+
+/**
+ * Ekibin görev satırları (görünürlük süzgeci çağıranda). Anahtar kapalıyken yalnız elle eklenenler; açıkken türetilen +
+ * saklı, `cold` ise soğuk liste görevleri de (yalnız Görevlerim listesi; rozet saymaz — DeepSport'taki gibi, yüzlerce
+ * aranmamış kişi rozeti anlamsızlaştırır).
+ */
+async function allTasks(today: string, { cold, openOnly }: { cold: boolean; openOnly: boolean }): Promise<CrmTaskDto[]> {
+  if (!RULE_TASKS_ENABLED) return loadManualTasks({ openOnly });
+  const [ctx, prospects] = await Promise.all([loadContext(), cold ? coldProspects() : Promise.resolve([])]);
+  const merged = composeTasks(ctx.stored, () => deriveTasks(ctx.input, ctx.rules, today), ctx);
+  const coldTasks = cold ? deriveColdListTasks(prospects, ctx.crmContacts, ctx.rules, today) : [];
+  return coldTasks.length ? [...merged, ...coldTasks].sort((a, b) => a.dueDate.localeCompare(b.dueDate)) : merged;
+}
+
+/** Çağıranın gördüğü görevler. `cold`: soğuk liste görevleri de (yalnız Görevlerim listesi; anahtar açıkken). */
 async function visibleTasks(
   staff: StaffContext,
   window: { from?: string | null; to: string; status?: TaskStatus | null },
   today: string,
   { cold }: { cold: boolean }
 ) {
-  const [ctx, prospects] = await Promise.all([loadContext(), cold ? coldProspects() : Promise.resolve([])]);
-  const merged = mergeTasks(deriveTasks(ctx.input, ctx.rules, today), ctx.stored, ctx);
-  const coldTasks = cold ? deriveColdListTasks(prospects, ctx.crmContacts, ctx.rules, today) : [];
-  const all = coldTasks.length ? [...merged, ...coldTasks].sort((a, b) => a.dueDate.localeCompare(b.dueDate)) : merged;
+  const all = await allTasks(today, { cold, openOnly: window.status === "OPEN" });
   return filterTasks(all, { viewer: viewerOf(staff), today, ...window });
 }
 
@@ -275,12 +306,12 @@ export async function listTasks(
 }
 
 /**
- * Rapor e-postası (lib/server/reports.ts): ekibin TÜM açık görevleri (kural + atanan; soğuk liste görevi yok, tamamlananlar
- * yok). Görünürlük süzmesi (atanmış görev yalnız atanana + ADMIN) çağıranda, alıcı başına yapılır — bağlam bir kez yüklenir.
+ * Rapor e-postası (lib/server/reports.ts): ekibin TÜM açık görevleri (anahtar kapalıyken yalnız elle eklenenler; açıkken
+ * kural + atanan; soğuk liste görevi yok, tamamlananlar yok). Görünürlük süzmesi (atanmış görev yalnız atanana + ADMIN)
+ * çağıranda, alıcı başına yapılır — bağlam bir kez yüklenir.
  */
 export async function listOpenTasksForReport(): Promise<CrmTaskDto[]> {
-  const ctx = await loadContext();
-  return mergeTasks(deriveTasks(ctx.input, ctx.rules, todayIso()), ctx.stored, ctx).filter((t) => t.status === "OPEN");
+  return (await allTasks(todayIso(), { cold: false, openOnly: true })).filter((t) => t.status === "OPEN");
 }
 
 /** Menü rozeti: çağıranın gördüğü gecikmiş + bugün açık görev sayısı. */
@@ -403,6 +434,9 @@ async function completionTarget(body: CompleteTaskValues, staff: StaffContext, t
     return { taskId: row.id, key: null, kind: row.kind, leadId: row.lead_id, institutionId: null, dueDate: row.due_date };
   }
   const d = body.derived;
+  // Kural görevleri kapalı (RULE_TASKS_ENABLED, 2026-10-12): açık kural görevi yok; eski ekrandan gelen istek 404 alır
+  // (liste tazelenir). Elle eklenen görev yukarıdaki `taskId` yolundan tamamlanır, türetmeye hiç girmez.
+  if (!RULE_TASKS_ENABLED) throw new HttpError(404, "TASK_NOT_FOUND");
   // Soğuk liste görevi tamamlanmaz: kişinin arama sonucu girilir (PATCH /api/crm/prospects/{id}).
   if (d.kind === "coldList") throw new HttpError(400, "VALIDATION");
   const subject = isInstitutionRule(d.kind) ? d.institutionId : d.leadId;
@@ -495,6 +529,9 @@ export async function completeTask(body: CompleteTaskValues, staff: StaffContext
  */
 export async function reopenTask(taskId: string, staff: StaffContext): Promise<void> {
   const row = await getTaskRow(taskId);
+  // Kural görevleri kapalıyken tamamlanmış kural görevi geri alınmaz: DONE satırı silinir ama görev yeniden türetilmez
+  // (iz kaybolurdu). Bu satırlar listede de gösterilmez.
+  if (!RULE_TASKS_ENABLED && row.kind !== "assigned") throw new HttpError(404, "TASK_NOT_FOUND");
   const { error } = await getSupabaseAdminClient().rpc("crm_reopen_task", { p_task_id: taskId, p_actor: staff.userId });
   if (error) throw dbError(error);
   const lead = row.lead_id ? await getLead(row.lead_id) : null;
@@ -504,5 +541,48 @@ export async function reopenTask(taskId: string, staff: StaffContext): Promise<v
     entityId: taskId,
     entityLabel: lead?.organization_name ?? (row.institution_id ? await institutionName(row.institution_id) : null),
     details: { kind: row.kind, key: row.task_key, leadId: row.lead_id, institutionId: row.institution_id, dueDate: row.due_date },
+  });
+}
+
+/**
+ * "Kaldır" (DELETE /api/crm/tasks/{id}; kullanıcı kararı 2026-10-12): elle eklenen AÇIK görev Görevlerim'den çıkar —
+ * yalnız görevi ekleyen, atanan kişi ya da ADMIN (`canRemoveTask`; değilse 403 TASK_NOT_REMOVER). Kural görevi satırı
+ * kaldırılmaz (404); tamamlanmış görev kaldırılmaz (409 — iş kaydı ve performans sayımı; önce "Geri al").
+ * crm_tasks'ta iptal / durum kolonu ve silme tetikleyicisi yok (yalnız OPEN / DONE): satır silinir, iz işlem kaydında
+ * (TASK_REMOVED) kalır — not metni yazılmaz. Şema değişmedi.
+ */
+export async function removeTask(taskId: string, staff: StaffContext): Promise<void> {
+  const row = await getTaskRow(taskId);
+  if (row.kind !== "assigned") throw new HttpError(404, "TASK_NOT_FOUND");
+  if (row.status !== "OPEN") throw new HttpError(409, "TASK_ALREADY_DONE");
+  const removable = canRemoveTask(
+    { kind: row.kind, status: row.status, createdBy: row.created_by, assigneeId: row.assignee_id },
+    viewerOf(staff)
+  );
+  if (!removable) throw new HttpError(403, "TASK_NOT_REMOVER");
+  // Koşullu silme: bu arada tamamlanan ya da başkasınca kaldırılan görev silinmez → 404 (ekran listeyi tazeler).
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_tasks")
+    .delete()
+    .eq("id", taskId)
+    .eq("kind", "assigned")
+    .eq("status", "OPEN")
+    .select("id");
+  if (error) throw dbError(error);
+  if (!data?.length) throw new HttpError(404, "TASK_NOT_FOUND");
+  const lead = row.lead_id ? await getLead(row.lead_id) : null;
+  await recordAudit(staff, {
+    action: "TASK_REMOVED",
+    entityType: "task",
+    entityId: taskId,
+    entityLabel: lead?.organization_name ?? null,
+    details: {
+      leadId: row.lead_id,
+      type: row.assignment_type,
+      dueDate: row.due_date,
+      assigneeId: row.assignee_id,
+      createdBy: row.created_by,
+      withNote: !!row.note,
+    },
   });
 }

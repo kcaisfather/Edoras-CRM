@@ -124,6 +124,14 @@ describe("buildReportSections (ADMIN)", () => {
     expect(s.todayTasks.lines[1].detail).toBe("Demo bitiyor");
   });
 
+  it("todayTasks: elle eklenen görevde satırda amacı yazar (2026-10-12: Görevlerim yalnız elle)", () => {
+    const manual = { ...source, tasks: [task({ id: "m1", leadId: "l1", dueDate: day(-1), kind: "assigned", type: "tahsilat" })] };
+    const [section] = buildReportSections(manual, ["todayTasks"], ADMIN, { periodDays: 7, now: NOW });
+    expect(section.lines[0].detail).toBe("Tahsilat takibi · 1 gün gecikti");
+    // Amacı olmayan (eski) satır: genel etiket.
+    expect(s.todayTasks.lines.find((l) => l.key === "t4")?.detail).toBe("Atanan görev");
+  });
+
   it("endingDemos: 7 günlük dönemde yalnız 3 gün içinde bitecek demo", () => {
     expect(s.endingDemos.lines.map((l) => l.key)).toEqual(["demo-ending"]);
     expect(s.endingDemos.lines[0].detail).toBe("1 gün kaldı");

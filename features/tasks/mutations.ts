@@ -40,3 +40,15 @@ export function useReopenTask() {
     onSettled: () => void qc.invalidateQueries({ queryKey: taskKeys.all }),
   });
 }
+
+/**
+ * "Kaldır" (2026-10-12): elle eklenen açık görev silinir (DELETE /api/crm/tasks/{id}). Başarıda da hatada da görev
+ * listesi ve menü rozeti tazelenir (taskKeys.all): görev bu arada tamamlanmış ya da kaldırılmış olabilir.
+ */
+export function useRemoveTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) => tasksApi.remove(taskId),
+    onSettled: () => void qc.invalidateQueries({ queryKey: taskKeys.all }),
+  });
+}

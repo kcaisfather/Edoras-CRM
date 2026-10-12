@@ -11,6 +11,7 @@ import { CoverageNote } from "@/components/ui/coverage-note";
 import { IMPORT_ACCEPT } from "@/lib/import/parse";
 import { IMPORT_FIELDS, hasIdentityField, sampleValue, type ColumnMapping, type ImportField } from "@/lib/import/fields";
 import { downloadImportTemplate } from "@/lib/import/template";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import type { ImportFlow, ImportTarget } from "./use-import-flow";
 
 const SELECT_CLASS = "h-9 w-full rounded-lg border border-input bg-background px-2 text-sm";
@@ -51,7 +52,7 @@ export function FileStep({
           </div>
         </div>
       )}
-      <CoverageNote>{t(`targetHints.${flow.target}`)}</CoverageNote>
+      <CoverageNote>{t(flow.target === "coldList" && !RULE_TASKS_ENABLED ? "targetHints.coldListManual" : `targetHints.${flow.target}`)}</CoverageNote>
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}

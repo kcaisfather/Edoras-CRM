@@ -16,7 +16,7 @@ import type { CrmLeadDto } from "@/lib/domain/crm/types";
 import { addDays, daysBetween, todayIso } from "@/lib/domain/institutions/rules";
 import type { InstitutionListItem } from "@/lib/domain/institutions/types";
 import { canSeeTask, type Viewer } from "@/lib/domain/tasks/derive";
-import type { CrmTaskDto, CrmTaskKind } from "@/lib/domain/tasks/types";
+import type { AssignmentType, CrmTaskDto, CrmTaskKind } from "@/lib/domain/tasks/types";
 import { FINANCIAL_REPORT_SECTIONS, REPORT_SECTIONS, type ReportLine, type ReportSection, type ReportSectionData } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -52,6 +52,23 @@ export const TASK_KIND_LABELS: Record<CrmTaskKind, string> = {
   coldList: "Soğuk liste",
   assigned: "Atanan görev",
 };
+
+/**
+ * Elle eklenen görevin amacı (messages/features/tasks.tr.json → crm.tasks.assign.types ile aynı). 2026-10-12'den beri
+ * Görevlerim yalnız elle eklenen görevlerdir (RULE_TASKS_ENABLED); satırda "Atanan görev" yerine amaç yazılır.
+ */
+export const ASSIGNMENT_TYPE_LABELS: Record<AssignmentType, string> = {
+  arama: "Arama",
+  anket: "Anket araması",
+  yenileme: "Yenileme görüşmesi",
+  tahsilat: "Tahsilat takibi",
+  demo: "Demo takibi",
+  teklif: "Teklif takibi",
+  diger: "Diğer",
+};
+
+const taskLabel = (t: Pick<CrmTaskDto, "kind" | "type">): string =>
+  t.kind === "assigned" && t.type ? ASSIGNMENT_TYPE_LABELS[t.type] : TASK_KIND_LABELS[t.kind];
 
 export interface ReportPayment {
   institutionId: string;
@@ -117,7 +134,7 @@ export function buildReportSections(
           return {
             key: t.id,
             name,
-            detail: [TASK_KIND_LABELS[t.kind], late > 0 ? `${late} gün gecikti` : null].filter(Boolean).join(" · "),
+            detail: [taskLabel(t), late > 0 ? `${late} gün gecikti` : null].filter(Boolean).join(" · "),
             amount: null,
           };
         });

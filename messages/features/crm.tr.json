@@ -229,6 +229,7 @@
     "sectionTitle": "Takip",
     "nextCall": "Sonraki arama tarihi",
     "nextCallHint": "Görevlerim listesinde o gün görünür.",
+    "nextCallHintManual": "Kayıtta tutulur; Görevlerim'e otomatik görev düşmez. Hatırlatma için “Görev ata”yı kullanın.",
     "lostReason": "Kayıp nedeni",
     "lostReasonPlaceholder": "Neden seçin",
     "noReason": "Belirtilmedi",

@@ -70,6 +70,7 @@
     "passives": "Pasif (7–8): {count}",
     "detractors": "Eleştirmen (0–6): {count}",
     "awaiting": "{count} kişi {days}+ gündür yanıt vermedi — anket araması önerilir (Görevlerim'de de listelenir).",
+    "awaitingManual": "{count} kişi {days}+ gündür yanıt vermedi — anket araması önerilir.",
     "showAwaiting": "Listeyi aç"
   },
   "invitations": {

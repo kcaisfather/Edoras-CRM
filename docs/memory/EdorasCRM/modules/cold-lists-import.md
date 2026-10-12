@@ -12,9 +12,10 @@ Sunucu: `lib/server/crm-prospects.ts`, `crm-import.ts`; saf kod `lib/import/`. D
 - "Sıcağa taşı" tek transaction (`crm_convert_prospect`): aday (kaynak COLD_LIST) + not + taşındı işareti; ikinci kez taşınmaz.
   Görev YAZMAZ, adayı gizlemez (sorumlusuz, sonraki arama yok — Adaylar'da en üstte). Kaydedince `MoveToCrmDialog` Adaylar'a
   gider ve adayın panelini açar (`/crm?lead=<id>`, 12.10); listede kaydedilmemiş arama sonucu varsa sayfada kalır, toast'ta
-  "Adaylar'da aç". Aranacak / Takipte açılan aday Görevlerim'de de hemen görünür: kural motorunun "Tarihsiz Aranacak /
-  Takipte" görevi (`undatedFollowUp`, varsayılan +0 gün, istekte türetilir — [tasks-rules.md](tasks-rules.md)); bu tasarım
-  gereği, kapatmak / ertelemek Ayarlar → Kurallar (ADMIN) ya da adaya sonraki arama tarihi girmek.
+  "Adaylar'da aç". ~~Aranacak / Takipte açılan aday Görevlerim'de de hemen görünür ("Tarihsiz Aranacak / Takipte",
+  `undatedFollowUp`)~~ — **2026-10-12'den beri otomatik görev KAPALI** (`RULE_TASKS_ENABLED`, [tasks-rules.md](tasks-rules.md)):
+  soğuk liste kişileri ve taşınan adaylar Görevlerim'e düşmez; görev elle eklenir. Soğuk liste metinlerinin "Görevlerim'de
+  görünür" diyen hâlleri anahtara bağlı (`…Manual` varyantları, `growth.tr.json`).
 - **"Kişi ekle"** (araç çubuğu, `AddProspectDialog`): seçili listeye tek kişi — `POST /api/crm/prospect-lists/{id}/prospects`
   (`createProspect`, şema `prospectCreateSchema`). İçe aktarmadan farkı: en az bir kimlik alanı ve GEÇERLİ telefon / e-posta
   zorunlu (geçersiz ham değer saklanmaz); aynı listede aynı telefon / e-posta → 409 `PROSPECT_DUPLICATE`; CRM / kurum

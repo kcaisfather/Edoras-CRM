@@ -145,6 +145,7 @@
       "TASK_ASSIGNED": "Görev atandı",
       "TASK_COMPLETED": "Görev tamamlandı",
       "TASK_REOPENED": "Görev yeniden açıldı",
+      "TASK_REMOVED": "Görev kaldırıldı",
       "RULES_UPDATED": "Takip kuralları güncellendi",
       "PROSPECT_LIST_CREATED": "Soğuk liste oluşturuldu",
       "PROSPECT_LIST_DELETED": "Soğuk liste silindi",

@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { CRM_STATUSES, LOST_REASONS, type CrmLead, type CrmStatus } from "@/lib/domain/crm/types";
 import { statusNeedsContext, suggestedNextDate } from "@/lib/domain/crm/status-change";
 import { amountToInput, getCrmStatusBadgeClass, getCrmStatusDotClass, getLeadDisplayName } from "@/lib/domain/crm/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useCrmRules } from "../queries";
 import { useLeadStatusUpdate } from "../useLeadStatusUpdate";
 import { AppointmentDialog } from "./AppointmentDialog";
@@ -301,7 +302,7 @@ function StatusContextPopover({
               <div className="space-y-1.5">
                 <Label htmlFor={`${id}-nextCall`}>{target === "OLUMSUZ" ? t("nextContact") : tOffer("nextCall")}</Label>
                 <Input id={`${id}-nextCall`} type="date" value={nextCall} onChange={(e) => setNextCall(e.target.value)} />
-                <p className="text-xs text-muted-foreground">{tOffer("nextCallHint")}</p>
+                <p className="text-xs text-muted-foreground">{tOffer(RULE_TASKS_ENABLED ? "nextCallHint" : "nextCallHintManual")}</p>
               </div>
             )}
 

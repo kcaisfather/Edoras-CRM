@@ -11,6 +11,7 @@ import type { LeadFormValues } from "@/lib/domain/crm/form";
 import { COMPETITOR_NAME_MAX, LOST_NOTE_MAX } from "@/lib/domain/crm/loss-detail";
 import { LOST_REASONS, type CrmStatus } from "@/lib/domain/crm/types";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 
 const TEXTAREA_CLASS =
   "flex min-h-[64px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y";
@@ -65,7 +66,7 @@ export function CrmFollowUpFields({
               </Button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{t("nextCallHint")}</p>
+          <p className="text-xs text-muted-foreground">{t(RULE_TASKS_ENABLED ? "nextCallHint" : "nextCallHintManual")}</p>
         </div>
         {status === "OLUMSUZ" && (
           <div className="space-y-1.5">

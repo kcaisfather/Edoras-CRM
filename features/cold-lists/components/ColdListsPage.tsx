@@ -15,6 +15,7 @@ import { QueryErrorState } from "@/components/query-error-state";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import type { Prospect } from "@/lib/domain/cold-lists/types";
 import { prospectTitle } from "@/lib/domain/cold-lists/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useColdListView } from "../hooks";
 import { ColdListFilters, ColdListToolbar } from "./ColdListToolbar";
 import { DeleteDialog, SavePendingDialog, type DeleteTarget } from "./ColdListDialogs";
@@ -88,7 +89,7 @@ export function ColdListsPage() {
   return (
     <div className="space-y-4">
       <Header />
-      <CoverageNote>{t("sharedNote")}</CoverageNote>
+      <CoverageNote>{t(RULE_TASKS_ENABLED ? "sharedNote" : "sharedNoteManual")}</CoverageNote>
       <ColdListToolbar
         view={view}
         onDeleteList={() => view.list && setDeleting({ kind: "list", id: view.list.id, name: view.list.name, count: view.list.prospectCount })}

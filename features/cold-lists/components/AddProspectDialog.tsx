@@ -19,6 +19,7 @@ import { IMPORT_FIELD_LIMITS } from "@/lib/import/bulk";
 import { prospectCreateSchema, type ProspectCreateValues } from "@/lib/domain/cold-lists/schemas";
 import type { ProspectList } from "@/lib/domain/cold-lists/types";
 import { prospectTitle } from "@/lib/domain/cold-lists/utils";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useCreateProspect } from "../mutations";
 
 type Field = keyof ProspectCreateValues;
@@ -53,7 +54,7 @@ export function AddProspectButton({ list }: { list: ProspectList | null }) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
-            <DialogDescription>{t("description", { list: list.name })}</DialogDescription>
+            <DialogDescription>{t(RULE_TASKS_ENABLED ? "description" : "descriptionManual", { list: list.name })}</DialogDescription>
           </DialogHeader>
           {open && <AddProspectForm listId={list.id} onDone={() => setOpen(false)} />}
         </DialogContent>

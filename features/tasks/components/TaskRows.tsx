@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, ClipboardCheck, MessageSquarePlus, Pencil, Snowflake, Undo2 } from "lucide-react";
+import { Check, ClipboardCheck, MessageSquarePlus, Pencil, Snowflake, Trash2, Undo2 } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -134,8 +134,12 @@ export interface TaskRowProps {
   /** Geri al düğmesi: tamamlayan ya da yönetici. */
   canUndo: boolean;
   undoing: boolean;
+  /** "Kaldır" düğmesi (elle eklenen açık görev): ekleyen, atanan kişi ya da yönetici — canRemoveTask. */
+  canRemove: boolean;
   onComplete: () => void;
   onUndo: () => void;
+  /** Onay penceresini açar (silme orada). */
+  onRemove: () => void;
   onNote: () => void;
   onEdit?: () => void;
 }
@@ -162,7 +166,7 @@ function Actions(props: TaskRowProps) {
   return <CrmActions {...props} />;
 }
 
-function CrmActions({ task, canUndo, undoing, onComplete, onUndo, onNote, onEdit }: TaskRowProps) {
+function CrmActions({ task, canUndo, undoing, canRemove, onComplete, onUndo, onRemove, onNote, onEdit }: TaskRowProps) {
   const t = useTranslations("crm.tasks");
   const tList = useTranslations("crm.list");
   const { canSeeFinancials } = usePermissions();
@@ -212,6 +216,18 @@ function CrmActions({ task, canUndo, undoing, onComplete, onUndo, onNote, onEdit
           phone={target.phone ?? inst?.crm?.contactPhone}
           name={target.name}
         />
+      )}
+      {canRemove && task.status === "OPEN" && (
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          onClick={onRemove}
+          aria-label={t("remove.action")}
+          title={t("remove.hint")}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 />
+        </Button>
       )}
     </div>
   );

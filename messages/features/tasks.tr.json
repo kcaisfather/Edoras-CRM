@@ -2,6 +2,7 @@
   "tasks": {
     "title": "Görevlerim",
     "description": "Kurallardan türetilen ve elle atanan gecikmiş, bugünkü ve yaklaşan görevler.",
+    "descriptionManual": "Elle eklenen gecikmiş, bugünkü ve yaklaşan görevler. Kurallar otomatik görev üretmez.",
     "buckets": {
       "overdue": "Gecikmiş",
       "today": "Bugün",
@@ -52,15 +53,27 @@
     "undoHint": "Görevi yeniden açar. Yazılan sonuç notu ve kayıt değişiklikleri geri alınmaz.",
     "undone": "Görev yeniden açıldı. Sonuç notu ve kayıt değişiklikleri geri alınmadı.",
     "undoError": "Görev geri alınamadı.",
+    "remove": {
+      "action": "Kaldır",
+      "hint": "Görevi Görevlerim'den kaldır",
+      "title": "Görevi kaldır",
+      "body": "“{name}” için “{task}” görevi ({date}) Görevlerim'den kaldırılacak. Bu işlem geri alınamaz; işlem kaydına yazılır.",
+      "confirm": "Kaldır",
+      "removing": "Kaldırılıyor…",
+      "success": "Görev kaldırıldı",
+      "error": "Görev kaldırılamadı."
+    },
     "done": "Tamamlandı",
     "doneBy": "{name} tamamladı",
     "showDone": "Tamamlananları göster ({count})",
     "hideDone": "Tamamlananları gizle",
     "sharedNote": "Görevler kurallardan her açılışta yeniden hesaplanır; tamamlanan görev ekipçe görünür (son 90 gün).",
+    "manualNote": "Görevler yalnız elle eklenir: “Görev ekle” ya da Adaylar'da “Görev ata” / “Arama listesine ekle”. Açık görevi ekleyen kişi, atanan kişi ya da yönetici kaldırabilir.",
     "empty": "Bu grupta görev yok.",
     "allClear": "Bugün için açık görev yok.",
     "rulesLink": "Kuralları düzenle",
     "crmLink": "Adaylar'a dön",
+    "add": "Görev ekle",
     "noLead": "CRM adayı yok",
     "institutionsLoadError": "Kurum listesi okunamadı; CRM adayı olmayan kurumların görevleri bu listede eksik.",
     "source": {
@@ -115,6 +128,18 @@
     "assign": {
       "title": "Görev ata",
       "description": "Görev ekiple paylaşılan görev listesine eklenir ve Görevlerim'de görünür.",
+      "add": {
+        "title": "Görev ekle",
+        "description": "Aday seçin; görev Görevlerim'e eklenir.",
+        "submit": "Görevi ekle",
+        "success": "Görev eklendi"
+      },
+      "lead": "Aday",
+      "leadPlaceholder": "Kurum, kişi ya da telefon ara…",
+      "leadLoading": "Adaylar yükleniyor…",
+      "leadEmpty": "Eşleşen aday yok.",
+      "leadClear": "Adayı temizle",
+      "leadHint": "Görev bir adaya bağlanır. Listede olmayan kişi için önce Adaylar'da aday ekleyin.",
       "type": "Amaç",
       "types": {
         "arama": "Arama",
@@ -151,6 +176,11 @@
   "rules": {
     "title": "Takip kuralları",
     "description": "Görevlerim listesini üreten kurallar. Gün sayısını ve aktifliği değiştirebilirsiniz.",
+    "descriptionManual": "Takip kurallarının gün değerleri. Otomatik görev kapalı: kurallar Görevlerim'e görev üretmez.",
+    "autoOff": {
+      "title": "Otomatik görev kapalı",
+      "body": "Kurallar artık Görevlerim'e görev eklemiyor; Görevlerim'e yalnız elle görev eklenir ve kaldırılır. Buradaki değerlerden hâlâ kullanılanlar: “Teklif takibi” ve “Yeniden temas” günleri statü değişince önerilen sonraki arama tarihini, “Anket araması” günü Anketler'deki “yanıt bekliyor” eşiğini belirler. Diğer kuralların şu an etkisi yok."
+    },
     "name": {
       "scheduled": "Planlanan arama",
       "offer": "Teklif takibi",
@@ -194,6 +224,7 @@
     "unsaved": "Kaydedilmemiş değişiklik var.",
     "confirmTitle": "Kuralları kaydet",
     "confirmBody": "Kurallar tüm ekip için güncellenecek; Görevlerim listesi yeniden hesaplanır.",
+    "confirmBodyManual": "Kurallar tüm ekip için güncellenecek. Otomatik görev kapalı olduğu için Görevlerim değişmez.",
     "confirm": "Onayla ve kaydet",
     "error": "Kurallar kaydedilemedi",
     "loadError": "Kurallar yüklenemedi; varsayılanlar gösteriliyor.",

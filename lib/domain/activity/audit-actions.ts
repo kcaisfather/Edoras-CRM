@@ -49,6 +49,8 @@ export const AUDIT_ACTIONS = [
   "TASK_ASSIGNED",
   "TASK_COMPLETED",
   "TASK_REOPENED",
+  // "Kaldır" (2026-10-12): elle eklenen açık görev silindi — aday, amaç, vade, atanan / ekleyen kimliği yazılır; not yazılmaz.
+  "TASK_REMOVED",
   "RULES_UPDATED",
   "PROSPECT_LIST_CREATED",
   "PROSPECT_LIST_DELETED",

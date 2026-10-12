@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QueryErrorState } from "@/components/query-error-state";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
 import { isAwaitingFollowUp } from "@/lib/domain/surveys/logic";
+import { RULE_TASKS_ENABLED } from "@/lib/domain/tasks/rules";
 import { useSurveyFollowUpDays, useSurveyInvitations, useSurveySummary } from "../queries";
 import { Kpi, NPS_TONE } from "./parts";
 
@@ -73,7 +74,7 @@ export function SurveySummaryTab({ surveyId, onShowAwaiting }: { surveyId: strin
 
       {awaiting > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-warning/30 bg-warning/[0.06] px-4 py-3 text-sm">
-          <span>{t("awaiting", { count: awaiting, days })}</span>
+          <span>{t(RULE_TASKS_ENABLED ? "awaiting" : "awaitingManual", { count: awaiting, days })}</span>
           <Button size="sm" variant="outline" onClick={onShowAwaiting}>
             {t("showAwaiting")}
           </Button>

@@ -3,6 +3,9 @@
  * görevleri SUNUCUDA her istekte adaylardan, kurum kayıtlarından, lisanslardan, ödemelerden ve kurallardan
  * türetilir (lib/server/crm-tasks.ts); veritabanına yalnız tamamlananlar ve elle atananlar yazılır. Saf fonksiyonlar.
  *
+ * ⚠️ 2026-10-12'den beri türetme KAPALI: RULE_TASKS_ENABLED (./rules.ts) = false → Görevlerim yalnız elle eklenen
+ * görevlerdir; motor yeniden açılabilsin diye duruyor. Liste kaynağı `composeTasks` üzerinden geçer.
+ *
  * Görev anahtarı `${tür}:${özne id}:${vade}` — vade değişirse (ör. yeni arama tarihi yazıldı, kayıt güncellendi)
  * yeni bir görev doğar, eskisinin tamamlanma kaydı ona taşınmaz. Özne aday kurallarında aday, kurum kurallarında
  * kurumdur (INSTITUTION_RULES).
@@ -13,7 +16,7 @@
 
 import { addDays, daysBetween, todayIso } from "@/lib/domain/institutions/rules";
 import type { CrmStatus } from "@/lib/domain/crm/types";
-import { isInstitutionRule, isTaskKind, ruleMap, type RuleConfig, type TaskKind } from "./rules";
+import { RULE_TASKS_ENABLED, isInstitutionRule, isTaskKind, ruleMap, type RuleConfig, type TaskKind } from "./rules";
 import type { AssignmentType, CrmTaskDto, CrmTaskKind, TaskOutcome, TaskStatus } from "./types";
 
 export const UPCOMING_WINDOW_DAYS = 14;
@@ -235,6 +238,16 @@ export function canSeeTask(task: Pick<CrmTaskDto, "kind" | "assigneeId">, viewer
   return viewer.isAdmin || task.kind !== "assigned" || !task.assigneeId || task.assigneeId === viewer.id;
 }
 
+/**
+ * "Kaldır" yetkisi (kullanıcı kararı 2026-10-12: "Ekleyen, atanan ve yönetici"): yalnız elle eklenen AÇIK görev; görevi
+ * ekleyen (created_by), atanan kişi ya da ADMIN. Ekip havuzundaki (atanmamış) görevi ekleyen ve yönetici kaldırır.
+ * Tamamlanmış görev kaldırılmaz (iş kaydı ve performans sayımı; önce "Geri al"). Sunucu da aynı fonksiyonla denetler.
+ */
+export function canRemoveTask(task: Pick<CrmTaskDto, "kind" | "status" | "createdBy" | "assigneeId">, viewer: Viewer): boolean {
+  if (task.kind !== "assigned" || task.status !== "OPEN") return false;
+  return viewer.isAdmin || (!!task.createdBy && task.createdBy === viewer.id) || (!!task.assigneeId && task.assigneeId === viewer.id);
+}
+
 const nameOf = (names: ReadonlyMap<string, string>, id: string | null) => (id ? (names.get(id) ?? null) : null);
 
 function fromStored(s: StoredTask, names: ReadonlyMap<string, string>, extra: Partial<CrmTaskDto> = {}): CrmTaskDto {
@@ -314,6 +327,22 @@ export function mergeTasks(
     out.push(fromStored(s, ctx.names, { leadId: lead }));
   }
   return out.sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.id.localeCompare(b.id));
+}
+
+/**
+ * Görev listesinin kaynakları — tek anahtar RULE_TASKS_ENABLED (./rules.ts; 2026-10-12 kararı: Görevlerim tamamen elle).
+ * Kapalıyken `derive` HİÇ çağrılmaz ve crm_tasks'taki kural görevi satırları (tamamlanmış kural görevleri — tarihçe)
+ * atılır: yalnız elle eklenen görevler ("assigned") kalır. Açıkken bugünkü davranış: türetilen + saklı (`mergeTasks`).
+ * Liste, menü rozeti, bildirim zili ve rapor e-postası bu fonksiyondan geçer (lib/server/crm-tasks.ts).
+ */
+export function composeTasks(
+  stored: readonly StoredTask[],
+  derive: () => readonly DerivedTask[],
+  ctx: { names: ReadonlyMap<string, string>; leadOfInstitution: ReadonlyMap<string, string> },
+  enabled: boolean = RULE_TASKS_ENABLED
+): CrmTaskDto[] {
+  if (!enabled) return mergeTasks([], stored.filter((s) => s.kind === "assigned"), ctx);
+  return mergeTasks(derive(), stored, ctx);
 }
 
 export interface TaskFilter {

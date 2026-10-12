@@ -7,6 +7,7 @@
     "title": "Soğuk Listeler",
     "subtitle": "CRM'e henüz girmemiş, aranacak kişi listeleri: içe aktar, ara, sonucu işaretle, ilgilenenleri sıcağa taşı.",
     "sharedNote": "Listeler ekiple paylaşılır. \"Aranmadı\" ve \"Ulaşılamadı\" kişiler Görevlerim'de \"Soğuk liste araması\" olarak görünür.",
+    "sharedNoteManual": "Listeler ekiple paylaşılır. Arama sonucu bu ekranda girilir; kişiler Görevlerim'e otomatik düşmez.",
     "emptyTitle": "Henüz soğuk liste yok",
     "emptyBody": "Fuar, rehberlik ya da kurum listelerinizi Excel/CSV olarak içe aktarın. Mükerrer telefonlar içe aktarırken gösterilir; CRM'de adayı ya da kurum kaydı olan kişiler eklenmez.",
     "list": "Liste",
@@ -33,6 +34,7 @@
     "save": "Kaydet",
     "saveTitle": "Arama sonuçlarını kaydet",
     "saveBody": "{count} kişinin arama sonucu kaydedilecek. Sonucun anı şimdi olarak yazılır; \"Ulaşılamadı\" kişiler kuraldaki gün sonra yeniden görev olur.",
+    "saveBodyManual": "{count} kişinin arama sonucu kaydedilecek. Sonucun anı şimdi olarak yazılır.",
     "saved": "{count} sonuç kaydedildi.",
     "savePartial": "{ok} kaydedildi, {failed} kaydedilemedi.",
     "table": {
@@ -53,6 +55,7 @@
     "prev": "Önceki",
     "next": "Sonraki",
     "queueNote": "\"Aranmadı\" ve \"Ulaşılamadı\" durumundaki, CRM'de kaydı olmayan kişiler Görevlerim'de \"Soğuk liste araması\" olarak görünür. Aynı anda en çok 50 aranmamış kişi görev olur; sonuç girdikçe sıradakiler gelir.",
+    "queueNoteManual": "Soğuk liste kişileri Görevlerim'e otomatik düşmez; arama sonucunu bu listeden girin.",
     "truncated": "Listenin ilk {loaded} / {total} kişisi yüklendi; süzgeçler ve sayılar eksik olabilir.",
     "institutionsError": "Kurum listesi okunamadı; \"Kurum kaydı var\" eşleşmesi eksik olabilir.",
     "detailFilters": {
@@ -119,6 +122,7 @@
       "button": "Kişi ekle",
       "title": "Listeye kişi ekle",
       "description": "\"{list}\" listesine tek kişi eklenir; \"Aranmadı\" olarak Görevlerim'deki soğuk liste aramalarına girer.",
+      "descriptionManual": "\"{list}\" listesine tek kişi \"Aranmadı\" olarak eklenir.",
       "fields": {
         "firstName": "Ad",
         "lastName": "Soyad",
@@ -156,6 +160,7 @@
         "OTHER": "Diğer hata: {count}"
       },
       "description": "Aday silinmez: statüsü \"Satış olmadı\" olur, notları ve geçmişi kalır. Kişi seçtiğiniz listeye \"Aranmadı\" olarak döner ve Görevlerim'deki soğuk liste aramalarına girer.",
+      "descriptionManual": "Aday silinmez: statüsü \"Satış olmadı\" olur, notları ve geçmişi kalır. Kişi seçtiğiniz listeye \"Aranmadı\" olarak döner.",
       "list": "Soğuk liste",
       "listPlaceholder": "Liste seçin",
       "origin": "geldiği liste",
@@ -187,6 +192,7 @@
     },
     "targetHints": {
       "coldList": "Kişiler ekiple paylaşılan bir soğuk listeye eklenir; Görevlerim'de \"Soğuk liste araması\" olarak görünür. Sonradan tek tek \"Sıcağa taşı\" ile CRM'e alınabilir.",
+      "coldListManual": "Kişiler ekiple paylaşılan bir soğuk listeye eklenir. Sonradan tek tek \"Sıcağa taşı\" ile CRM'e alınabilir.",
       "crm": "Her satır için CRM'de \"Aranacak\" statülü bir aday açılır (500'erli parçalar hâlinde, durdurulabilir). Tutar alanları boş kalır."
     },
     "dropHint": "Dosyayı buraya sürükleyin ya da seçin",

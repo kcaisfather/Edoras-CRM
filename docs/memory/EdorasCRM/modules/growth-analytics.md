@@ -21,4 +21,11 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
   Personel × işlem (yoklama, ödev, ödev kontrolü, birebir, deneme, duyuru, elle SMS, konu, mobil oturum); hücre = işlem
   (aynı dakika = 1), "Aktif gün" RPC'nin kişi başı `total` satırından (işlemler arasında toplanmaz). İşlemsiz etkin
   personel de listelenir. Maliyet: kart başına 3 istek (RPC + `institution_users` + `profiles`), 5 dk önbellek.
+  **Ödev iki sütun (2026-10-12, dal `odev-paket-2026-10-12`, Edoras migration 315):** "Ödev paketi" = RPC `assignment`
+  satırının `session_count`'u = farklı (hedef, OLUŞTURMA haftası); hedef bireysel ödevde öğrenci, sınıf ödevinde sınıf
+  (sınıf × hafta = 1). "Tekil görev" = `event_count` = öğrenciye düşen görev (`student_assignments`; sınıf ödevi 30 öğrenciye
+  = 30). Kütüphane şablonu (`due_date` NULL) ikisinde de yok. Hangi sütun hangi ölçü: `COLUMN_METRIC` + `cellValue` (kart,
+  CSV, mobil). Toplam "işlem" (sıralama) paketi BİR kez toplar. Aynı şablon süzgeci kurum kullanım kartında (`SOURCES`
+  `notNullColumn`, haftalık seri dahil) ve Kurum etkinliği akışında (`ASSIGNMENT_CREATED`) da var. Bakırköy 30 gün: Enes
+  1.057 (eski dakika) → 143 paket / 5.161 tekil. RPC 90 gün sıcak ≈ 265 ms (eşik 500).
 - Bırakılan: genişleme (koltuk), kanal sekmeleri, AWS / CAC-ROAS, telemetri `/analytics`. → [../reference/decisions.md](../reference/decisions.md)

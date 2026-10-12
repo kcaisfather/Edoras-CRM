@@ -33,13 +33,14 @@ import { fetchAll, listEdorasInstitutions } from "./edoras";
  * OKUMA: `select` + `head:true` sayımlar. Yazan / yan etkili RPC yok; `institution_students_with_default_password` gibi ağır
  * RPC'ler çağrılmaz. Öğrenci kişisel verisi okunmaz — yalnız sayılar ve tarihler.
  *
- * Tek RPC istisnası: `staff_activity_summary` (Öğretmen kullanımı kartı, edoras-admin migration 305) — salt okunur,
+ * Tek RPC istisnası: `staff_activity_summary` (Öğretmen kullanımı kartı, edoras-admin migration 305 + 315) — salt okunur,
  * `stable`, indeksli; ayrıntı dosyanın sonunda.
  *
  * Sinyaller (Edoras'ta "son giriş" kolonu yok; etkinlik = öğretmen/yönetici işlemleri):
  *   attendance    attendance_sessions.date         (institution_id, date) indeksli; en iyi günlük kullanım sinyali
  *   lessonTopics  lesson_topic_logs.date           (institution_id, date) indeksli
- *   assignments   assignments.created_at           institution_id indeksli; öğrencinin teslimi (student_assignments) sayılmaz
+ *   assignments   assignments.created_at           institution_id indeksli; öğrencinin teslimi (student_assignments) sayılmaz;
+ *                                                  kütüphane şablonu (due_date NULL) sayılmaz — Öğretmen kullanımı kartıyla aynı
  *   exams         exams.created_at                 institution_id; exam_results.created_at KULLANILMAZ (yeniden puanlamada değişir)
  *   announcements announcements.created_at         institution_id indeksli
  *   sms           sms_logs.created_at              yalnız elle gönderim (send_type = 'auto' hariç; NULL dahil)
@@ -69,12 +70,14 @@ interface SourceSpec {
   kind: "date" | "timestamp";
   /** Elle gönderim süzgeci (yalnız sms). */
   manualOnly?: boolean;
+  /** Yalnız bu sütunu dolu olanlar (ödevde `due_date` NULL = kütüphane şablonu, öğrenciye verilmedi). */
+  notNullColumn?: string;
 }
 
 const SOURCES: SourceSpec[] = [
   { source: "attendance", table: "attendance_sessions", column: "date", kind: "date" },
   { source: "lessonTopics", table: "lesson_topic_logs", column: "date", kind: "date" },
-  { source: "assignments", table: "assignments", column: "created_at", kind: "timestamp" },
+  { source: "assignments", table: "assignments", column: "created_at", kind: "timestamp", notNullColumn: "due_date" },
   { source: "exams", table: "exams", column: "created_at", kind: "timestamp" },
   { source: "announcements", table: "announcements", column: "created_at", kind: "timestamp" },
   { source: "sms", table: "sms_logs", column: "created_at", kind: "timestamp", manualOnly: true },
@@ -84,8 +87,10 @@ const SOURCES: SourceSpec[] = [
 
 const limit = createLimiter(EDORAS_CONCURRENCY);
 
-function applySource<Q extends { or: (filter: string) => Q }>(query: Q, spec: SourceSpec): Q {
-  return spec.manualOnly ? query.or("send_type.is.null,send_type.neq.auto") : query;
+function applySource<Q extends { or: (filter: string) => Q; not: (column: string, operator: string, value: null) => Q }>(query: Q, spec: SourceSpec): Q {
+  let q = spec.manualOnly ? query.or("send_type.is.null,send_type.neq.auto") : query;
+  if (spec.notNullColumn) q = q.not(spec.notNullColumn, "is", null);
+  return q;
 }
 
 async function headCount(db: SupabaseClient, table: string, filter: Record<string, string>): Promise<number> {
@@ -378,7 +383,7 @@ interface EventSpec {
   timeColumn: string;
   actorColumn: string;
   countColumn?: string;
-  /** Yalnız bu sütunu dolu olanlar (deneme sonucu yayını). */
+  /** Yalnız bu sütunu dolu olanlar (deneme sonucu yayını; ödevde due_date — kütüphane şablonu hariç). */
   notNullColumn?: string;
   /** Elle gönderim süzgeci (yalnız sms). */
   manualOnly?: boolean;
@@ -387,7 +392,7 @@ interface EventSpec {
 const EVENT_SPECS: EventSpec[] = [
   { type: "ATTENDANCE_TAKEN", table: "attendance_sessions", rangeColumn: "date", kind: "date", timeColumn: "taken_at", actorColumn: "teacher_id", countColumn: "student_count" },
   { type: "LESSON_TOPIC_LOGGED", table: "lesson_topic_logs", rangeColumn: "date", kind: "date", timeColumn: "created_at", actorColumn: "recorded_by" },
-  { type: "ASSIGNMENT_CREATED", table: "assignments", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "teacher_id" },
+  { type: "ASSIGNMENT_CREATED", table: "assignments", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "teacher_id", notNullColumn: "due_date" },
   { type: "EXAM_CREATED", table: "exams", rangeColumn: "created_at", kind: "timestamp", timeColumn: "created_at", actorColumn: "creator_id" },
   {
     type: "EXAM_RESULTS_PUBLISHED",
@@ -613,8 +618,9 @@ export async function getSmsRecipientsByInstitution(month: string): Promise<{ by
 
 /**
  * Kurumun personeli × işlem türü (kurum ayrıntısındaki "Öğretmen kullanımı" kartı). Kaynak: Edoras RPC
- * `staff_activity_summary` (edoras-admin migration 305; YALNIZ OKUMA, `stable`, indeksli kaynaklar — en büyük kurumda
- * 90 gün ≈ 0,1–0,2 sn). Edoras'a kart açılışı başına 3 istek: RPC (≤ 1000 satır/sayfa) + `institution_users` +
+ * `staff_activity_summary` (edoras-admin migration 305, ödev dalı 315: event = tekil görev, session = ödev paketi;
+ * YALNIZ OKUMA, `stable`, indeksli kaynaklar — en büyük kurumda 90 gün ≈ 0,27 sn, 12.10 ölçümü). Edoras'a kart açılışı
+ * başına 3 istek: RPC (≤ 1000 satır/sayfa) + `institution_users` +
  * `profiles` (ad, branş — yalnız bu kurumun personeli ve penceredeki aktörler). Öğrenci verisi okunmaz.
  * 5 dakikalık bellek önbelleği; aynı anda gelen istekler tek çalışmada birleşir. Okunamazsa hata fırlatır (kart
  * "okunamadı" gösterir) — RPC henüz uygulanmamışsa (PGRST202) da böyle.

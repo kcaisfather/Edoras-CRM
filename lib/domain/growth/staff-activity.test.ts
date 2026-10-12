@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildStaffActivityRows, idleStaffCount, type StaffActivityRpcRow } from "./staff-activity";
+import { buildStaffActivityRows, cellValue, idleStaffCount, type StaffActivityRpcRow } from "./staff-activity";
 
 const rpc = (user_id: string, action: string, event_count: number, session_count: number, active_days: number, last_day: string | null = "2026-10-08"): StaffActivityRpcRow => ({
   user_id,
@@ -38,6 +38,28 @@ describe("öğretmen kullanımı satırları", () => {
     expect(row.activeDays).toBe(10); // 8 + 6 = 14 DEĞİL
     expect(row.actions).toBe(32);
     expect(row.cells.assignment).toEqual({ events: 300, sessions: 12, days: 6 });
+  });
+
+  it("ödev satırı iki sütunu doldurur: Ödev paketi = sessions, Tekil görev = events", () => {
+    const [row] = buildStaffActivityRows(
+      [rpc("a", "assignment", 5161, 143, 9), rpc("a", "total", 5161, 143, 9)],
+      [{ userId: "a", role: "teacher", active: true }],
+      []
+    );
+    expect(row.cells.assignment).toEqual({ events: 5161, sessions: 143, days: 9 });
+    expect(row.cells.assignmentTasks).toEqual({ events: 5161, sessions: 143, days: 9 });
+    expect(cellValue(row, "assignment")).toBe(143);
+    expect(cellValue(row, "assignmentTasks")).toBe(5161);
+    expect(cellValue(row, "attendance")).toBe(0);
+  });
+
+  it("toplam işlem ödev paketini bir kez sayar (iki sütuna yazılsa da)", () => {
+    const [row] = buildStaffActivityRows(
+      [rpc("a", "assignment", 621, 15, 4), rpc("a", "review", 40, 7, 3), rpc("a", "total", 661, 22, 5)],
+      [{ userId: "a", role: "teacher", active: true }],
+      []
+    );
+    expect(row.actions).toBe(22); // 15 paket + 7 kontrol; 15 iki kez (37) DEĞİL, tekil 621 hiç DEĞİL
   });
 
   it("birleşik sütun: işlem toplanır, gün en büyük parça (alt sınır)", () => {

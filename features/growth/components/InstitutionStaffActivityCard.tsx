@@ -11,14 +11,16 @@ import { CsvButton, DesktopTable, EmptyRow, MobileCard, MobileCardList } from "@
 import { formatDate } from "@/features/institutions";
 import { cn } from "@/lib/utils";
 import { DEFAULT_WINDOW_DAYS, WINDOW_DAYS_OPTIONS } from "@/lib/domain/growth/usage";
-import { STAFF_COLUMNS, idleStaffCount, type StaffActivityRow, type StaffCell, type StaffColumn } from "@/lib/domain/growth/staff-activity";
+import { STAFF_COLUMNS, cellValue, idleStaffCount, type StaffActivityRow, type StaffColumn } from "@/lib/domain/growth/staff-activity";
 import { useStaffActivity } from "../queries";
 import { TABLE, TH, formatNumber } from "./shared";
 
 /**
  * Kurum ayrıntısının altındaki "Öğretmen kullanımı" kartı (tam genişlik): personel × işlem türü. Hücre = işlem sayısı
- * (aynı dakika = 1), ipucunda kayıt + gün. "Aktif gün" kişinin tüm işlemleri birlikte (toplanmış değil). Veri Edoras
- * RPC'sinden salt okunur (5 dk önbellekli); işlemi olmayan etkin öğretmenler de listelenir.
+ * (aynı dakika = 1), ipucunda kayıt + gün. Ödev iki sütun: "Ödev paketi" (öğrenci / sınıf × oluşturma haftası) ve
+ * "Tekil görev" (öğrenciye düşen görev); ipuçları birbirini gösterir. Hücre değeri `cellValue`'dan. "Aktif gün" kişinin
+ * tüm işlemleri birlikte (toplanmış değil). Veri Edoras RPC'sinden salt okunur (5 dk önbellekli); işlemi olmayan etkin
+ * öğretmenler de listelenir.
  */
 export function InstitutionStaffActivityCard({ institutionId }: { institutionId: string }) {
   const t = useTranslations("growth.staffActivity");
@@ -30,13 +32,18 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
   const activeStaff = rows.filter((r) => r.active).length;
   const idle = idleStaffCount(rows);
 
-  const cellTitle = (c: StaffCell) => t("cellTitle", { events: c.events, days: c.days });
+  const cellTitle = (r: StaffActivityRow, c: StaffColumn) => {
+    const { events, sessions, days } = r.cells[c];
+    if (c === "assignment") return t("cellTitleAssignment", { events, days });
+    if (c === "assignmentTasks") return t("cellTitleAssignmentTasks", { sessions, days });
+    return t("cellTitle", { events, days });
+  };
   const csvRows = () =>
     rows.map((r) => [
       r.name ?? t("unknown"),
       r.branch ?? "",
       t(`role.${r.role}`),
-      ...STAFF_COLUMNS.map((c) => r.cells[c].sessions),
+      ...STAFF_COLUMNS.map((c) => cellValue(r, c)),
       r.activeDays,
       r.lastDay ?? "",
     ]);
@@ -99,8 +106,8 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
                       <PersonCell row={r} />
                     </TableCell>
                     {STAFF_COLUMNS.map((c) => (
-                      <TableCell key={c} className="text-right tabular-nums" title={r.cells[c].sessions > 0 ? cellTitle(r.cells[c]) : undefined}>
-                        {r.cells[c].sessions > 0 ? formatNumber(r.cells[c].sessions) : <span className="text-muted-foreground/60">—</span>}
+                      <TableCell key={c} className="text-right tabular-nums" title={cellValue(r, c) > 0 ? cellTitle(r, c) : undefined}>
+                        {cellValue(r, c) > 0 ? formatNumber(cellValue(r, c)) : <span className="text-muted-foreground/60">—</span>}
                       </TableCell>
                     ))}
                     <TableCell className="text-right font-semibold tabular-nums">{formatNumber(r.activeDays)}</TableCell>
@@ -146,14 +153,14 @@ function PersonCell({ row }: { row: StaffActivityRow }) {
 }
 
 function MobileCells({ row, label }: { row: StaffActivityRow; label: (c: StaffColumn) => string }) {
-  const used = STAFF_COLUMNS.filter((c) => row.cells[c].sessions > 0);
+  const used = STAFF_COLUMNS.filter((c) => cellValue(row, c) > 0);
   if (used.length === 0) return null;
   return (
     <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
       {used.map((c) => (
         <div key={c} className="flex gap-1">
           <dt className="text-muted-foreground">{label(c)}</dt>
-          <dd className="font-medium tabular-nums">{formatNumber(row.cells[c].sessions)}</dd>
+          <dd className="font-medium tabular-nums">{formatNumber(cellValue(row, c))}</dd>
         </div>
       ))}
     </dl>

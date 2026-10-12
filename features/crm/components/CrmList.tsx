@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisionListPagination } from "@/components/ui/vision-list-pagination";
 import { PeriodPicker } from "@/components/period-picker";
@@ -73,13 +75,18 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
-      {/* Üst satır: dönem seçici (kartlar, şerit ve liste bunu izler) + veri araçları (dışa / içe aktarma) */}
+      {/* Üst satır: dönem seçici (kartlar, şerit ve liste bunu izler) + veri araçları (dışa / içe aktarma) + tek aday ekleme */}
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <PeriodPicker defaultPeriod="all" allowAll resetParams={["page"]} />
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {isListView && <CrmExportButton getLeads={() => list.filteredLeads} />}
           {/* EK-1: Excel/CSV içe aktarma (mükerrer önizleme, onay, sunucu kontrolü ve özet bileşenin içinde). */}
           {renderImport?.()}
+          {/* Tek aday: ?new=lead → CrmAddModal (POST /api/crm/leads); kaydedilince ?lead= ile aday paneli açılır. */}
+          <Button size="sm" onClick={() => list.setAddOpen(true)}>
+            <Plus />
+            {t("addLead")}
+          </Button>
         </div>
       </div>
 
@@ -105,7 +112,6 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
         onClearSearch={list.searchBox.clear}
         pageSize={list.pageSize}
         onPageSize={list.setPageSize}
-        onAdd={() => list.setAddOpen(true)}
       />
 
       <CrmBulkBar

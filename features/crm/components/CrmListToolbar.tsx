@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Plus, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +22,7 @@ import { PAGE_SIZES } from "../hooks";
 
 /**
  * Tablo araç satırı: tek süzgeç listesi ("Tümü" + Görünümler ?tab= + Durumlar ?status= + Kaynaklar ?source=; aynı anda
- * biri seçili, seçilince diğerleri temizlenir), arama, sayfa boyutu; sağda tek "Yeni aday".
+ * biri seçili, seçilince diğerleri temizlenir), arama, sayfa boyutu. "Aday ekle" ekranın üst satırında (CrmList).
  */
 export function CrmListToolbar({
   quickTab,
@@ -41,7 +41,6 @@ export function CrmListToolbar({
   onClearSearch,
   pageSize,
   onPageSize,
-  onAdd,
 }: {
   quickTab: CrmQuickTab;
   statusFilter: string;
@@ -59,7 +58,6 @@ export function CrmListToolbar({
   onClearSearch: () => void;
   pageSize: number;
   onPageSize: (value: string) => void;
-  onAdd: () => void;
 }) {
   const t = useTranslations("crm.list");
   const tStatus = useTranslations("crm.status");
@@ -174,10 +172,6 @@ export function CrmListToolbar({
           </>
         )}
       </div>
-      <Button size="sm" onClick={onAdd} className="shrink-0 self-end sm:self-auto">
-        <Plus />
-        {t("addLead")}
-      </Button>
     </div>
   );
 }

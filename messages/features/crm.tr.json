@@ -75,7 +75,7 @@
     "count": "Toplam {count} kayıt (Sayfa {page}/{totalPages})",
     "search": "Kurum, yetkili, e-posta veya telefon ile ara...",
     "searchClear": "Aramayı temizle",
-    "addLead": "Yeni aday",
+    "addLead": "Aday ekle",
     "tabs": {
       "pendingDemo": "Bekleyen Demo",
       "inProgress": "Satış Sürecinde",

@@ -76,8 +76,8 @@ function MoveForm({ prospect: p, crmMatches, onDone }: { prospect: Prospect; crm
   ];
 
   return (
-    <div className="space-y-4">
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+    <div className="min-w-0 space-y-4">
+      <dl className="grid min-w-0 grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
             <dt className="text-muted-foreground">{k}</dt>
@@ -105,9 +105,12 @@ function MoveForm({ prospect: p, crmMatches, onDone }: { prospect: Prospect; crm
       {noteText && (
         <label className="flex items-start gap-2 text-sm">
           <Checkbox checked={addNote} onCheckedChange={(v) => setAddNote(v === true)} className="mt-0.5" />
-          <span>
+          {/* Not uzun URL (Google Maps) taşıyabilir: kırılamayan metin modalı genişletmesin, uzun not kaydırılsın. */}
+          <span className="min-w-0 flex-1">
             {t("addNote")}
-            <span className="block text-xs text-muted-foreground">{noteText}</span>
+            <span className="mt-0.5 block max-h-28 overflow-y-auto whitespace-pre-line text-xs text-muted-foreground [overflow-wrap:anywhere]">
+              {noteText}
+            </span>
           </span>
         </label>
       )}

@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/ui/info-tip";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { CsvButton, SearchBox } from "@/components/list";
+import { CsvButton, FilterToggle, SearchBox } from "@/components/list";
 import { usePermissions } from "@/features/auth";
 import { formatCrmDate } from "@/lib/domain/crm/utils";
 import { csvDate } from "@/lib/utils/csv";
@@ -13,6 +14,7 @@ import { listSlug } from "@/lib/domain/cold-lists/utils";
 import { OUTCOME_FILTERS, type ColdListView, type OutcomeFilter } from "../hooks";
 import { AddProspectButton } from "./AddProspectDialog";
 import { ImportButton, ImportTemplateButton } from "./import/ImportDialog";
+import { PROSPECT_FILTER_PANEL_ID, ProspectFilterPanel, ProspectFilterSummary } from "./ProspectDetailFilters";
 
 /** Üst satır: liste seçici + bilgi; kişi ekle (tek kişi, elle), içe aktar, şablon, CSV, listeyi sil (yalnız yönetici). */
 export function ColdListToolbar({ view, onDeleteList }: { view: ColdListView; onDeleteList: () => void }) {
@@ -93,25 +95,43 @@ export function ColdListToolbar({ view, onDeleteList }: { view: ColdListView; on
   );
 }
 
-/** Sonuç süzgeci (sayılarla) + arama. */
+/**
+ * Sonuç süzgeci (sayılar detay süzgeci + aramadan SONRA sayılır) + arama + "Filtreler" (detaylı filtre paneli, altta
+ * tam genişlik) + etkin süzgeç çipleri. Panelin açık/kapalı durumu yerel; değerler URL'de.
+ */
 export function ColdListFilters({ view }: { view: ColdListView }) {
   const t = useTranslations("growth.coldLists");
+  const [panelOpen, setPanelOpen] = useState(false);
   return (
-    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex items-center gap-1.5">
-        <div className="overflow-x-auto">
-          <SegmentedControl<OutcomeFilter>
-            value={view.outcome}
-            onValueChange={view.setOutcome}
-            aria-label={t("outcomeFilter")}
-            options={OUTCOME_FILTERS.map((f) => ({ value: f, label: `${t(`filters.${f}`)} (${view.counts[f]})` }))}
+    <div className="space-y-2">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <div className="min-w-0 overflow-x-auto">
+            <SegmentedControl<OutcomeFilter>
+              value={view.outcome}
+              onValueChange={view.setOutcome}
+              aria-label={t("outcomeFilter")}
+              options={OUTCOME_FILTERS.map((f) => ({ value: f, label: `${t(`filters.${f}`)} (${view.counts[f]})` }))}
+            />
+          </div>
+          <InfoTip label={t("outcomeFilter")} align="end">
+            {t("queueNote")}
+          </InfoTip>
+        </div>
+        <div className="flex items-center gap-2 lg:shrink-0">
+          <div className="min-w-0 flex-1 lg:w-80 lg:flex-none">
+            <SearchBox value={view.q} onChange={view.setQ} />
+          </div>
+          <FilterToggle
+            open={panelOpen}
+            onToggle={() => setPanelOpen((o) => !o)}
+            activeCount={view.detailActiveCount}
+            controlsId={PROSPECT_FILTER_PANEL_ID}
           />
         </div>
-        <InfoTip label={t("outcomeFilter")} align="end">
-          {t("queueNote")}
-        </InfoTip>
       </div>
-      <SearchBox value={view.q} onChange={view.setQ} />
+      <ProspectFilterPanel view={view} open={panelOpen} />
+      <ProspectFilterSummary view={view} />
     </div>
   );
 }

@@ -112,6 +112,13 @@ export function CrmList({ renderImport, ...slots }: CrmScreenSlots = {}) {
         onClearSearch={list.searchBox.clear}
         pageSize={list.pageSize}
         onPageSize={list.setPageSize}
+        detail={{
+          values: list.detailFilters,
+          activeKeys: list.detailActiveKeys,
+          options: list.detailOptions,
+          onChange: list.setDetailFilter,
+          onClear: list.clearDetailFilters,
+        }}
       />
 
       <CrmBulkBar

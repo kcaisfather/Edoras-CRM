@@ -10,16 +10,22 @@ import {
 } from "./schemas";
 import type { Prospect } from "./types";
 import {
+  activeProspectFilterCount,
   callableProspects,
   canMove,
   convertNoteText,
   crmContactSets,
+  EMPTY_PROSPECT_FILTER,
   fillEmptyFields,
+  filterProspects,
   hasLeadIdentity,
   isMoved,
   listSlug,
+  prospectMatchesQuery,
   prospectTitle,
   prospectToExisting,
+  toPresenceFilter,
+  type ProspectDetailFilter,
 } from "./utils";
 
 const mk = (id: string, over: Partial<Prospect> = {}): Prospect => ({
@@ -184,5 +190,95 @@ describe("Soğuk listeye geri gönder şeması", () => {
     expect(leadToColdListSchema.safeParse({ listId }).success).toBe(false);
     expect(leadToColdListSchema.safeParse({ listId: "liste", lostReason: "OTHER" }).success).toBe(false);
     expect(leadToColdListSchema.safeParse({ listId, lostReason: "FIYAT" }).success).toBe(false);
+  });
+});
+
+describe("detaylı süzgeç", () => {
+  const people = [
+    mk("a", { city: "Edirne", district: "Keşan", branch: "YKS", note: "Fuarda tanıştık", organization: "Keşan Fen Lisesi" }),
+    mk("b", {
+      firstName: "Ayşe",
+      lastName: "Işık",
+      city: "EDİRNE",
+      district: "Merkez",
+      phone: "+902842350501",
+      phoneRaw: "0284 235 05 01",
+      email: "ayse@okul.k12.tr",
+      emailRaw: "Ayse@Okul.k12.tr",
+      branch: "LGS",
+    }),
+    mk("c", { firstName: "Can", city: "İstanbul", district: "Kadıköy", phone: null, phoneRaw: "", emailRaw: "can@yok", organization: "" }),
+    mk("d", { firstName: "", lastName: "", organization: "Çağ Koleji", city: "", phone: null, phoneRaw: "0284-235 99 99", crmLeadId: "L1", movedAt: 3 }),
+  ];
+  const run = (f: Partial<ProspectDetailFilter>, opts?: Parameters<typeof filterProspects>[2]) =>
+    filterProspects(people, { ...EMPTY_PROSPECT_FILTER, ...f }, opts).map((p) => p.id);
+
+  it("boş süzgeç hepsini sırasıyla döndürür", () => {
+    expect(run({})).toEqual(["a", "b", "c", "d"]);
+    expect(activeProspectFilterCount(EMPTY_PROSPECT_FILTER)).toBe(0);
+    expect(activeProspectFilterCount({ ...EMPTY_PROSPECT_FILTER, city: "Edirne", inCrm: "no", phone: "  " })).toBe(2);
+  });
+
+  it("il / ilçe: tam eşleşme, Türkçe büyük-küçük harf farkı yok", () => {
+    expect(run({ city: "Edirne" })).toEqual(["a", "b"]);
+    expect(run({ city: "edirne" })).toEqual(["a", "b"]);
+    expect(run({ city: "Edir" })).toEqual([]);
+    expect(run({ city: "Edirne", district: "KEŞAN" })).toEqual(["a"]);
+    expect(run({ district: "kadikoy" })).toEqual(["c"]);
+  });
+
+  it("telefon: yalnız rakamlar, E.164 ve ham yazım", () => {
+    expect(run({ phone: "0284 235" })).toEqual(["b", "d"]);
+    expect(run({ phone: "+90 284 235 05" })).toEqual(["b"]);
+    expect(run({ phone: "5320000001" })).toEqual(["a"]);
+    expect(run({ phone: "0555" })).toEqual([]);
+  });
+
+  it("e-posta, kurum, ad soyad, not: içerme; program / tür: tam eşleşme", () => {
+    expect(run({ email: "OKUL" })).toEqual(["b"]);
+    expect(run({ email: "can@" })).toEqual(["c"]);
+    expect(run({ organization: "çağ" })).toEqual(["d"]);
+    expect(run({ organization: "kesan fen" })).toEqual(["a"]);
+    expect(run({ name: "ayşe ışık" })).toEqual(["b"]);
+    expect(run({ name: "AYSE ISIK" })).toEqual(["b"]);
+    expect(run({ note: "fuarda" })).toEqual(["a"]);
+    expect(run({ branch: "yks" })).toEqual(["a"]);
+    expect(run({ branch: "Y" })).toEqual([]);
+  });
+
+  it("telefon / e-posta kaydı var-yok (normalize ya da ham)", () => {
+    expect(run({ hasPhone: "no" })).toEqual(["c"]);
+    expect(run({ hasPhone: "yes" })).toEqual(["a", "b", "d"]);
+    expect(run({ hasEmail: "yes" })).toEqual(["b", "c"]);
+    expect(run({ hasEmail: "no", hasPhone: "yes" })).toEqual(["a", "d"]);
+  });
+
+  it("CRM'de kayıtlı: taşınmış ya da CRM eşleşmesi olan", () => {
+    const hasCrmMatch = (p: Prospect) => p.id === "b";
+    expect(run({ inCrm: "yes" }, { hasCrmMatch })).toEqual(["b", "d"]);
+    expect(run({ inCrm: "no" }, { hasCrmMatch })).toEqual(["a", "c"]);
+    expect(run({ inCrm: "yes" })).toEqual(["d"]);
+  });
+
+  it("alanlar ve serbest arama VE ile birleşir", () => {
+    expect(run({ city: "Edirne", hasEmail: "yes" })).toEqual(["b"]);
+    expect(run({ city: "Edirne" }, { q: "keşan" })).toEqual(["a"]);
+    expect(run({}, { q: "ISIK" })).toEqual(["b"]);
+  });
+
+  it("serbest arama: alanlarda geçer, telefon yazım farkından bağımsız", () => {
+    expect(prospectMatchesQuery(people[1], "0284 235 05")).toBe(true);
+    expect(prospectMatchesQuery(people[1], "284-235")).toBe(true);
+    expect(prospectMatchesQuery(people[0], "0284")).toBe(false);
+    expect(prospectMatchesQuery(people[2], "kadıköy")).toBe(true);
+    expect(prospectMatchesQuery(people[2], "can@yok")).toBe(true);
+    expect(prospectMatchesQuery(people[2], "  ")).toBe(true);
+  });
+
+  it("URL var / yok değeri", () => {
+    expect(toPresenceFilter("yes")).toBe("yes");
+    expect(toPresenceFilter("no")).toBe("no");
+    expect(toPresenceFilter("evet")).toBe("");
+    expect(toPresenceFilter(null)).toBe("");
   });
 });

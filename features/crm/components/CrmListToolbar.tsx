@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search, X } from "lucide-react";
+import { FilterToggle } from "@/components/list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,10 +21,12 @@ import { OWNER_NONE, STORED_STATUSES } from "@/lib/domain/crm/signals";
 import { LEAD_SOURCES } from "@/lib/domain/crm/types";
 import { CRM_VIEWS, FINANCIAL_VIEWS, type CrmQuickTab } from "@/lib/domain/crm/views";
 import { PAGE_SIZES } from "../hooks";
+import { CRM_FILTER_PANEL_ID, CrmFilterChips, CrmFilterPanel, type CrmDetailFilterState } from "./CrmDetailFilters";
 
 /**
  * Tablo araç satırı: tek süzgeç listesi ("Tümü" + Görünümler ?tab= + Durumlar ?status= + Kaynaklar ?source=; aynı anda
- * biri seçili, seçilince diğerleri temizlenir), arama, sayfa boyutu. "Aday ekle" ekranın üst satırında (CrmList).
+ * biri seçili, seçilince diğerleri temizlenir), arama, "Filtreler" (detaylı süzgeç paneli: il, ilçe, telefon…; altında
+ * etkin süzgeç çipleri), sorumlu, sayfa boyutu. "Aday ekle" ekranın üst satırında (CrmList).
  */
 export function CrmListToolbar({
   quickTab,
@@ -41,6 +45,7 @@ export function CrmListToolbar({
   onClearSearch,
   pageSize,
   onPageSize,
+  detail,
 }: {
   quickTab: CrmQuickTab;
   statusFilter: string;
@@ -58,120 +63,138 @@ export function CrmListToolbar({
   onClearSearch: () => void;
   pageSize: number;
   onPageSize: (value: string) => void;
+  /** Detaylı süzgeç (yalnız liste görünümünde: showListControls). */
+  detail: CrmDetailFilterState;
 }) {
   const t = useTranslations("crm.list");
   const tStatus = useTranslations("crm.status");
   const tSource = useTranslations("crm.source");
   const { canSeeFinancials } = usePermissions();
   const views = canSeeFinancials ? CRM_VIEWS : CRM_VIEWS.filter((v) => !FINANCIAL_VIEWS.includes(v.value));
+  // Panel varsayılan kapalı; etkin süzgeçler kapalıyken de çiplerde görünür.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
-    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-        <Select
-          value={quickTab ? `tab:${quickTab}` : statusFilter ? `status:${statusFilter}` : sourceFilter ? `source:${sourceFilter}` : "__all__"}
-          onValueChange={(v) => {
-            if (v.startsWith("tab:")) onQuickTab(v.slice(4) as CrmQuickTab);
-            else if (v.startsWith("status:")) onStatus(v.slice(7));
-            else if (v.startsWith("source:")) onSource(v.slice(7));
-            else onQuickTab("");
-          }}
-        >
-          <SelectTrigger className="w-[210px]" aria-label={t("filters.status")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">{t("filters.statusAll")}</SelectItem>
-            <SelectSeparator />
-            <SelectGroup>
-              <SelectLabel>{t("filters.viewsGroup")}</SelectLabel>
-              {views.map((v) => (
-                <SelectItem key={v.value} value={`tab:${v.value}`}>
-                  {t(`tabs.${v.labelKey}`)}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-            <SelectSeparator />
-            <SelectGroup>
-              <SelectLabel>{t("filters.statusGroup")}</SelectLabel>
-              {STORED_STATUSES.map((s) => (
-                <SelectItem key={s} value={`status:${s}`}>
-                  {tStatus(s)}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-            {showListControls && (
-              <>
-                <SelectSeparator />
-                <SelectGroup>
-                  <SelectLabel>{t("filters.sourceGroup")}</SelectLabel>
-                  {LEAD_SOURCES.map((s) => (
-                    <SelectItem key={s} value={`source:${s}`}>
-                      {tSource(s)}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </>
-            )}
-          </SelectContent>
-        </Select>
-        {showListControls && (
-          <>
-            <div className="relative w-full max-w-sm flex-1 sm:w-auto">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("search")}
-                value={search}
-                onChange={(e) => onSearch(e.target.value)}
-                aria-label={t("search")}
-                className="h-9 pl-10 pr-10"
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="absolute right-1 top-1/2 -translate-y-1/2"
-                  onClick={onClearSearch}
-                  aria-label={t("searchClear")}
-                  title={t("searchClear")}
-                >
-                  <X />
-                </Button>
-              )}
-            </div>
-            <Select value={ownerFilter || "__all__"} onValueChange={(v) => onOwner(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="w-[170px]" aria-label={t("filters.owner")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t("filters.ownerAll")}</SelectItem>
-                {meId && <SelectItem value={meId}>{t("filters.ownerMine")}</SelectItem>}
-                <SelectItem value={OWNER_NONE}>{t("filters.ownerNone")}</SelectItem>
-                {owners
-                  .filter((o) => o.id !== meId)
-                  .map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <Select value={String(pageSize)} onValueChange={onPageSize}>
-              <SelectTrigger className="w-[80px]" aria-label={t("pagination.pageSize")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
+    <div className="space-y-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <Select
+            value={quickTab ? `tab:${quickTab}` : statusFilter ? `status:${statusFilter}` : sourceFilter ? `source:${sourceFilter}` : "__all__"}
+            onValueChange={(v) => {
+              if (v.startsWith("tab:")) onQuickTab(v.slice(4) as CrmQuickTab);
+              else if (v.startsWith("status:")) onStatus(v.slice(7));
+              else if (v.startsWith("source:")) onSource(v.slice(7));
+              else onQuickTab("");
+            }}
+          >
+            <SelectTrigger className="w-[210px]" aria-label={t("filters.status")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("filters.statusAll")}</SelectItem>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel>{t("filters.viewsGroup")}</SelectLabel>
+                {views.map((v) => (
+                  <SelectItem key={v.value} value={`tab:${v.value}`}>
+                    {t(`tabs.${v.labelKey}`)}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </>
-        )}
+              </SelectGroup>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel>{t("filters.statusGroup")}</SelectLabel>
+                {STORED_STATUSES.map((s) => (
+                  <SelectItem key={s} value={`status:${s}`}>
+                    {tStatus(s)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+              {showListControls && (
+                <>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>{t("filters.sourceGroup")}</SelectLabel>
+                    {LEAD_SOURCES.map((s) => (
+                      <SelectItem key={s} value={`source:${s}`}>
+                        {tSource(s)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </>
+              )}
+            </SelectContent>
+          </Select>
+          {showListControls && (
+            <>
+              <div className="relative w-full max-w-sm flex-1 sm:w-auto">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t("search")}
+                  value={search}
+                  onChange={(e) => onSearch(e.target.value)}
+                  aria-label={t("search")}
+                  className="h-9 pl-10 pr-10"
+                />
+                {search && (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="absolute right-1 top-1/2 -translate-y-1/2"
+                    onClick={onClearSearch}
+                    aria-label={t("searchClear")}
+                    title={t("searchClear")}
+                  >
+                    <X />
+                  </Button>
+                )}
+              </div>
+              <FilterToggle
+                open={filtersOpen}
+                onToggle={() => setFiltersOpen((o) => !o)}
+                activeCount={detail.activeKeys.length}
+                controlsId={CRM_FILTER_PANEL_ID}
+              />
+              <Select value={ownerFilter || "__all__"} onValueChange={(v) => onOwner(v === "__all__" ? "" : v)}>
+                <SelectTrigger className="w-[170px]" aria-label={t("filters.owner")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">{t("filters.ownerAll")}</SelectItem>
+                  {meId && <SelectItem value={meId}>{t("filters.ownerMine")}</SelectItem>}
+                  <SelectItem value={OWNER_NONE}>{t("filters.ownerNone")}</SelectItem>
+                  {owners
+                    .filter((o) => o.id !== meId)
+                    .map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Select value={String(pageSize)} onValueChange={onPageSize}>
+                <SelectTrigger className="w-[80px]" aria-label={t("pagination.pageSize")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZES.map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+        </div>
       </div>
+      {showListControls && (
+        <>
+          <CrmFilterPanel detail={detail} open={filtersOpen} />
+          <CrmFilterChips detail={detail} />
+        </>
+      )}
     </div>
   );
 }

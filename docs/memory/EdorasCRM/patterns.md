@@ -41,6 +41,12 @@ export const POST = route(async (request: Request, { params }: Ctx) => {
 - DeepSport'tan taşınan kodda `@/i18n/routing` → `@/lib/navigation`.
 - Başka feature'a yalnız `features/<ad>/index.ts` üzerinden erişilir.
 - Yeni metin dosyası `i18n/request.ts` → `loadFeatureMessages`'e eklenir.
+- **Detaylı filtre (12.10)** — liste ekranlarında ortak görünüm: `@/components/list` → `FilterToggle` ("Filtreler (n)"),
+  `FilterPanel` (alan ızgarası + "Filtreleri temizle"), `FilterField`, `FilterTextInput` (300 ms), `FilterCombobox`
+  (il/ilçe/program — seçenekler VERİDEN, `distinctOptions`), `FilterSelect`, `ActiveFilterChips`; metinler `list.filters.*`.
+  Eşleştirme `lib/utils/filter-match.ts` (Türkçe duyarlı `normalizeSearch`; telefon rakamla, baştaki 0 atılır). Değerler URL'de;
+  birden çok parametreyi birlikte yazan iş ("il değişti → ilçeyi sıfırla", "temizle") `useUrlParamsSetter()` ile — ardışık
+  `useUrlParam` setter'ları aynı eski `searchParams`'tan başladığı için birbirini ezer. Kullananlar: Adaylar, Soğuk listeler.
 
 ## Dosya biçimi
 

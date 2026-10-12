@@ -256,7 +256,28 @@
     "csv": "CSV indir",
     "search": "Kurum, yetkili, e-posta veya telefon ara",
     "empty": "Bu görünümde kayıt yok.",
-    "truncated": "İlk {loaded} / {total} kayıt yüklendi; liste eksik olabilir."
+    "truncated": "İlk {loaded} / {total} kayıt yüklendi; liste eksik olabilir.",
+    "filters": {
+      "toggle": "Filtreler",
+      "panel": "Detaylı filtre",
+      "hint": "Filtreler birlikte uygulanır (hepsine uyan kayıtlar listelenir).",
+      "clear": "Filtreleri temizle",
+      "clearField": "Temizle",
+      "noOption": "Eşleşen seçenek yok",
+      "active": "Etkin filtreler",
+      "remove": "{label} filtresini kaldır",
+      "city": "İl",
+      "cityAll": "Tüm iller",
+      "district": "İlçe",
+      "districtAll": "Tüm ilçeler",
+      "phone": "Telefon",
+      "phonePlaceholder": "Rakamla ara (0532 123…)",
+      "email": "E-posta",
+      "emailPlaceholder": "E-postada ara",
+      "any": "Hepsi",
+      "yes": "Var",
+      "no": "Yok"
+    }
   },
   "dashboard": {
     "title": "Ana Sayfa",

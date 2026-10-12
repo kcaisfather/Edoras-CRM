@@ -93,7 +93,28 @@
       "owner": "Sorumlu",
       "ownerAll": "Tüm sorumlular",
       "ownerMine": "Bana ait",
-      "ownerNone": "Atanmamış"
+      "ownerNone": "Atanmamış",
+      "organization": "Kurum adı",
+      "organizationPlaceholder": "Kurum adında ara",
+      "contact": "Yetkili",
+      "contactPlaceholder": "Yetkili adında ara",
+      "program": "Program",
+      "programAll": "Tüm programlar",
+      "followUp": "Sonraki arama",
+      "followUpAll": "Tüm tarihler",
+      "followUpOptions": {
+        "overdue": "Gecikmiş",
+        "today": "Bugün",
+        "week": "Önümüzdeki 7 gün",
+        "none": "Tarih yok"
+      },
+      "lostReason": "Kayıp nedeni",
+      "lostReasonAll": "Tüm nedenler",
+      "hasPhone": "Telefon kaydı",
+      "hasEmail": "E-posta kaydı",
+      "linked": "Kuruma bağlı",
+      "complaint": "Şikâyet",
+      "chip": "{label}: {value}"
     },
     "table": {
       "customer": "Müşteri",

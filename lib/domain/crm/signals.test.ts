@@ -5,6 +5,8 @@ import {
   buildLeadIndex,
   demoEndDate,
   filterLeadsClient,
+  followUpMatches,
+  isFollowUpFilter,
   OWNER_NONE,
   isDemoEndedNoSale,
   leadBalance,
@@ -142,5 +144,114 @@ describe("filterLeadsClient — sorumlu", () => {
   });
   it("boş süzgeç hepsini döndürür", () => {
     expect(filterLeadsClient(leads, {})).toHaveLength(4);
+  });
+});
+
+describe("filterLeadsClient — detaylı süzgeç", () => {
+  const ids = (rows: CrmLead[]) => rows.map((l) => l.id);
+  const leads: CrmLead[] = [
+    lead({
+      id: "a",
+      city: "İstanbul",
+      district: "Kadıköy",
+      contactPhone: "+905321234567",
+      contactEmail: "ayse@fen.k12.tr",
+      organizationName: "Işık Fen Lisesi",
+      contactFirstName: "Ayşe",
+      contactLastName: "Yılmaz",
+      programTags: ["erken"],
+      nextFollowUpAt: dayFromNow(-2),
+      institutionId: "i1",
+    }),
+    lead({
+      id: "b",
+      city: "ISTANBUL",
+      district: "Üsküdar",
+      contactPhone: "+905441112233",
+      organizationName: null,
+      institution: institution(null),
+      contactFirstName: "Mehmet",
+      contactLastName: "Şahin",
+      programTags: ["erken", "yillik"],
+      status: "OLUMSUZ",
+      lostReason: "PRICE",
+      nextFollowUpAt: dayFromNow(0),
+      dissatisfaction: { category: "teknik", severity: "orta", status: "acik", description: "", createdAt: 0 },
+    }),
+    lead({
+      id: "c",
+      city: "Edirne",
+      district: "Keşan",
+      contactEmail: "info@edirne.com",
+      organizationName: "Edirne Koleji",
+      status: "OLUMSUZ",
+      lostReason: "COMPETITOR",
+      nextFollowUpAt: dayFromNow(6),
+    }),
+    lead({ id: "d", city: null, district: null, organizationName: "İzmir Akademi", nextFollowUpAt: dayFromNow(7) }),
+  ];
+
+  it("il ve ilçe: tam eşleşme, Türkçe büyük/küçük harf ve ı/i farkı yok", () => {
+    expect(ids(filterLeadsClient(leads, { city: "istanbul" }, NOW))).toEqual(["a", "b"]);
+    expect(ids(filterLeadsClient(leads, { city: "İSTANBUL" }, NOW))).toEqual(["a", "b"]);
+    expect(ids(filterLeadsClient(leads, { city: "edirne" }, NOW))).toEqual(["c"]);
+    expect(ids(filterLeadsClient(leads, { city: "istanbul", district: "kadikoy" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(leads, { district: "USKUDAR" }, NOW))).toEqual(["b"]);
+    // Tam eşleşme: "Edir" il seçimi değildir.
+    expect(filterLeadsClient(leads, { city: "Edir" }, NOW)).toEqual([]);
+  });
+
+  it("telefon: rakamlarla, baştaki 0 ve +90 yazımı fark etmez", () => {
+    expect(ids(filterLeadsClient(leads, { phone: "0532 123" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(leads, { phone: "+90 544" }, NOW))).toEqual(["b"]);
+    expect(ids(filterLeadsClient(leads, { phone: "(0532) 123-45-67" }, NOW))).toEqual(["a"]);
+    expect(filterLeadsClient(leads, { phone: "0555" }, NOW)).toEqual([]);
+    // Rakamsız sorgu süzmez.
+    expect(filterLeadsClient(leads, { phone: "abc" }, NOW)).toHaveLength(4);
+  });
+
+  it("e-posta, kurum adı (bağlı kurumun adı dahil) ve yetkili", () => {
+    expect(ids(filterLeadsClient(leads, { email: "EDIRNE.COM" }, NOW))).toEqual(["c"]);
+    expect(ids(filterLeadsClient(leads, { organization: "isik" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(leads, { organization: "kurum" }, NOW))).toEqual(["b"]);
+    expect(ids(filterLeadsClient(leads, { organization: "izmir" }, NOW))).toEqual(["d"]);
+    expect(ids(filterLeadsClient(leads, { contact: "ayse yil" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(leads, { contact: "ŞAHİN" }, NOW))).toEqual(["b"]);
+  });
+
+  it("program etiketi ve kayıp nedeni", () => {
+    expect(ids(filterLeadsClient(leads, { program: "erken" }, NOW))).toEqual(["a", "b"]);
+    expect(ids(filterLeadsClient(leads, { program: "yillik" }, NOW))).toEqual(["b"]);
+    expect(ids(filterLeadsClient(leads, { lostReason: "COMPETITOR" }, NOW))).toEqual(["c"]);
+    expect(filterLeadsClient(leads, { lostReason: "OTHER" }, NOW)).toEqual([]);
+  });
+
+  it("sonraki arama: gecikmiş, bugün, önümüzdeki 7 gün (bugün dahil), tarihsiz", () => {
+    const rows = [...leads, lead({ id: "e" })];
+    expect(ids(filterLeadsClient(rows, { followUp: "overdue" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(rows, { followUp: "today" }, NOW))).toEqual(["b"]);
+    expect(ids(filterLeadsClient(rows, { followUp: "week" }, NOW))).toEqual(["b", "c"]);
+    expect(ids(filterLeadsClient(rows, { followUp: "none" }, NOW))).toEqual(["e"]);
+    expect(followUpMatches("2026-09-26", "today", "2026-09-26")).toBe(true);
+    expect(followUpMatches(null, "overdue", "2026-09-26")).toBe(false);
+    expect(isFollowUpFilter("week")).toBe(true);
+    expect(isFollowUpFilter("month")).toBe(false);
+  });
+
+  it("var / yok: telefon, e-posta, kuruma bağlı, şikâyet", () => {
+    expect(ids(filterLeadsClient(leads, { hasPhone: "yes" }, NOW))).toEqual(["a", "b"]);
+    expect(ids(filterLeadsClient(leads, { hasPhone: "no" }, NOW))).toEqual(["c", "d"]);
+    expect(ids(filterLeadsClient(leads, { hasEmail: "yes" }, NOW))).toEqual(["a", "c"]);
+    expect(ids(filterLeadsClient(leads, { linked: "yes" }, NOW))).toEqual(["a"]);
+    expect(ids(filterLeadsClient(leads, { linked: "no" }, NOW))).toEqual(["b", "c", "d"]);
+    expect(ids(filterLeadsClient(leads, { complaint: "yes" }, NOW))).toEqual(["b"]);
+    expect(filterLeadsClient(leads, { complaint: "" }, NOW)).toHaveLength(4);
+  });
+
+  it("alanlar birbiriyle ve mevcut süzgeçlerle VE ile birleşir", () => {
+    expect(ids(filterLeadsClient(leads, { city: "istanbul", program: "yillik" }, NOW))).toEqual(["b"]);
+    expect(ids(filterLeadsClient(leads, { city: "istanbul", status: "OLUMSUZ", hasEmail: "no" }, NOW))).toEqual(["b"]);
+    expect(filterLeadsClient(leads, { city: "edirne", phone: "0532" }, NOW)).toEqual([]);
+    expect(ids(filterLeadsClient(leads, { search: "koleji", lostReason: "COMPETITOR" }, NOW))).toEqual(["c"]);
   });
 });

@@ -6,6 +6,15 @@ import { useRouter } from "@/lib/navigation";
 import { useCurrentUser, usePermissions } from "@/features/auth";
 import { parsePeriodParam, periodToRange } from "@/lib/utils/date";
 import { parseSort, sortRows } from "@/lib/utils/sort";
+import {
+  LEAD_DETAIL_KEYS,
+  detailActiveKeys,
+  detailClientFilter,
+  leadDetailOptions,
+  leadDetailQuery,
+  readLeadDetailFilters,
+  type LeadDetailKey,
+} from "@/lib/domain/crm/detail-filter";
 import { leadFunnel } from "@/lib/domain/crm/insights";
 import { STORED_STATUSES, filterLeadsClient, pipelineByStatus, summarizeLeads, type CrmClientTab } from "@/lib/domain/crm/signals";
 import { CRM_SORT_ACCESSORS, CRM_SORT_KEYS } from "@/lib/domain/crm/sort";
@@ -82,6 +91,15 @@ export function useCrmList(slots: CrmRowSlots = {}) {
   const detailId = searchParams.get("lead") ?? "";
   const addOpen = searchParams.get("new") === "lead";
   const { dateFrom, dateTo } = useCrmPeriodRange();
+  // Detaylı süzgeç ("Filtreler" paneli): il, ilçe, telefon, e-posta, kurum adı, yetkili, program, sonraki arama,
+  // kayıp nedeni, var/yok alanları — hepsi URL'de, diğer süzgeçlerle VE ile birleşir.
+  // Yalnız detay parametrelerinden oluşan sorgu: sayfa / aday paneli değişince süzgeç nesnesi değişmez (yeniden süzme yok).
+  const detailQuery = leadDetailQuery((key) => searchParams.get(key));
+  const detailFilters = useMemo(() => {
+    const params = new URLSearchParams(detailQuery);
+    return readLeadDetailFilters((key) => params.get(key));
+  }, [detailQuery]);
+  const detailActive = useMemo(() => detailActiveKeys(detailFilters), [detailFilters]);
 
   const replaceParams = (mutate: (p: URLSearchParams) => void) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -112,6 +130,12 @@ export function useCrmList(slots: CrmRowSlots = {}) {
     return [...map].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   }, [all.leads]);
 
+  // Detaylı süzgeç seçenekleri: tüm adaylardaki iller, seçili ildeki ilçeler, verideki program / kayıp nedenleri.
+  const detailOptions = useMemo(
+    () => leadDetailOptions(all.leads, { city: detailFilters.city, program: detailFilters.program, lost: detailFilters.lost }),
+    [all.leads, detailFilters.city, detailFilters.program, detailFilters.lost]
+  );
+
   // Seçili dönemdeki tüm adaylar (satış olanlar dahil).
   const rangeLeads = useMemo(() => filterLeadsClient(all.leads, { dateFrom, dateTo }), [all.leads, dateFrom, dateTo]);
 
@@ -124,17 +148,18 @@ export function useCrmList(slots: CrmRowSlots = {}) {
       dateTo,
       tab: clientTab,
       search,
+      ...detailClientFilter(detailFilters),
     });
     if (colSort) return sortRows(filtered, colSort, CRM_SORT_ACCESSORS);
     // "Bakiyesi olanlar": en yüksek kalan bakiye önce; diğerleri en yeni kayıt önce (sunucu sırası).
     if (clientTab === "balance") return sortRows(filtered, { key: "balance", dir: "desc" }, CRM_SORT_ACCESSORS);
     return filtered;
-  }, [all.leads, effectiveStatus, sourceFilter, ownerFilter, dateFrom, dateTo, clientTab, search, colSort]);
+  }, [all.leads, effectiveStatus, sourceFilter, ownerFilter, dateFrom, dateTo, clientTab, search, detailFilters, colSort]);
 
   // Statü şeridi (G35): dönemdeki aşamalar (statü seçiminden bağımsız).
   const pipeline = useMemo(() => pipelineByStatus(rangeLeads, STORED_STATUSES), [rangeLeads]);
   // Özet kartlar (G03): süzgeç varsa süzülen satırlar, yoksa seçili dönemin tamamı.
-  const hasFilter = !!effectiveStatus || !!sourceFilter || !!ownerFilter || !!clientTab || !!search.trim();
+  const hasFilter = !!effectiveStatus || !!sourceFilter || !!ownerFilter || !!clientTab || !!search.trim() || detailActive.length > 0;
   const summary = useMemo(() => summarizeLeads(hasFilter ? filteredLeads : rangeLeads), [rangeLeads, hasFilter, filteredLeads]);
   // G19: açık alacak — dönemdeki kayıtlar (satır formülüyle aynı).
   const openReceivables = useMemo(
@@ -244,6 +269,24 @@ export function useCrmList(slots: CrmRowSlots = {}) {
       replaceParams((p) => {
         if (value) p.set("owner", value);
         else p.delete("owner");
+        p.delete("page");
+      }),
+    // Detaylı süzgeç
+    detailFilters,
+    detailActiveKeys: detailActive,
+    detailActiveCount: detailActive.length,
+    detailOptions,
+    /** Tek alanı yazar; il değişince ilçe temizlenir (tek URL değişikliği), sayfa başa döner. */
+    setDetailFilter: (key: LeadDetailKey, value: string) =>
+      replaceParams((p) => {
+        if (value) p.set(key, value);
+        else p.delete(key);
+        if (key === "city") p.delete("district");
+        p.delete("page");
+      }),
+    clearDetailFilters: () =>
+      replaceParams((p) => {
+        for (const key of LEAD_DETAIL_KEYS) p.delete(key);
         p.delete("page");
       }),
     setQuickTab: (tab: CrmQuickTab) =>

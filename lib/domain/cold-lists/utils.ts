@@ -5,6 +5,7 @@
 import type { ExistingContact } from "@/lib/import/duplicates";
 import { normalizeImportEmail, normalizeImportPhone } from "@/lib/import/normalize";
 import type { ImportRecord } from "@/lib/import/records";
+import { phoneMatches, presenceMatches, sameText, textIncludes, type PresenceFilter } from "@/lib/utils/filter-match";
 import type { ProspectPatchInput, ProspectTextField } from "./schemas";
 import type { Prospect, ProspectOutcome } from "./types";
 
@@ -113,4 +114,121 @@ export function listSlug(name: string): string {
       .replace(/[^a-z0-9ğüşöçı]+/g, "-")
       .replace(/^-+|-+$/g, "") || "liste"
   );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Detaylı süzgeç (Soğuk listeler ekranı; değerler URL'de, süzme istemcide). Alanlar VE ile birleşir, boş alan süzmez.
+// Karşılaştırma Türkçe duyarlı (`lib/utils/filter-match`): "EDİRNE" = "Edirne", ı/i ve aksan farkı yok.
+// ---------------------------------------------------------------------------------------------------------------
+
+export interface ProspectDetailFilter {
+  /** İl — tam eşleşme (seçenekler listedeki değerlerden). */
+  city: string;
+  /** İlçe — tam eşleşme. */
+  district: string;
+  /** Telefon — rakamlar içeriyor mu (E.164 ve ham yazım; baştaki 0 yok sayılır). */
+  phone: string;
+  /** E-posta — içeriyor mu (normalize ya da ham). */
+  email: string;
+  /** Kurum adı — içeriyor mu. */
+  organization: string;
+  /** Ad soyad — "ad soyad" içinde geçiyor mu. */
+  name: string;
+  /** Program / tür — tam eşleşme. */
+  branch: string;
+  /** Not — içeriyor mu. */
+  note: string;
+  hasPhone: PresenceFilter;
+  hasEmail: PresenceFilter;
+  /** CRM'de kayıtlı: taşınmış (adayı duruyor) ya da aynı telefon / e-postayla CRM adayı ya da kurum kaydı var. */
+  inCrm: PresenceFilter;
+}
+
+export const PROSPECT_FILTER_KEYS = [
+  "city",
+  "district",
+  "phone",
+  "email",
+  "organization",
+  "name",
+  "branch",
+  "note",
+  "hasPhone",
+  "hasEmail",
+  "inCrm",
+] as const satisfies readonly (keyof ProspectDetailFilter)[];
+export type ProspectFilterKey = (typeof PROSPECT_FILTER_KEYS)[number];
+
+export const PRESENCE_FILTER_KEYS = ["hasPhone", "hasEmail", "inCrm"] as const satisfies readonly ProspectFilterKey[];
+
+export const EMPTY_PROSPECT_FILTER: ProspectDetailFilter = {
+  city: "",
+  district: "",
+  phone: "",
+  email: "",
+  organization: "",
+  name: "",
+  branch: "",
+  note: "",
+  hasPhone: "",
+  hasEmail: "",
+  inCrm: "",
+};
+
+/** URL'den gelen var / yok değeri: yalnız "yes" / "no" geçerli, gerisi "hepsi". */
+export const toPresenceFilter = (value: string | null | undefined): PresenceFilter =>
+  value === "yes" || value === "no" ? value : "";
+
+/** Dolu (etkin) detay süzgeci sayısı. */
+export const activeProspectFilterCount = (f: ProspectDetailFilter): number =>
+  PROSPECT_FILTER_KEYS.filter((k) => f[k].trim() !== "").length;
+
+export const prospectHasPhone = (p: Pick<Prospect, "phone" | "phoneRaw">): boolean => !!p.phone || p.phoneRaw.trim() !== "";
+export const prospectHasEmail = (p: Pick<Prospect, "email" | "emailRaw">): boolean => !!p.email || p.emailRaw.trim() !== "";
+
+/** Telefon gibi görünen arama ("0532 123", "+90 284…"): en az 3 rakam, rakam dışında yalnız boşluk + - ( ). */
+const looksLikePhone = (q: string): boolean => /^[\d\s+()-]+$/.test(q) && q.replace(/\D/g, "").length >= 3;
+
+/**
+ * Serbest arama (?q=): ad, soyad, kurum, telefon, e-posta, il, ilçe, program / tür içinde geçiyor mu. Telefon gibi
+ * görünen arama yazım farkından bağımsız eşleşir ("0532 123" → "+90532123…" ve "0532-123…").
+ */
+export function prospectMatchesQuery(p: Prospect, q: string): boolean {
+  const query = q.trim();
+  if (!query) return true;
+  if (looksLikePhone(query) && phoneMatches(query, p.phone, p.phoneRaw)) return true;
+  return [p.firstName, p.lastName, p.organization, p.phoneRaw, p.phone, p.email, p.emailRaw, p.city, p.district, p.branch].some((v) =>
+    textIncludes(v, query)
+  );
+}
+
+export interface ProspectFilterOptions {
+  /** Serbest arama (?q=). */
+  q?: string;
+  /** CRM eşleşmesi (aday / kurum yetkilisi telefon / e-posta dizini ekranın kancasında durur). */
+  hasCrmMatch?: (p: Prospect) => boolean;
+}
+
+/** Kişi detay süzgecine (ve serbest aramaya) uyuyor mu — alanlar VE ile. */
+export function prospectMatchesFilter(p: Prospect, f: ProspectDetailFilter, opts: ProspectFilterOptions = {}): boolean {
+  return (
+    sameText(p.city, f.city) &&
+    sameText(p.district, f.district) &&
+    phoneMatches(f.phone, p.phone, p.phoneRaw) &&
+    (textIncludes(p.email, f.email) || textIncludes(p.emailRaw, f.email)) &&
+    textIncludes(p.organization, f.organization) &&
+    textIncludes(prospectName(p), f.name) &&
+    sameText(p.branch, f.branch) &&
+    textIncludes(p.note, f.note) &&
+    presenceMatches(prospectHasPhone(p), f.hasPhone) &&
+    presenceMatches(prospectHasEmail(p), f.hasEmail) &&
+    (f.inCrm === "" || presenceMatches(p.crmLeadId != null || !!opts.hasCrmMatch?.(p), f.inCrm)) &&
+    prospectMatchesQuery(p, opts.q ?? "")
+  );
+}
+
+/** Detay süzgeci + serbest arama (sonuç sekmesi ayrı uygulanır; sekme sayıları bu sonuçtan sayılır). Sıra korunur. */
+export function filterProspects<P extends Prospect>(prospects: readonly P[], f: ProspectDetailFilter, opts: ProspectFilterOptions = {}): P[] {
+  if (activeProspectFilterCount(f) === 0 && !(opts.q ?? "").trim()) return [...prospects];
+  return prospects.filter((p) => prospectMatchesFilter(p, f, opts));
 }

@@ -30,3 +30,19 @@ DB: `crm_leads`, `crm_notes` (migration `crm_leads`).
   "Satış oldu"ya geçilemez (409 `SALE_ACCOUNT_REQUIRED`). Temsilci yalnız teklife geçerken teklif tutarını yazar (EK-3
   istisnası). Görev tamamlamada Teklif / Satış seçilemez. Tabloda satış yoksa teklif tutarı ("teklif" etiketiyle).
   Kural tek kaynak `lib/domain/crm/sale.ts` + `form.ts → leadFormRuleErrors`; DB: `20261005170000_crm_lead_sale_rules`.
+
+## Detaylı filtre (12.10)
+
+- Araç satırında "Filtreler" düğmesi (yalnız liste görünümünde; Yeni kayıtlar / Olası mükerrer'de yok) → altında panel
+  (varsayılan kapalı) + panel kapalıyken de görünen etkin süzgeç çipleri ("İl: Edirne"). Hepsi URL'de, birbirleriyle ve
+  durum / kaynak / sorumlu / dönem / aramayla VE ile birleşir; değişince `page` sıfırlanır, il değişince ilçe silinir.
+- URL: `city`, `district` (tam eşleşme, Türkçe harf / büyük-küçük farkı yok), `phone` (rakamlar; "0532 123" ↔ E.164),
+  `email`, `org` (aday kurum adı ya da bağlı Edoras kurumunun adı), `contact` ("ad soyad"), `program` (`erken` /
+  `yillik`), `follow` (`overdue` / `today` / `week` = bugün + 6 gün / `none`; Türkiye takvim günü), `lost` (kayıp
+  nedeni kodu), `hasPhone` / `hasEmail` / `linked` (institutionId) / `complaint` (şikâyet kaydı) = `yes` | `no`.
+- Mantık: `lib/domain/crm/signals.ts → filterLeadsClient` (`ClientLeadFilter` yeni alanları, `followUpMatches`);
+  URL ↔ süzgeç ve seçenekler (iller, seçili ilin ilçeleri, verideki program / kayıp nedenleri) `lib/domain/crm/detail-filter.ts`;
+  kanca `features/crm/hooks.ts` (`detailFilters`, `setDetailFilter`, `clearDetailFilters`, `detailActiveCount`, `detailOptions`);
+  arayüz `features/crm/components/CrmDetailFilters.tsx` (ortak yapı taşları `components/list/filter-panel.tsx`,
+  eşleştirme `lib/utils/filter-match.ts` — Soğuk listeler de aynılarını kullanır). Etkin süzgeç özet kartlarını (`hasFilter`)
+  ve CSV dışa aktarmayı da süzer. Metinler `crm.list.filters.*` + ortak `list.filters.*`.

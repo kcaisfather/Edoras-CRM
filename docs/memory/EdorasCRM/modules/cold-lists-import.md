@@ -23,3 +23,21 @@ Sunucu: `lib/server/crm-prospects.ts`, `crm-import.ts`; saf kod `lib/import/`. D
   müşteri (SATIS_OLDU) → 409 `LEAD_IS_CUSTOMER`. Migration YOK: kişi → not → statü sırayla, `createCompensator()` ile
   geri alınır. İşlem kaydı `LEAD_RETURNED_TO_COLD_LIST`.
 - KVKK envanterinde listelidir (Ayarlar → KVKK).
+
+## Detaylı filtre (12.10)
+
+- Arama kutusunun yanında **"Filtreler (n)"** → altında tam genişlik panel (yerel `useState`, varsayılan kapalı) + panel
+  kapalıyken de görünen etkin süzgeç çipleri ("İl: Edirne") ve süzgeç / arama varken "{gösterilen} / {toplam} kişi".
+  UI: `features/cold-lists/components/ProspectDetailFilters.tsx` (ortak yapı taşları `components/list/filter-panel.tsx`).
+- Alanlar (VE ile) ve URL parametreleri: İl `city`, İlçe `district` (ikisi tam eşleşme; seçenekler yalnız listedeki
+  değerler, ilçe seçili ilin ilçeleri; **il değişince ilçe silinir** — tek URL yazımı `useUrlParamsSetter`), Telefon
+  `phone` (rakamlar; E.164 + ham, baştaki 0 yok sayılır), E-posta `email`, Kurum `org`, Ad soyad `name`, Not `note`
+  (içerme), Program / tür `branch` (tam eşleşme), Telefon kaydı `hasPhone`, E-posta kaydı `hasEmail`, CRM'de kayıtlı
+  `inCrm` (`yes` / `no`; CRM'de = taşınmış ve adayı duruyor YA DA aynı telefon / e-postayla CRM adayı / kurum kaydı).
+  Karşılaştırma Türkçe duyarlı (`lib/utils/filter-match.ts`: "EDİRNE" = "Edirne").
+- Sıra (`useColdListView`): detay süzgeci + serbest arama (`?q=`) → **sekme sayıları bundan sayılır** ("Aranmadı (12)" =
+  süzgece uyan 12 kişi) → sonuç sekmesi (`?outcome=`). CSV dışa aktarma `view.filtered`'ı kullanır, süzgeçleri izler.
+  Süzgeç değişince sayfa başa döner; liste değişince süzgeçler korunur (URL'de).
+- Saf mantık `lib/domain/cold-lists/utils.ts` (`filterProspects`, `prospectMatchesQuery`, `ProspectDetailFilter`; testler
+  `cold-lists.test.ts`). Serbest arama artık Türkçe duyarlı ve telefon gibi görünen sorguyu ("0532 123") yazım
+  farkından bağımsız eşler. CRM dizini kancada durur → `hasCrmMatch` geri çağırması olarak verilir.

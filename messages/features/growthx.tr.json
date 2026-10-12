@@ -258,7 +258,12 @@
     }
   },
   "usageCard": {
-    "title": "Kullanım",
+    "title": "Özellik kullanımı",
+    "subtitle": "Son {days} günün kayıt sayısı ve son kullanım günü",
+    "history": "Etkinlik geçmişi",
+    "unused": "Hiç kullanılmadı",
+    "tileActivity": "Etkinlik",
+    "tileWindow": "son {days} gün",
     "unavailable": "Kullanım okunamadı.",
     "activity": "Etkinlik (son {days} gün)",
     "never": "Hiç etkinlik yok",

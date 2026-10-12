@@ -17,7 +17,8 @@ export const CLICKABLE_ROW =
   "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60";
 export const TABLE = "min-w-max [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_thead_tr]:bg-muted/40";
 
-const TONE_DOT: Record<InactivityTone, string> = {
+/** Hareketsizlik tonu → nokta rengi (müşteri listesi, kurum ayrıntısının etkinlik kutucukları). */
+export const TONE_DOT: Record<InactivityTone, string> = {
   green: "bg-success",
   yellow: "bg-caution",
   orange: "bg-warning",

@@ -1,7 +1,9 @@
 # Müşteri analizleri
 
 Ekran: `/growth/customers` (Müşteri Takibi — CRM_AGENT'a açık), `/growth/analytics` (Müşteri Analizleri — yalnız ADMIN);
-kurum ayrıntısında "Kullanım" kartı. Uçlar: `/api/growth/customers?window=`, `/api/growth/weekly?weeks=`,
+kurum ayrıntısında başlıktaki "Etkinlik" / "Son etkinlik" kutucukları (`InstitutionActivityHighlights`) ve Genel bakış
+yan sütununda "Özellik kullanımı" kartı (`InstitutionUsageCard`; kaynak başına sayı + son gün, nokta = son kullanımdan bu
+yana süre; ADMIN'e "Etkinlik geçmişi" → `/activity-history?inst=<id>`). İkisi aynı sorgu (React Query tek istek). Uçlar: `/api/growth/customers?window=`, `/api/growth/weekly?weeks=`,
 `/api/growth/institutions/{id}/usage`. Sunucu: `lib/server/growth.ts`, Edoras okuma `lib/server/edoras-usage.ts`.
 Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Migration yok.**
 
@@ -14,8 +16,8 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
 - Yenileme / retention `crm_licenses`'tan kesin: bitişten sonra 30 gün içinde yeni lisans = yenilendi, yoksa churn; kohort
   ilk lisans ayı. Birim ekonomisi ve sızıntı yalnız ADMIN.
 - Kampanya: WhatsApp bağlantıları + CSV (e-posta kampanyası yok — onay / çıkış kaydı yok).
-- **Öğretmen kullanımı kartı (2026-10-09, dal `ogretmen-kullanim-2026-10-09`):** kurum ayrıntısının altında tam genişlik
-  (`InstitutionDetailPage` → `footer` yuvası), uç `/api/growth/institutions/{id}/staff-activity?window=7|30|90`, sunucu
+- **Öğretmen kullanımı kartı (2026-10-09, dal `ogretmen-kullanim-2026-10-09`):** kurum ayrıntısında **"Öğretmen kullanımı" sekmesi**
+  (`InstitutionDetailPage` → `staff` yuvası, 2026-10-12'den beri; önce `footer` idi — sekme açılmadan RPC çağrılmaz), uç `/api/growth/institutions/{id}/staff-activity?window=7|30|90`, sunucu
   `getStaffActivity` (`edoras-usage.ts` sonu), saf mantık `lib/domain/growth/staff-activity.ts` (+ test). Kaynak Edoras RPC
   `staff_activity_summary` (edoras-admin migration 305 — CRM'den önce Edoras canlısına uygulanmalı; yoksa kart "okunamadı").
   Personel × işlem (yoklama, ödev, ödev kontrolü, birebir, deneme, duyuru, elle SMS, konu, mobil oturum); hücre = işlem

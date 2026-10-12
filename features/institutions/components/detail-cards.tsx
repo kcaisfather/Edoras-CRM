@@ -12,8 +12,8 @@ import {
   Phone,
   Receipt,
   ShieldCheck,
+  UserCog,
   UserRound,
-  UsersRound,
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -272,7 +272,10 @@ export function LicensesCard({ institution }: { institution: InstitutionDetail }
           })}
         </ul>
       )}
-      <p className="mt-3 text-xs text-muted-foreground">{t("rule")}</p>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {t("rule")}
+        {crm.convertedAt ? <span className="block">{t("convertedAt", { date: formatDateTime(crm.convertedAt) })}</span> : null}
+      </p>
       {canRenew ? <RenewDialog institution={institution} open={open} onOpenChange={setOpen} /> : null}
       {isAdmin && editing ? (
         <LicenseEditDialog institution={institution} license={editing} open onOpenChange={(o) => !o && setEditing(null)} />
@@ -351,39 +354,50 @@ export function PaymentsCard({
   );
 }
 
-export function UsageCard({ institution }: { institution: InstitutionDetail }) {
-  const t = useTranslations("institutions.detail.usage");
-  const stats = [
-    { label: t("students"), value: institution.usage.students },
-    { label: t("teachers"), value: institution.usage.teachers },
-    { label: t("classes"), value: institution.usage.classes },
-  ];
+/** Edoras'taki kurum yöneticisi hesapları (ad + giriş e-postası); pasif hesap soluk ve etiketli. */
+export function AdminsCard({ institution }: { institution: InstitutionDetail }) {
+  const t = useTranslations("institutions.detail.admins");
+  const admins = institution.admins;
   return (
-    <SectionCard icon={UsersRound} title={t("title")}>
-      <dl className="grid grid-cols-3 gap-3">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-muted/30 p-3 text-center">
-            <dd className="text-2xl font-bold tabular-nums">{s.value}</dd>
-            <dt className="text-[11px] text-muted-foreground">{s.label}</dt>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admins")}</p>
-      {institution.admins.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("noAdmins")}</p>
+    <SectionCard
+      icon={UserCog}
+      title={t("title")}
+      action={admins.length > 0 ? <span className="text-xs text-muted-foreground">{t("count", { count: admins.length })}</span> : null}
+    >
+      {admins.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <ul className="space-y-2">
-          {institution.admins.map((a) => (
-            <li key={a.userId} className="text-sm">
-              <span className={cn("font-medium", !a.isActive && "text-muted-foreground line-through")}>{a.fullName ?? "—"}</span>
-              {a.email ? <span className="block text-xs text-muted-foreground">{a.email}</span> : null}
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {admins.map((a) => (
+            <li
+              key={a.userId}
+              className={cn("flex min-w-0 items-center gap-3 rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5", !a.isActive && "opacity-60")}
+            >
+              <span
+                aria-hidden
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
+              >
+                {initials(a.fullName)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="truncate text-sm font-medium">{a.fullName ?? "—"}</span>
+                  {!a.isActive ? (
+                    <span className="shrink-0 rounded border border-border px-1.5 text-[10px] font-semibold text-muted-foreground">{t("inactive")}</span>
+                  ) : null}
+                </span>
+                {a.email ? <span className="block truncate text-xs text-muted-foreground" title={a.email}>{a.email}</span> : null}
+              </span>
             </li>
           ))}
         </ul>
       )}
-      {institution.crm?.convertedAt ? (
-        <p className="mt-4 text-xs text-muted-foreground">{t("convertedAt", { date: formatDateTime(institution.crm.convertedAt) })}</p>
-      ) : null}
     </SectionCard>
   );
+}
+
+function initials(name: string | null): string {
+  const parts = (name ?? "").trim().split(/s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2)).toLocaleUpperCase("tr-TR");
 }

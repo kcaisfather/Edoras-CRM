@@ -8,6 +8,23 @@ Kural: `lib/domain/institutions/{rules,schemas,billing-profile}.ts`. DB: `crm_co
 Edoras `institutions` + CRM kaydı birleşir. CRM kaydı yoksa "kayda al" (`POST /api/institutions/{id}/enroll`: DEMO ya
 da — yalnız ADMIN — UCRETLI). İç kurumlar (Ayarlar → Veri kalitesi) analiz ve görevlerden düşer.
 
+## Kurum ayrıntısı ekranı (`/institutions/[id]`, düzen 2026-10-12)
+
+- **Başlık:** ad + durum rozeti + program + yetkili adı; CRM kaydı varsa Ara / WhatsApp / E-posta kısayolu (dar ekranda
+  yalnız ikon); birincil eylem (CRM'e kaydet / Ücretliye geçir). Altında **gösterge şeridi** (`StatTile`, `STAT_GRID` =
+  `auto-fit minmax(8.5rem)` → kutucuk sayısı değişse de satır dolar, 375 px'te 2 sütun): Öğrenci / Öğretmen / Sınıf
+  (Edoras), büyümenin Etkinlik + Son etkinlik kutucukları, Demo ya da Lisans kalan gün + dönem çubuğu (kalan gün
+  `institutionStatus` ile aynı → listeyle tutarlı). Kurum Edoras'ta yoksa Edoras kutucukları çizilmez.
+- **Sekmeler URL'de** (`?tab=overview|staff|account`, `useUrlParam` → route dosyası `<Suspense>` ile sarılı). Etkin olmayan
+  sekme bağlanmaz: öğretmen tablosu (Edoras RPC) yalnız sekme açılınca okunur. "Lisans ve ödeme" yalnız CRM kaydı varsa;
+  fatura eksik / lisans yaklaşıyor-bitti / demo bitti ise sekmede uyarı noktası. Dar ekranda kısa sekme adları.
+- **Genel bakış:** ana sütun yetkili (ya da "CRM kaydı yok") + `overviewMain` (destek talepleri) + Kurum yöneticileri;
+  yan sütun `overviewAside` (CRM adayı, memnuniyet, özellik kullanımı) + Panel modülleri. **Lisans ve ödeme:** lisanslar
+  (ücretliye geçiş tarihi burada) + ödemeler | demo + fatura bilgileri.
+- Başka modüllerin parçaları `app/institutions/[id]/_components/InstitutionScreen.tsx`'te yuvalara verilir (kurumlar
+  modülü onları import etmez). Izgaralar `grid-cols-1` (= `minmax(0,1fr)`): yoksa mobilde destek tablosunun içerik
+  genişliği sütunu büyütüp sayfayı yatay taşırıyordu.
+
 ## Demo açma — Edoras'a YAZAR (`POST /api/institutions`, her personel)
 
 Sıra (`createDemoInstitution`):
@@ -59,7 +76,7 @@ TC/VKN kontrol hanesi SQL ve TS'te birebir aynı algoritma (test 3.000 örnek).
 
 ## Panel modülleri — Edoras'a YAZAR (`GET/PATCH /api/institutions/{id}/modules`, 2026-10-08)
 
-Kurum ayrıntısı sağ sütunda "Panel modülleri" kartı (`features/institutions/components/PanelModulesCard.tsx`): Edoras
+Kurum ayrıntısı Genel bakış yan sütununda "Panel modülleri" kartı (`features/institutions/components/PanelModulesCard.tsx`): Edoras
 panelinin ücretli / ek modülleri (ilk modül: Muhasebe, `accounting`) kurum bazında aç / kapa. Sözleşme edoras-admin
 migration 300: `panel_modules` katalog (CRM yalnız okur) + `institution_panel_modules` kurum satırı (CRM upsert eder,
 `updated_by = crm:<personel adı>`). Satır yoksa katalogdaki `default_enabled` geçerli (`mergePanelModules`,

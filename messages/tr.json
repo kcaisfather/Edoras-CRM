@@ -514,6 +514,33 @@
       "inactiveNote": "Bu kurum Edoras'ta pasif (edoras-admin). CRM bu durumu değiştirmez.",
       "missingNote": "Bu kurum Edoras'ta bulunamadı (silinmiş olabilir). CRM kaydı, lisans ve ödemeler burada korunuyor.",
       "convertAdminOnly": "Ücretliye geçirme, lisans ve ödeme işlemlerini yalnız yöneticiler yapabilir.",
+      "tabs": {
+        "overview": "Genel bakış",
+        "staff": "Öğretmen kullanımı",
+        "account": "Lisans ve ödeme",
+        "overviewShort": "Genel",
+        "staffShort": "Öğretmenler",
+        "accountShort": "Lisans",
+        "attention": "Dikkat gerektiren bilgi var"
+      },
+      "quick": {
+        "call": "Ara",
+        "whatsapp": "WhatsApp",
+        "mail": "E-posta"
+      },
+      "kpi": {
+        "students": "Öğrenci",
+        "teachers": "Öğretmen",
+        "classes": "Sınıf",
+        "demo": "Demo",
+        "license": "Lisans",
+        "days": "{days} gün",
+        "left": "kaldı · bitiş {date}",
+        "ended": "Bitti",
+        "endedToday": "Bugün bitti",
+        "endedAgo": "{days} gün önce bitti",
+        "progress": "Dönem ilerlemesi: %{percent}"
+      },
       "contact": {
         "title": "Yetkili",
         "edit": "Düzenle",
@@ -569,7 +596,8 @@
           "upcoming": "Başlayacak"
         },
         "edit": "Lisansı düzelt",
-        "discount": "%{percent} indirim"
+        "discount": "%{percent} indirim",
+        "convertedAt": "Ücretliye geçiş: {date}"
       },
       "payments": {
         "title": "Ödemeler",
@@ -593,18 +621,15 @@
         "note": "Değişiklik Edoras panelinde ve mobilde bir sonraki sayfa yenilemesinde görünür. Kapatmak veri silmez: kayıtlar durur, yalnız menü, sayfalar ve mobil ekran gizlenir.",
         "adminOnly": "Modülleri yalnız yöneticiler açıp kapatabilir."
       },
-      "usage": {
-        "title": "Edoras kullanımı",
-        "students": "Öğrenci",
-        "teachers": "Öğretmen",
-        "classes": "Sınıf",
-        "admins": "Kurum yöneticileri",
-        "noAdmins": "Yönetici hesabı yok.",
-        "convertedAt": "Ücretliye geçiş: {date}"
-      },
       "unregistered": {
         "title": "CRM kaydı yok",
         "description": "Bu kurum CRM kurulmadan önce açılmış. Yetkili bilgisini ve durumunu (demo / ücretli) girmek için \"CRM'e kaydet\" düğmesini kullanın."
+      },
+      "admins": {
+        "title": "Kurum yöneticileri",
+        "count": "{count} hesap",
+        "empty": "Yönetici hesabı yok.",
+        "inactive": "Pasif"
       }
     },
     "pricing": {

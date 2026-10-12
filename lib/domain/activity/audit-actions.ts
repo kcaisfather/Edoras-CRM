@@ -8,6 +8,8 @@ export const AUDIT_ACTIONS = [
   // Satışla açılan hesap (Edoras kurumu + kurum yöneticisi; aynı işlemde ücretliye geçer).
   "PAID_ACCOUNT_CREATED",
   "INSTITUTION_ENROLLED",
+  // Açık demonun bitişi değişti (yalnız ADMIN; uzatma / kısaltma): başlangıç, önceki ve yeni bitiş yazılır.
+  "DEMO_END_UPDATED",
   "CONVERTED_TO_PAID",
   "LICENSE_RENEWED",
   // Düzeltme: önceki / yeni bedel, indirim ve başlangıç yazılır.

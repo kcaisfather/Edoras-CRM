@@ -223,7 +223,7 @@
     "error": "Aday kuruma bağlanamadı"
   },
   "demo": {
-    "description": "Kurum Edoras'ta açılır, yetkiliye kurum yöneticisi hesabı verilir ve aday bu kuruma bağlanıp \"Demo Tanımlandı\" olur. Demo 1 dönem (1 yıl) sürer."
+    "description": "Kurum Edoras'ta açılır, yetkiliye kurum yöneticisi hesabı verilir ve aday bu kuruma bağlanıp \"Demo Tanımlandı\" olur. Demo bugün başlar; süresini bu kurum için siz seçersiniz."
   },
   "offer": {
     "sectionTitle": "Takip",

@@ -4,7 +4,7 @@
  */
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
+import { addDays, isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
 import { createTestDb, helpers } from "./harness";
 
 const TCKN = "10000000146";
@@ -20,7 +20,7 @@ let db: PGlite;
 const h = () => helpers(db);
 
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::numeric, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::date, $13::numeric, null)";
 const SALE = `select public.crm_record_lead_sale($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) as r`;
 
 async function newId(): Promise<string> {
@@ -29,7 +29,7 @@ async function newId(): Promise<string> {
 
 async function enrollDemo(name: string): Promise<string> {
   const id = await newId();
-  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, todayIso(), null, null]);
+  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, todayIso(), addDays(todayIso(), 14), null, null]);
   return id;
 }
 
@@ -118,7 +118,7 @@ describe("satış: tutar + ücretli hesap + tam fatura profili", () => {
   it("zaten ücretli kurumda lisansa dokunulmaz; kurumsal (VKN) profil yazılır", async () => {
     const actor = await h().newUser("satis2@edorasapp.ai");
     const inst = await newId();
-    await db.query(ENROLL, [inst, "Ücretli Kolej", "UCRETLI", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", ADDRESS, TCKN, null, null, todayIso(), 30000]);
+    await db.query(ENROLL, [inst, "Ücretli Kolej", "UCRETLI", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", ADDRESS, TCKN, null, null, null, todayIso(), 30000]);
     const id = await lead("Ücretli Kolej", { institution_id: inst });
     const { r } = await h().one<{ r: { licenseId: string | null; converted: boolean } }>(SALE, [
       id, inst, 30000, ADDRESS, null, VKN, "COMPANY", "Kolej A.Ş.", "Kadıköy", "İstanbul", "Kadıköy", "34710", "muhasebe@kolej.test",

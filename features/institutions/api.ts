@@ -3,6 +3,7 @@ import type {
   BillingInput,
   ContactInput,
   ConvertInput,
+  DemoEditInput,
   EnrollInput,
   LicenseEditInput,
   LicenseListPriceInput,
@@ -29,6 +30,7 @@ export const institutionsApi = {
     apiRequest(`${base(id)}/billing`, { method: "PATCH", body: input }),
   recordPayment: (id: string, input: PaymentInput) =>
     apiRequest(`${base(id)}/payments`, { method: "POST", body: input }),
+  updateDemoEnd: (id: string, input: DemoEditInput) => apiRequest(`${base(id)}/demo`, { method: "PATCH", body: input }),
   updateLicense: (id: string, licenseId: string, input: LicenseEditInput) =>
     apiRequest(`${base(id)}/licenses/${encodeURIComponent(licenseId)}`, { method: "PATCH", body: input }),
   updatePayment: (id: string, paymentId: string, input: PaymentInput) =>

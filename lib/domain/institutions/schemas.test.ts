@@ -5,6 +5,9 @@ import {
   billingSchema,
   toBillingProfile,
   convertSchema,
+  demoAccountSchema,
+  demoEditSchema,
+  demoEditSchemaFor,
   enrollSchema,
   licenseEditSchema,
   licenseListPriceSchema,
@@ -15,6 +18,7 @@ import {
   toContact,
   type ConvertInput,
 } from "./schemas";
+import { addDays, todayIso } from "./rules";
 
 const ADDRESS = "Atatürk Cad. No: 12, Bakırköy / İstanbul";
 
@@ -22,13 +26,14 @@ function issues(result: { success: boolean; error?: { issues: { path: PropertyKe
   return result.success ? [] : result.error!.issues.map((i) => i.path.join("."));
 }
 
-describe("demo kuralı: ad soyad + kurum adı + telefon + e-posta", () => {
+describe("demo kuralı: ad soyad + kurum adı + telefon + e-posta + demo süresi", () => {
   const ok = {
     institutionName: "Deneme Koleji",
     program: "yks" as const,
     contactName: "Ayşe Yılmaz",
     contactPhone: "0532 123 45 67",
     contactEmail: "Ayse@Kurum.com",
+    demoEndsOn: addDays(todayIso(), 14),
   };
 
   it("tam bilgiyle geçer ve veritabanı biçimine çevrilir", () => {
@@ -47,6 +52,29 @@ describe("demo kuralı: ad soyad + kurum adı + telefon + e-posta", () => {
     ["contactEmail", "ayse@"],
   ])("%s eksik/geçersizse demo açılmaz", (field, value) => {
     expect(issues(newDemoSchema.safeParse({ ...ok, [field]: value }))).toContain(field);
+  });
+
+  it("demo süresi zorunlu (hazır süre yok); bitiş bugünden sonra olmalı", () => {
+    expect(issues(newDemoSchema.safeParse({ ...ok, demoEndsOn: "" }))).toEqual(["demoEndsOn"]);
+    expect(issues(newDemoSchema.safeParse({ ...ok, demoEndsOn: todayIso() }))).toEqual(["demoEndsOn"]);
+    expect(issues(newDemoSchema.safeParse({ ...ok, demoEndsOn: "2026-02-30" }))).toEqual(["demoEndsOn"]);
+    expect(newDemoSchema.safeParse({ ...ok, demoEndsOn: addDays(todayIso(), 1) }).success).toBe(true);
+  });
+
+  it("hesap alanları (satışla hesap açma) demo süresi istemez", () => {
+    const account = { ...ok, demoEndsOn: undefined };
+    expect(demoAccountSchema.safeParse(account).success).toBe(true);
+    expect(demoAccountSchema.parse(account)).not.toHaveProperty("demoEndsOn");
+  });
+
+  it("açık demonun bitişini değiştirme: geçerli tarih zorunlu (başlangıç sunucuda denetlenir)", () => {
+    expect(demoEditSchema.safeParse({ demoEndsOn: "2027-01-15" }).success).toBe(true);
+    expect(issues(demoEditSchema.safeParse({ demoEndsOn: "" }))).toEqual(["demoEndsOn"]);
+    expect(issues(demoEditSchema.safeParse({ demoEndsOn: "15.01.2027" }))).toEqual(["demoEndsOn"]);
+    // Form başlangıcı bilir: kısaltma serbest (geçmişe bile), başlangıçtan önce / aynı gün değil.
+    const form = demoEditSchemaFor("2026-09-01");
+    expect(form.safeParse({ demoEndsOn: "2026-09-02" }).success).toBe(true);
+    expect(issues(form.safeParse({ demoEndsOn: "2026-09-01" }))).toEqual(["demoEndsOn"]);
   });
 });
 
@@ -112,6 +140,7 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
       contactPhone: "05551112233",
       contactEmail: "mehmet@kurum.com",
       demoStartsOn: "2025-09-15",
+      demoEndsOn: "2026-09-15",
       address: "",
       idType: "TC" as const,
       idNumber: "",
@@ -122,6 +151,12 @@ describe("ücretli kuralı: adres + TC veya Vergi No", () => {
     };
     expect(enrollSchema.safeParse({ ...base, status: "DEMO" }).success).toBe(true);
     expect(issues(enrollSchema.safeParse({ ...base, status: "DEMO", demoStartsOn: "" }))).toEqual(["demoStartsOn"]);
+    // Demo süresi seçilmeli; bitiş başlangıçtan sonra olmalı (geçmişte bitmiş eski demo kaydedilebilir).
+    expect(issues(enrollSchema.safeParse({ ...base, status: "DEMO", demoEndsOn: "" }))).toEqual(["demoEndsOn"]);
+    expect(issues(enrollSchema.safeParse({ ...base, status: "DEMO", demoEndsOn: "2025-09-15" }))).toEqual(["demoEndsOn"]);
+    expect(issues(enrollSchema.safeParse({ ...base, status: "DEMO", demoEndsOn: "2025-09-16" }))).toEqual([]);
+    // Ücretli kayıtta demo bitişi aranmaz.
+    expect(issues(enrollSchema.safeParse({ ...base, status: "UCRETLI", demoEndsOn: "" }))).not.toContain("demoEndsOn");
     expect(issues(enrollSchema.safeParse({ ...base, status: "UCRETLI" })).sort()).toEqual(
       ["address", "idNumber", "licenseDiscount", "licenseStartsOn"].sort()
     );

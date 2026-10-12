@@ -42,9 +42,13 @@ kaldırabilir"; kapsam **"Hepsi — Görevlerim tamamen elle"** (10 kuralın hi�
 **Zamanlayıcı yok.** Açık kural görevleri tabloya yazılmaz; her istekte CRM verisinden türetilir. `crm_tasks`'ta yalnız
 elle atanan görevler ve tamamlanmış kural görevleri durur (anahtar `tür:özne:vade`).
 
-- Kural seti (demo ve lisans 1 yıl): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine 60 gün kala,
+- Kural seti (lisans 1 yıl; demo süresi kurum bazlı — 2026-10-12): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine 60 gün kala,
   Süresi doldu +0, Açık bakiye +7, Satış olmadı +90, **Tarihsiz Aranacak/Takipte +0** (`undatedFollowUp`, DeepSport
   2026-09-27), Soğuk liste (aranmamış bugün, ulaşılamayan +2), Anket araması (yanıtsız davet, gönderimden +5).
+- **Kurum bazlı demo süresiyle bilinen iki durum (2026-10-12, tasarım değişmedi):** (1) "Demo bitiyor" varsayılanı 30 gün
+  kala; 30 günden kısa demoda (ör. 14 gün) görev demo açılır açılmaz vadesi gelmiş görünür. (2) Görev anahtarı
+  `tür:özne:vade` olduğundan ADMIN demo bitişini değiştirince vade ve anahtar da değişir: eski bitişe göre tamamlanmış
+  "Demo bitiyor" / "Süresi doldu" görevi yeni vadeye taşınmaz, görev yeniden açık görünür.
 - Tamamlama tek transaction (`crm_complete_task`): görev + sonuç notu + aday statüsü / sonraki arama. Sunucu görevi
   yeniden türetir; bugün açık değilse 404. Geri al: tamamlayan ya da ADMIN.
 - Görünürlük: kural görevleri ve atanmamışlar ekip havuzu; atanmış görev atanan + ADMIN. ADMIN herkese, CRM_AGENT

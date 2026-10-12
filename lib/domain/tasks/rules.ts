@@ -3,7 +3,8 @@
  * Kurallar crm_rules tablosunda (supabase/migrations/20260929170000_crm_tasks.sql); varsayılanlar orada
  * da yazılıdır ve bu dosyayla AYNI tutulur. Saf veri + doğrulama.
  *
- * Edoras'ta demo da lisans da 1 yıldır; 1 haftalık demo, paket ve kontenjan yoktur. DeepSport'tan eşleme:
+ * Edoras'ta lisans 1 yıldır, demonun süresi kurum bazlıdır (açarken seçilir; 2026-10-12); paket ve kontenjan yoktur.
+ * DeepSport'tan eşleme:
  *   demoShort + demoLong → demoEnding (demo bitişine N gün kala)
  *   expiredActive        → expired (demo ya da lisans bitti, dönüşmedi / yenilenmedi; kullanım sinyali yok)
  *   quotaHigh            → kaldırıldı (kontenjan yok)
@@ -78,7 +79,7 @@ export const isInstitutionRule = (kind: string): boolean => (INSTITUTION_RULES a
 export const DEFAULT_RULES: RuleConfig[] = [
   { id: "scheduled", enabled: true, days: 0 },
   { id: "offer", enabled: true, days: 3 },
-  // Demo 1 yıl: bitişine 30 gün kala ara.
+  // Demo bitişine 30 gün kala ara (süre kurum bazlı: 30 günden kısa demoda görev açılışta vadesi gelmiş olur).
   { id: "demoEnding", enabled: true, days: 30 },
   // Yıllık lisans bitişine 60 gün kala ara.
   { id: "annualRenewal", enabled: true, days: 60 },

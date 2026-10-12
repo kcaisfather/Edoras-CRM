@@ -9,7 +9,7 @@ import { createTestDb, helpers } from "./harness";
 const TCKN = "10000000146";
 const ADDRESS = "Atatürk Cad. No: 12, Bakırköy / İstanbul";
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, 'UCRETLI', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', $3, $4, null, null, $5::date, $6::numeric, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, 'UCRETLI', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', $3, $4, null, null, null, $5::date, $6::numeric, null)";
 
 let db: PGlite;
 const one = <T,>(sql: string, params: unknown[] = []) => helpers(db).one<T>(sql, params);

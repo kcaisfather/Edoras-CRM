@@ -6,13 +6,13 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { usePermissions } from "@/features/auth";
-import { demoEndDate, isIsoDate, todayIso } from "@/lib/domain/institutions/rules";
+import { todayIso } from "@/lib/domain/institutions/rules";
 import { licensePriceFormValues } from "@/lib/domain/institutions/pricing";
 import { enrollSchema, type EnrollInput } from "@/lib/domain/institutions/schemas";
 import type { InstitutionDetail } from "@/lib/domain/institutions/types";
 import { useEnrollInstitution } from "../mutations";
-import { formatDate } from "../format";
 import { BillingFields, ChoiceField, ContactFields, LicenseFields, TextField, applyServerFieldErrors } from "./fields";
+import { DemoEndField } from "./DemoEndField";
 import { FormDialog } from "./FormDialog";
 
 const initial = (): EnrollInput => ({
@@ -21,6 +21,8 @@ const initial = (): EnrollInput => ({
   contactPhone: "",
   contactEmail: "",
   demoStartsOn: todayIso(),
+  // Hazır süre yok: demonun bitişi seçilir (kurucu kararı 2026-10-12).
+  demoEndsOn: "",
   address: "",
   idType: "TC",
   idNumber: "",
@@ -29,7 +31,8 @@ const initial = (): EnrollInput => ({
 });
 
 /**
- * CRM öncesinden kalan kurumu kayda alır. Demo: yetkili bilgisi + demonun gerçek başlangıcı (bitiş +1 yıl).
+ * CRM öncesinden kalan kurumu kayda alır. Demo: yetkili bilgisi + demonun gerçek başlangıcı + bitişi (süre kurum bazlı;
+ * hızlı seçimler başlangıçtan sayılır, özel tarih de girilebilir).
  * Ücretli (yalnız ADMIN): fatura bilgisi + süren lisansın başlangıcı da zorunlu. Kurumun Edoras hesabına dokunmaz.
  */
 export function EnrollDialog({
@@ -87,12 +90,10 @@ export function EnrollDialog({
       />
       <ContactFields />
       {status === "DEMO" ? (
-        <TextField
-          name="demoStartsOn"
-          label={t("demoStartsOn")}
-          type="date"
-          description={isIsoDate(demoStart) ? t("demoEndsPreview", { date: formatDate(demoEndDate(demoStart)) }) : undefined}
-        />
+        <>
+          <TextField name="demoStartsOn" label={t("demoStartsOn")} type="date" className="sm:max-w-56" />
+          <DemoEndField startsOn={demoStart} />
+        </>
       ) : null}
       {status === "UCRETLI" ? (
         <>

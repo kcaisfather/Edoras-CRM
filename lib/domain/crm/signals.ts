@@ -3,7 +3,7 @@
  * özet ve aşama toplamları, kurum ↔ aday eşlemesi. Saf fonksiyonlar.
  *
  * DeepSport'ta demo, paket, son giriş / son test antrenör hesabından (school, lastTestTime…) okunuyordu.
- * Edoras'ta adayın demosu bağlı kurumun CRM kaydıdır (1 yıl; `institution.crm.demoEndsAt`); kullanıcı
+ * Edoras'ta adayın demosu bağlı kurumun CRM kaydıdır (süre kurum bazlı; `institution.crm.demoEndsAt`); kullanıcı
  * bazlı giriş/test verisi CRM'e gelmediği için ilgi (sıcaklık), hazır hareketsizlik süzgeçleri ve
  * kullanım rozetleri taşınmadı.
  */

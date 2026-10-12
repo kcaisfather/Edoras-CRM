@@ -12,7 +12,7 @@ let staffId: string;
 let token: string;
 
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, 'DEMO', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', null, null, null, current_date, null, null, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, 'DEMO', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', null, null, null, current_date, current_date + 14, null, null, null)";
 const newToken = () => `${crypto.randomUUID().replaceAll("-", "")}${crypto.randomUUID().replaceAll("-", "")}`.slice(0, 48);
 const portal = (t: string, over: Partial<Record<"subject" | "description" | "name" | "email" | "phone", string | null>> = {}) => {
   const v = { subject: "Yoklama açılmıyor", description: "Detay", name: "Ali Veli", email: "ali@kurum.test", phone: null, ...over };

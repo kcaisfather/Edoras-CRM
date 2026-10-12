@@ -3,6 +3,7 @@ import "server-only";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
 import { licenseEndDate, todayIso } from "@/lib/domain/institutions/rules";
+import { saleDemoEndDate } from "@/lib/domain/institutions/demo-duration";
 import { toBillingProfile, type NewDemoInput, type PaymentInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials, PaymentMethod } from "@/lib/domain/institutions/types";
 import { sumByInstitution, type CollectionRecord } from "@/lib/domain/crm/collections";
@@ -613,7 +614,7 @@ export async function recordLeadSale(id: string, input: LeadSaleInput, staff: St
     mode = "NEW";
     requireAccount(mode);
     const created = await createDemoInstitution(toSaleAccount(input), staff, {
-      auditAction: "PAID_ACCOUNT_CREATED",
+      sale: true,
       afterEnroll: async (institutionId) => {
         result = await record(institutionId);
       },
@@ -627,12 +628,16 @@ export async function recordLeadSale(id: string, input: LeadSaleInput, staff: St
     if (!crm) {
       mode = "ENROLL";
       requireAccount(mode);
+      // RPC kurumun CRM kaydını şart koşar: önce DEMO kaydı, hemen ardından ücretliye geçiş. Demo süresi seçilmez; bitiş
+      // kısıta uyan teknik değer (saleDemoEndDate: başlangıç + 1 gün), kayıt ücretliye geçtiği için yalnız geçmiş kalır.
+      const today = todayIso();
       await enrollInstitution(
         institutionId,
         {
           status: "DEMO",
           ...toSaleContact(input),
-          demoStartsOn: todayIso(),
+          demoStartsOn: today,
+          demoEndsOn: saleDemoEndDate(today),
           address: "",
           idType: "TC",
           idNumber: "",

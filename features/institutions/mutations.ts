@@ -5,6 +5,7 @@ import type {
   BillingInput,
   ContactInput,
   ConvertInput,
+  DemoEditInput,
   EnrollInput,
   LicenseEditInput,
   LicenseListPriceInput,
@@ -122,6 +123,23 @@ export function useDeletePayment(id: string) {
   return useMutation({
     mutationFn: (paymentId: string) => institutionsApi.deletePayment(id, paymentId),
     onSuccess: () => invalidate(id),
+  });
+}
+
+/**
+ * Açık demonun bitişi (ADMIN). Demo bitişi CRM adayının demo sinyalini, "Demo bitiyor" / "Süresi doldu" görevlerini
+ * (["crm", "tasks"]) ve bildirimleri de değiştirir; kök anahtarlar elle (features/crm bu modülü içe aktarır).
+ */
+export function useUpdateDemoEnd(id: string) {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (input: DemoEditInput) => institutionsApi.updateDemoEnd(id, input),
+    onSuccess: () => {
+      invalidate(id);
+      void queryClient.invalidateQueries({ queryKey: ["crm"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 

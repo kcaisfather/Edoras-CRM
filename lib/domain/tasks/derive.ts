@@ -174,7 +174,8 @@ function deriveInstitutionTasks(
     // Aralık [başlangıç, bitiş): bitiş günü demo / lisans bitmiştir (left ≤ 0).
     const left = daysBetween(today, end);
 
-    // 6) Demo bitişine N gün kala (demo 1 yıl); bitişten sonra kısa bir süre daha açık kalır.
+    // 6) Demo bitişine N gün kala (süre kurum bazlı); bitişten sonra kısa bir süre daha açık kalır. Bitiş değişirse
+    //    (ADMIN uzattı / kısalttı) vade ve görev anahtarı da değişir: eski tamamlama yeni vadeye taşınmaz.
     if (inst.status === "DEMO" && r.demoEnding.enabled && left >= -DEMO_GRACE_DAYS) {
       at("demoEnding", addDays(end, -r.demoEnding.days), end);
     }

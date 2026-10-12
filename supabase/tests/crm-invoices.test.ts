@@ -4,7 +4,7 @@
  */
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
+import { addDays, isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
 import { createTestDb, helpers } from "./harness";
 
 const TCKN = "10000000146";
@@ -21,7 +21,7 @@ const one = <T,>(sql: string, params: unknown[] = []) => helpers(db).one<T>(sql,
 const failure = (sql: string, params: unknown[] = []) => helpers(db).failure(sql, params);
 
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::numeric, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::date, $13::numeric, null)";
 
 async function newId(): Promise<string> {
   return (await one<{ id: string }>("select gen_random_uuid() as id")).id;
@@ -29,7 +29,7 @@ async function newId(): Promise<string> {
 
 async function enrollDemo(name: string): Promise<string> {
   const id = await newId();
-  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, todayIso(), null, null]);
+  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, todayIso(), addDays(todayIso(), 14), null, null]);
   return id;
 }
 
@@ -38,7 +38,7 @@ async function enrollPaid(name: string, taxNo: string | null = null): Promise<{ 
   const institutionId = await newId();
   await db.query(ENROLL, [
     institutionId, name, "UCRETLI", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test",
-    ADDRESS, taxNo ? null : TCKN, taxNo, null, "2026-10-01", 45000,
+    ADDRESS, taxNo ? null : TCKN, taxNo, null, null, "2026-10-01", 45000,
   ]);
   const lic = await one<{ id: string }>("select id from crm_licenses where institution_id = $1", [institutionId]);
   return { institutionId, licenseId: lic.id };

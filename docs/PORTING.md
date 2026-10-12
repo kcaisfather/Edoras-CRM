@@ -28,7 +28,7 @@ EdorasCRM'de:
 | Sporcu (athlete) | Öğrenci — kişisel veri CRM'e **gelmez**, yalnız sayılar |
 | Takım | Sınıf (yalnız sayı) |
 | Paket / ürün (`product`, plan, DeepPro) | **1 yıllık lisans** (`crm_licenses`, 1 dönem = 1 yıl) |
-| Demo sporcu / demo kotası | **Demo kurum** (1 yıl; `crm_institutions.status = 'DEMO'`) |
+| Demo sporcu / demo kotası | **Demo kurum** (süre kurum bazlı, açarken seçilir — 2026-10-12; `crm_institutions.status = 'DEMO'`) |
 | Ödeme kaydı (`product-logs`) | `crm_payments` |
 | Kanal (clinic / atletik / trainer) | Yok (kaldırın) |
 | Test sayısı, son test | Edoras kullanımı (öğrenci/öğretmen/sınıf sayısı; ileride deneme/ödev) |

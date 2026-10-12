@@ -19,7 +19,7 @@ let db: PGlite;
 const failure = (sql: string, params: unknown[] = []) => helpers(db).failure(sql, params);
 
 const ENROLL =
-  "select public.crm_enroll_institution(gen_random_uuid(), $1, 'UCRETLI', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', $2, $3, $4, null, $5::date, 45000::numeric, null)";
+  "select public.crm_enroll_institution(gen_random_uuid(), $1, 'UCRETLI', 'Ayşe Yılmaz', '+905321234567', 'ayse@kurum.test', $2, $3, $4, null, null, $5::date, 45000::numeric, null)";
 
 const enroll = (name: string, tc: string | null, tax: string | null) =>
   failure(ENROLL, [name, ADDRESS, tc, tax, todayIso()]);

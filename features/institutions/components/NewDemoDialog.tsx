@@ -13,22 +13,26 @@ import { Form } from "@/components/ui/form";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { apiErrorCode } from "@/lib/api/errors";
 import { normalizeTrPhone } from "@/lib/utils/phone";
-import { demoEndDate, todayIso } from "@/lib/domain/institutions/rules";
+import { todayIso } from "@/lib/domain/institutions/rules";
+import { demoLengthDays, isValidDemoEnd } from "@/lib/domain/institutions/demo-duration";
 import { newDemoSchema, type NewDemoInput } from "@/lib/domain/institutions/schemas";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
 import { useCreateDemo } from "../mutations";
 import { formatDate, formatPhone, PROGRAM_LABEL } from "../format";
 import { ChoiceField, ContactFields, TextField, applyServerFieldErrors } from "./fields";
 import { CredentialsPanel } from "./CredentialsPanel";
+import { DemoEndField } from "./DemoEndField";
 
-const EMPTY: NewDemoInput = { institutionName: "", program: "yks", contactName: "", contactPhone: "", contactEmail: "" };
+/** Demo süresi boş başlar: hazır süre yok, her demoda seçilir (kurucu kararı 2026-10-12). */
+const EMPTY: NewDemoInput = { institutionName: "", program: "yks", contactName: "", contactPhone: "", contactEmail: "", demoEndsOn: "" };
 
 type Step = "form" | "review" | "done";
 
 /**
  * Yeni demo kurum: form → özet onayı → giriş bilgisi. Onayla birlikte canlı Edoras'ta kurum ve kurum
  * yöneticisi hesabı açılır; bu yüzden ayrı bir onay adımı var. Kural: yetkili ad soyad, kurum adı,
- * telefon ve e-posta olmadan demo açılmaz (form + sunucu + veritabanı).
+ * telefon ve e-posta olmadan demo açılmaz (form + sunucu + veritabanı). Demo süresi kurum bazlı: bugünden başlar,
+ * bitişi formda seçilir (hızlı seçim ya da özel tarih; varsayılan yok).
  *
  * CRM adayından açılırken (`features/crm`): `initial` formu adayın bilgileriyle doldurur, `submitRequest` isteği
  * adayın demo ucuna yollar (aday aynı işlemde yeni kuruma bağlanır), `onCreated` başarıdan sonra çağrılır.
@@ -50,6 +54,7 @@ export function NewDemoDialog({
   description?: string;
 }) {
   const t = useTranslations("institutions.newDemo");
+  const tDuration = useTranslations("institutions.demoDuration");
   const tCommon = useTranslations("common");
   const errorMessage = useApiErrorMessage();
   const create = useCreateDemo(submitRequest);
@@ -97,7 +102,7 @@ export function NewDemoDialog({
   };
 
   const values = { ...EMPTY, ...useWatch({ control: form.control }) };
-  const demoEnd = formatDate(demoEndDate(todayIso()));
+  const today = todayIso();
 
   return (
     <Dialog open={open} onOpenChange={close}>
@@ -125,6 +130,7 @@ export function NewDemoDialog({
                 ]}
               />
               <ContactFields />
+              <DemoEndField startsOn={today} />
               <p className="text-xs text-muted-foreground">{t("rulesHint")}</p>
             </form>
           </Form>
@@ -143,8 +149,16 @@ export function NewDemoDialog({
               <dd>{formatPhone(normalizeTrPhone(values.contactPhone))}</dd>
               <dt className="text-muted-foreground">{t("login")}</dt>
               <dd className="font-medium">{values.contactEmail.trim().toLowerCase()}</dd>
-              <dt className="text-muted-foreground">{t("demoEnds")}</dt>
-              <dd>{demoEnd}</dd>
+              <dt className="text-muted-foreground">{tDuration("label")}</dt>
+              <dd>
+                {isValidDemoEnd(today, values.demoEndsOn)
+                  ? tDuration("review", {
+                      start: formatDate(today),
+                      end: formatDate(values.demoEndsOn),
+                      days: demoLengthDays(today, values.demoEndsOn),
+                    })
+                  : "—"}
+              </dd>
             </dl>
             <ul className="space-y-1 text-xs text-muted-foreground">
               <li>• {t("willCreateInstitution")}</li>

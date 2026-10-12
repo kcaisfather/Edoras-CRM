@@ -196,7 +196,7 @@
     "when": {
       "scheduled": "Kayda sonraki arama tarihi girildiğinde o gün",
       "offer": "Teklif verildikten {days} gün sonra ara",
-      "demoEnding": "Demo (1 yıl) bitişine {days} gün kala ara",
+      "demoEnding": "Demo bitişine {days} gün kala ara",
       "annualRenewal": "Yıllık lisans bitişine {days} gün kala ara",
       "expired": "Demo ya da lisans bittikten {days} gün sonra ara (ücretliye geçmediyse ya da yenilenmediyse; son 90 gün)",
       "balance": "Açık bakiye varsa kaydın son güncellemesinden ya da son tahsilattan {days} gün sonra tahsilat araması",

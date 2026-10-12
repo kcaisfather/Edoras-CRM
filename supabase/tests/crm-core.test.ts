@@ -4,7 +4,7 @@
  */
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { addYears, isValidTckn, isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
+import { addDays, addYears, isValidTckn, isValidVkn, todayIso } from "@/lib/domain/institutions/rules";
 import { createTestDb, helpers } from "./harness";
 
 const VALID_TCKN = "10000000146";
@@ -21,16 +21,19 @@ const one = <T,>(sql: string, params: unknown[] = []) => helpers(db).one<T>(sql,
 const failure = (sql: string, params: unknown[] = []) => helpers(db).failure(sql, params);
 
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::numeric, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::date, $13::numeric, null)";
 
 async function newId(): Promise<string> {
   return (await one<{ id: string }>("select gen_random_uuid() as id")).id;
 }
 
-/** Demo kaydı (Edoras'ta açılmış kurumun CRM tarafı): başlangıçtan 1 yıl. */
-async function enrollDemo(name: string, start = todayIso()): Promise<string> {
+/**
+ * Demo kaydı (Edoras'ta açılmış kurumun CRM tarafı). Süre kurum bazlıdır (20261012120000); buradaki testler için
+ * bitiş yalnız geçerli bir değer — süre kuralları crm-demo-duration.test.ts'te.
+ */
+async function enrollDemo(name: string, start = todayIso(), end = addDays(start, 14)): Promise<string> {
   const id = await newId();
-  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, start, null, null]);
+  await db.query(ENROLL, [id, name, "DEMO", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test", null, null, null, start, end, null, null]);
   return id;
 }
 
@@ -109,8 +112,8 @@ describe("TC / Vergi No doğrulayıcıları SQL ve TypeScript'te aynı", () => {
   });
 });
 
-describe("demo: 1 dönem = 1 yıl", () => {
-  it("demo kaydı başlangıçtan 1 yıl sürer ve kurum adını saklar", async () => {
+describe("demo kaydı (süre kurum bazlı — ayrıntı crm-demo-duration.test.ts)", () => {
+  it("demo kaydı seçilen bitişi ve kurum adını saklar", async () => {
     const id = await enrollDemo("Deneme Koleji");
     const crm = await one<{ status: string; demo_started_at: string; demo_ends_at: string; institution_name: string }>(
       "select status, demo_started_at::text, demo_ends_at::text, institution_name from crm_institutions where institution_id = $1",
@@ -119,26 +122,18 @@ describe("demo: 1 dönem = 1 yıl", () => {
     expect(crm).toEqual({
       status: "DEMO",
       demo_started_at: todayIso(),
-      demo_ends_at: addYears(todayIso(), 1),
+      demo_ends_at: addDays(todayIso(), 14),
       institution_name: "Deneme Koleji",
     });
   });
 
-  it("bitiş tarihi başka değere çekilemez; uzatma fonksiyonu yok", async () => {
-    const id = await enrollDemo("Kural Dershanesi");
-    expect(
-      await failure("update crm_institutions set demo_ends_at = demo_ends_at + 30 where institution_id = $1", [id])
-    ).toBe("crm_institutions_demo_dates_check");
-    expect(await failure("select public.crm_extend_demo($1, 7)", [id])).toMatch(/does not exist/);
-  });
-
   it("CRM öncesi demo gerçek başlangıcıyla kaydedilir; başlangıç zorunlu", async () => {
-    const id = await enrollDemo("Eski Pilot Okulu", "2025-09-15");
+    const id = await enrollDemo("Eski Pilot Okulu", "2025-09-15", "2026-09-15");
     const crm = await one<{ demo_ends_at: string }>("select demo_ends_at::text from crm_institutions where institution_id = $1", [id]);
     expect(crm.demo_ends_at).toBe("2026-09-15");
 
     expect(
-      await failure(ENROLL, [await newId(), "Başlangıçsız Kurs", "DEMO", "Ali Veli", "+905321234567", "ali@kurs.test", null, null, null, null, null, null])
+      await failure(ENROLL, [await newId(), "Başlangıçsız Kurs", "DEMO", "Ali Veli", "+905321234567", "ali@kurs.test", null, null, null, null, "2026-12-01", null, null])
     ).toMatch(/CRM_DEMO_START_REQUIRED/);
   });
 
@@ -158,7 +153,7 @@ describe("demo: 1 dönem = 1 yıl", () => {
 
   it("kurum adı olmadan kayıt açılmaz; aynı kurum iki kez kaydedilmez", async () => {
     const id = await newId();
-    const args = (name: string) => [id, name, "DEMO", "Ali Veli", "+905321234567", "ali@kurs.test", null, null, null, todayIso(), null, null];
+    const args = (name: string) => [id, name, "DEMO", "Ali Veli", "+905321234567", "ali@kurs.test", null, null, null, todayIso(), addDays(todayIso(), 30), null, null];
     expect(await failure(ENROLL, args(" "))).toBe("crm_institutions_institution_name_check");
     await db.query(ENROLL, args("Adlı Kurs"));
     expect(await failure(ENROLL, args("Adlı Kurs"))).toMatch(/CRM_ALREADY_ENROLLED/);
@@ -280,6 +275,7 @@ describe("CRM öncesi kurumu ücretli olarak kayda alma", () => {
       "zeynep@eski.test",
       address,
       tc,
+      null,
       null,
       null,
       "2026-01-15",

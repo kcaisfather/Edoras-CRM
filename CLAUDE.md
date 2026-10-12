@@ -52,7 +52,10 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
 ## Kararlar (kurucu, 2026-09-29)
 
 - 1 dönem = 1 yıl (`TERM_YEARS`, aralık `[başlangıç, bitiş)`). Ücretli lisans 1 dönem; yenileme süren lisansın bitişinden başlar.
-- Demo da 1 dönem (1 yıl) — uzatma yok. Süre dolunca kurum pasife DÜŞMEZ, yalnız "Demo bitti" görünür.
+- **Demo süresi kurum bazlı (2026-10-12; eski "demo da 1 yıl, uzatma yok" kalktı):** her demo açılışında seçilir (14 gün /
+  1 ay / 3 ay / 1 yıl ya da özel bitiş; hazır / varsayılan süre YOK, alan zorunlu), açık demonun bitişini sonradan yalnız
+  yönetici (ADMIN) uzatır ya da kısaltır (işlem kaydı `DEMO_END_UPDATED`). DB: bitiş > başlangıç
+  (`20261012120000_crm_demo_duration`). Süre dolunca kurum pasife DÜŞMEZ, yalnız "Demo bitti" görünür.
 - Demo için zorunlu: yetkili ad soyad, kurum adı, telefon, e-posta.
 - Ücretli hesap ve ödeme için zorunlu: adres + (TC Kimlik No veya Vergi No).
 - CRM ayrı Supabase projesinde; Edoras'a da bağlanır ("ikisine de bağlan").

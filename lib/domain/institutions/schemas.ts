@@ -14,7 +14,9 @@ import {
   isIsoDate,
   isValidTckn,
   isValidTaxNumber,
+  todayIso,
 } from "./rules";
+import { isValidDemoEnd } from "./demo-duration";
 import { effectiveBillingType } from "./billing-profile";
 import { parsePercent, type LicensePriceFields } from "./pricing";
 import { PAYMENT_METHODS, type Billing, type BillingProfile, type BillingType, type PaymentMethod } from "./types";
@@ -39,6 +41,9 @@ const MSG = {
   postalCode: "Posta kodu 5 haneli olmalı",
   billingEmail: "Faturanın gideceği geçerli bir e-posta girin",
   date: "Geçerli bir tarih seçin",
+  demoEndRequired: "Demo süresini seçin ya da bitiş tarihi girin",
+  demoEndAfterStart: "Demo bitişi, başlangıçtan sonra olmalı",
+  demoEndAfterToday: "Demo bitişi bugünden sonra olmalı",
   priceInvalid: "Geçerli bir tutar girin (ör. 45.000)",
   discountInvalid: "0 ile 100 arasında bir indirim yüzdesi girin (ör. 10 ya da 12,5)",
   listPriceInvalid: "Sıfırdan büyük bir liste fiyatı girin",
@@ -136,15 +141,50 @@ function checkPayment(v: { payAmount: string; payMethod: string; paidOn: string 
   if (!isIsoDate(v.paidOn)) ctx.addIssue({ code: "custom", path: ["paidOn"], message: MSG.date });
 }
 
+/**
+ * Demo bitişi (süre kurum bazlı, hazır süre yok — ./demo-duration.ts): boşsa "süre seçin", başlangıçtan sonra değilse
+ * hata. SQL: CRM_DEMO_END_REQUIRED + crm_institutions_demo_dates_check.
+ */
+function checkDemoEnd(startsOn: string, endsOn: string, ctx: Ctx, afterMessage: string = MSG.demoEndAfterStart) {
+  if (endsOn.trim() === "") ctx.addIssue({ code: "custom", path: ["demoEndsOn"], message: MSG.demoEndRequired });
+  else if (!isIsoDate(endsOn)) ctx.addIssue({ code: "custom", path: ["demoEndsOn"], message: MSG.date });
+  else if (isIsoDate(startsOn) && !isValidDemoEnd(startsOn, endsOn)) ctx.addIssue({ code: "custom", path: ["demoEndsOn"], message: afterMessage });
+}
+
 // --- Şemalar ----------------------------------------------------------------------------------
 
-/** Yeni demo kurum: kurum adı + yetkili ad soyad + telefon + e-posta (kural). */
-export const newDemoSchema = z.object({
+const demoAccountShape = {
   institutionName: z.string().trim().min(2, MSG.institutionName).max(120),
   program: z.enum(["yks", "lgs"]),
   ...contactShape,
-});
+};
+
+/**
+ * Demo hesabının alanları: kurum adı + yetkili ad soyad + telefon + e-posta (kural). Satışla hesap açma da bunu kullanır
+ * (lib/domain/crm/sale.ts) — orada demo süresi seçilmez, hesap aynı işlemde ücretliye geçer.
+ */
+export const demoAccountSchema = z.object(demoAccountShape);
+export type DemoAccountInput = z.input<typeof demoAccountSchema>;
+
+/**
+ * Yeni demo kurum: hesap alanları + demonun bitişi (zorunlu; başlangıç = bugün, Türkiye günü). Süre her demoda seçilir:
+ * hızlı seçim (14 gün / 1 ay / 3 ay / 1 yıl) ya da özel tarih; varsayılan yok.
+ */
+export const newDemoSchema = z
+  .object({ ...demoAccountShape, demoEndsOn: z.string() })
+  .superRefine((v, ctx) => checkDemoEnd(todayIso(), v.demoEndsOn, ctx, MSG.demoEndAfterToday));
 export type NewDemoInput = z.input<typeof newDemoSchema>;
+
+/**
+ * Açık demonun bitişini değiştirme (yalnız ADMIN; uzatma ya da kısaltma — bugünden önceye de). Bitiş > başlangıç:
+ * başlangıcı bilen form `demoEditSchemaFor(başlangıç)` kullanır; uç (`demoEditSchema`) yalnız tarihi denetler, başlangıcı
+ * sunucu kayıttan okur (updateDemoEnd).
+ */
+export function demoEditSchemaFor(startsOn: string) {
+  return z.object({ demoEndsOn: z.string() }).superRefine((v, ctx) => checkDemoEnd(startsOn, v.demoEndsOn, ctx));
+}
+export const demoEditSchema = demoEditSchemaFor("");
+export type DemoEditInput = z.input<typeof demoEditSchema>;
 
 export const contactSchema = z.object(contactShape);
 export type ContactInput = z.input<typeof contactSchema>;
@@ -177,7 +217,7 @@ export const convertSchema = z
 export type ConvertInput = z.input<typeof convertSchema>;
 
 /**
- * CRM öncesinden kalan kurumu kayda alma: DEMO (demonun gerçek başlangıcı; bitiş +1 yıl) ya da
+ * CRM öncesinden kalan kurumu kayda alma: DEMO (demonun gerçek başlangıcı + seçilen bitiş; hazır süre yok) ya da
  * UCRETLI (fatura + süren lisansın başlangıcı ve bedeli).
  */
 export const enrollSchema = z
@@ -185,12 +225,14 @@ export const enrollSchema = z
     status: z.enum(["DEMO", "UCRETLI"]),
     ...contactShape,
     demoStartsOn: z.string(),
+    demoEndsOn: z.string(),
     ...billingShape,
     ...licenseShape,
   })
   .superRefine((v, ctx) => {
-    if (v.status === "DEMO" && !isIsoDate(v.demoStartsOn)) {
-      ctx.addIssue({ code: "custom", path: ["demoStartsOn"], message: MSG.date });
+    if (v.status === "DEMO") {
+      if (!isIsoDate(v.demoStartsOn)) ctx.addIssue({ code: "custom", path: ["demoStartsOn"], message: MSG.date });
+      checkDemoEnd(v.demoStartsOn, v.demoEndsOn, ctx);
     }
     if (v.status === "UCRETLI") {
       checkBilling(v, ctx);

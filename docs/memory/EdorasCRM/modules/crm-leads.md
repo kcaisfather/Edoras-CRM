@@ -26,7 +26,8 @@ DB: `crm_leads`, `crm_notes` (migration `crm_leads`).
 - **Teklif / satış kuralları (kurucu, 2026-10-05):** teklif verildiyse teklif tutarı, satışta satış tutarı + firma / fatura
   bilgileri zorunlu; satış kaydedilince hesap aynı adımda açılır. Satış yalnız `POST /api/crm/leads/{id}/sale`
   (`recordLeadSale`, her personel): aday bağlı değilse Edoras'ta yeni kurum + kurum yöneticisi (demo zinciri, işlem kaydı
-  `PAID_ACCOUNT_CREATED`, geçici şifre bir kez), kayıtsız kurum → DEMO kayıt + ücretliye geçiş, DEMO → ücretliye geçiş
+  `PAID_ACCOUNT_CREATED`, geçici şifre bir kez), kayıtsız kurum → DEMO kayıt + ücretliye geçiş (bu iki yolda demo süresi
+  seçilmez: teknik bitiş başlangıç + 1 gün, `saleDemoEndDate` — kayıt aynı zincirde ücretliye geçer), DEMO → ücretliye geçiş
   (lisans = satış tutarı, bugünden 1 yıl), ücretli → yalnız fatura profili (lisansa dokunulmaz). PATCH / yeni aday ile
   "Satış oldu"ya geçilemez (409 `SALE_ACCOUNT_REQUIRED`). Temsilci yalnız teklife geçerken teklif tutarını yazar (EK-3
   istisnası). Görev tamamlamada Teklif / Satış seçilemez. Tabloda satış yoksa teklif tutarı ("teklif" etiketiyle).

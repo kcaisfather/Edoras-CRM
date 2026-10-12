@@ -12,6 +12,7 @@ import {
   licenseEndDate,
   todayIso,
 } from "@/lib/domain/institutions/rules";
+import { demoLengthDays, isValidDemoEnd, saleDemoEndDate } from "@/lib/domain/institutions/demo-duration";
 import {
   toBilling,
   toBillingProfile,
@@ -20,6 +21,8 @@ import {
   type BillingInput,
   type ContactInput,
   type ConvertInput,
+  type DemoAccountInput,
+  type DemoEditInput,
   type EnrollInput,
   type LicenseEditInput,
   type NewDemoInput,
@@ -284,6 +287,8 @@ function enrollParams(
     p_tc_no: billing.tcNo,
     p_tax_no: billing.taxNo,
     p_demo_starts_on: paid ? null : (input.demoStartsOn ?? null),
+    // Süre kurum bazlı: bitişi çağıran verir; yoksa veritabanı reddeder (CRM_DEMO_END_REQUIRED — hazır süre yok).
+    p_demo_ends_on: paid ? null : (input.demoEndsOn ?? null),
     p_license_starts_on: paid ? ((input as EnrollInput).licenseStartsOn ?? null) : null,
     p_license_price: paid ? (pricing?.price ?? null) : null,
     p_created_by: staff.userId,
@@ -292,29 +297,36 @@ function enrollParams(
 
 /**
  * Demo kurum açar. Sıra: (Edoras) kurum → aktif yıl/dönem → kurum yöneticisi → üyelik, sonra (CRM)
- * DEMO kaydı (bugünden 1 yıl). İki veritabanı arasında transaction olmadığından her adım geri alma
- * işini kaydeder; CRM kaydı dahil herhangi bir adım patlarsa Edoras'ta açılanların hepsi silinir.
- * Geçici şifre yalnız bu yanıtta döner, hiçbir yerde saklanmaz.
+ * DEMO kaydı (bugünden seçilen bitişe; süre kurum bazlı, hazır süre yok — demo-duration.ts). İki veritabanı arasında
+ * transaction olmadığından her adım geri alma işini kaydeder; CRM kaydı dahil herhangi bir adım patlarsa Edoras'ta
+ * açılanların hepsi silinir. Geçici şifre yalnız bu yanıtta döner, hiçbir yerde saklanmaz.
  *
  * `afterEnroll`: CRM kaydından sonra aynı geri alma zincirinde çalışan ek adım (ör. adayı yeni kuruma
  * bağlamak — lib/server/crm-leads.ts). Patlarsa CRM kaydı ve Edoras'ta açılanlar da geri alınır.
  */
 export async function createDemoInstitution(
-  input: NewDemoInput,
+  input: NewDemoInput | DemoAccountInput,
   staff: StaffContext,
   options: {
     afterEnroll?: (institutionId: string) => Promise<void>;
-    /** İşlem kaydı eylemi: satışla açılan hesapta PAID_ACCOUNT_CREATED (crm_record_lead_sale ücretliye geçirir). */
-    auditAction?: "DEMO_CREATED" | "PAID_ACCOUNT_CREATED";
+    /**
+     * Satışla açılan hesap (lib/server/crm-leads.ts recordLeadSale): `afterEnroll`'daki crm_record_lead_sale aynı
+     * zincirde ücretliye geçirir. Demo süresi seçilmez → teknik bitiş `saleDemoEndDate` (yalnız geçmiş kalır); işlem
+     * kaydı PAID_ACCOUNT_CREATED.
+     */
+    sale?: boolean;
   } = {}
 ): Promise<DemoCredentials> {
   const contact = toContact(input);
   const name = input.institutionName.trim().replace(/\s+/g, " ");
+  const today = todayIso();
+  const demoEndsOn = options.sale ? saleDemoEndDate(today) : "demoEndsOn" in input ? input.demoEndsOn : null;
+  // Şema zaten denetler (bitiş > bugün); gece yarısı geçişinde Edoras'a boşuna yazılmasın diye burada da.
+  if (!isValidDemoEnd(today, demoEndsOn)) throw new HttpError(400, "DEMO_INVALID");
 
   if (await isEdorasInstitutionNameTaken(name)) throw new HttpError(409, "INSTITUTION_NAME_TAKEN");
   if (await isEdorasEmailTaken(contact.contactEmail)) throw new HttpError(409, "EMAIL_TAKEN");
 
-  const today = todayIso();
   const password = generateTemporaryPassword((max) => randomInt(max));
   const compensator = createCompensator();
   try {
@@ -333,7 +345,7 @@ export async function createDemoInstitution(
     const crmDb = getSupabaseAdminClient();
     const { error } = await crmDb.rpc(
       "crm_enroll_institution",
-      enrollParams(institutionId, name, { ...input, status: "DEMO", demoStartsOn: today }, staff)
+      enrollParams(institutionId, name, { ...input, status: "DEMO", demoStartsOn: today, demoEndsOn }, staff)
     );
     if (error) throw dbError(error);
     // Yeni demonun lisansı/ödemesi yok: sonraki bir adım patlarsa CRM kaydı da silinebilir.
@@ -344,19 +356,21 @@ export async function createDemoInstitution(
 
     if (options.afterEnroll) await options.afterEnroll(institutionId);
 
-    const { data: crm } = await crmDb.from("crm_institutions").select("demo_ends_at").eq("institution_id", institutionId).maybeSingle();
     await recordAudit(staff, {
-      action: options.auditAction ?? "DEMO_CREATED",
+      action: options.sale ? "PAID_ACCOUNT_CREATED" : "DEMO_CREATED",
       entityType: "institution",
       entityId: institutionId,
       entityLabel: name,
-      details: { program: input.program, demoEndsAt: (crm?.demo_ends_at as string | undefined) ?? null },
+      // Satışta demo tarihi teknik (hesap ücretli açıldı) → yazılmaz.
+      details: options.sale
+        ? { program: input.program }
+        : { program: input.program, demoEndsAt: demoEndsOn, demoDays: demoLengthDays(today, demoEndsOn) },
     });
     return {
       institutionId,
       loginEmail: contact.contactEmail,
       temporaryPassword: password,
-      demoEndsAt: (crm?.demo_ends_at as string | undefined) ?? "",
+      demoEndsAt: demoEndsOn,
       panelUrl: EDORAS_PANEL_URL,
     };
   } catch (err) {
@@ -423,7 +437,7 @@ function pricingDetails(p: LicensePricing) {
   return { price: p.price, listPrice: p.listPrice, discountPercent: p.discountPercent };
 }
 
-/** CRM öncesinden kalan kurumu kayda alır: DEMO (başlangıç + 1 yıl) ya da — yalnız ADMIN — UCRETLI. */
+/** CRM öncesinden kalan kurumu kayda alır: DEMO (başlangıç + seçilen bitiş) ya da — yalnız ADMIN — UCRETLI. */
 export async function enrollInstitution(id: string, input: EnrollInput, staff: StaffContext): Promise<void> {
   if (input.status === "UCRETLI" && staff.role !== "ADMIN") throw new HttpError(403, "FORBIDDEN");
   const inst = await getEdorasInstitution(id);
@@ -442,7 +456,11 @@ export async function enrollInstitution(id: string, input: EnrollInput, staff: S
     entityType: "institution",
     entityId: id,
     entityLabel: inst.name,
-    details: { status: input.status, ...(pricing ? pricingDetails(pricing) : {}) },
+    details: {
+      status: input.status,
+      ...(input.status === "DEMO" ? { demoStartsOn: input.demoStartsOn, demoEndsAt: input.demoEndsOn } : {}),
+      ...(pricing ? pricingDetails(pricing) : {}),
+    },
   });
 }
 
@@ -499,6 +517,44 @@ export async function updateContact(id: string, input: ContactInput, staff: Staf
   if (error) throw dbError(error);
   if (!data?.length) throw new HttpError(404, "NOT_ENROLLED");
   await recordAudit(staff, { action: "CONTACT_UPDATED", entityType: "institution", entityId: id });
+}
+
+/**
+ * Açık demonun bitişini değiştirir — yalnız ADMIN (route), uzatma da kısaltma da (kurucu kararı 2026-10-12: demo süresi
+ * kurum bazlı). Kayıt yoksa 404 NOT_ENROLLED, kurum demoda değilse 409 NOT_DEMO; bitiş başlangıçtan sonra olmalı
+ * (422 DEMO_INVALID; SQL crm_institutions_demo_dates_check). Bugüne ya da öncesine çekilen demo hemen bitmiş sayılır
+ * (kurum kapanmaz, yalnız "Demo bitti"). İşlem kaydına önceki ve yeni bitiş yazılır.
+ */
+export async function updateDemoEnd(id: string, input: DemoEditInput, staff: StaffContext): Promise<void> {
+  const crmDb = getSupabaseAdminClient();
+  const { data: current, error: readError } = await crmDb
+    .from("crm_institutions")
+    .select("status, demo_started_at, demo_ends_at")
+    .eq("institution_id", id)
+    .maybeSingle();
+  if (readError) throw dbError(readError);
+  if (!current) throw new HttpError(404, "NOT_ENROLLED");
+  if (current.status !== "DEMO") throw new HttpError(409, "NOT_DEMO");
+  const startedAt = current.demo_started_at as string;
+  const before = current.demo_ends_at as string;
+  if (!isValidDemoEnd(startedAt, input.demoEndsOn)) throw new HttpError(422, "DEMO_INVALID");
+  if (input.demoEndsOn === before) return;
+
+  // status = 'DEMO' koşulu: okuma ile yazma arasında ücretliye geçtiyse geçmiş demo tarihine dokunulmaz.
+  const { data, error } = await crmDb
+    .from("crm_institutions")
+    .update({ demo_ends_at: input.demoEndsOn })
+    .eq("institution_id", id)
+    .eq("status", "DEMO")
+    .select("institution_id");
+  if (error) throw dbError(error);
+  if (!data?.length) throw new HttpError(409, "NOT_DEMO");
+  await recordAudit(staff, {
+    action: "DEMO_END_UPDATED",
+    entityType: "institution",
+    entityId: id,
+    details: { demoStartedAt: startedAt, demoEndsAtBefore: before, demoEndsAt: input.demoEndsOn },
+  });
 }
 
 /** Fatura profili (GET /api/institutions/{id}/billing) — yalnız ADMIN çağırır. Kayıt yoksa 404 NOT_ENROLLED. */

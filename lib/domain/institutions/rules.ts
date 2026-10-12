@@ -5,8 +5,9 @@
  */
 
 /**
- * Kural: 1 dönem = 1 yıl. Hem demo hem ücretli lisans 1 dönem sürer (SQL: crm_institutions_demo_dates_check,
- * crm_licenses_one_year_check). Demo bitince kurum pasife düşmez; yalnız ekranda "Demo bitti" görünür.
+ * Kural: 1 dönem = 1 yıl. Ücretli lisans 1 dönem sürer (SQL: crm_licenses_one_year_check). Demonun süresi sabit DEĞİL,
+ * kurum bazlıdır (2026-10-12; ./demo-duration.ts, SQL crm_institutions_demo_dates_check: bitiş > başlangıç). Demo bitince
+ * kurum pasife düşmez; yalnız ekranda "Demo bitti" görünür.
  */
 export const TERM_YEARS = 1;
 /** Lisans bitişine bu kadar gün kala "yaklaşıyor" sayılır. */
@@ -104,13 +105,21 @@ export function addDays(iso: string, days: number): string {
 }
 
 /**
+ * Postgres `date + interval 'N month'` ile aynı: ay sonunu aşan gün ayın son gününe kırpılır
+ * (31 Ocak + 1 ay = 28 Şubat).
+ */
+export function addMonths(iso: string, months: number): string {
+  const [y, m, d] = parts(iso);
+  const lastDay = new Date(Date.UTC(y, m + months, 0)).getUTCDate();
+  return fromUtc(new Date(Date.UTC(y, m - 1 + months, Math.min(d, lastDay))));
+}
+
+/**
  * Postgres `date + interval 'N year'` ile aynı: ay sonunu aşan gün ayın son gününe kırpılır
- * (29 Şubat 2028 + 1 yıl = 28 Şubat 2029). SQL CHECK'i bu eşitliği birebir arar.
+ * (29 Şubat 2028 + 1 yıl = 28 Şubat 2029). SQL CHECK'i (lisans) bu eşitliği birebir arar.
  */
 export function addYears(iso: string, years: number): string {
-  const [y, m, d] = parts(iso);
-  const lastDay = new Date(Date.UTC(y + years, m, 0)).getUTCDate();
-  return fromUtc(new Date(Date.UTC(y + years, m - 1, Math.min(d, lastDay))));
+  return addMonths(iso, years * 12);
 }
 
 /** b − a (gün). */
@@ -125,11 +134,8 @@ export function termEndDate(startsOn: string): string {
   return addYears(startsOn, TERM_YEARS);
 }
 
-/** Ücretli lisansın bitişi (1 dönem). */
+/** Ücretli lisansın bitişi (1 dönem). Demonun bitişi sabit değildir → ./demo-duration.ts. */
 export const licenseEndDate = termEndDate;
-
-/** Demonun bitişi (1 dönem). */
-export const demoEndDate = termEndDate;
 
 /** Yenilemenin başlangıcı: süren lisansın bitişi; lisans bitmişse (ya da yoksa) bugün. SQL ile aynı. */
 export function renewalStartDate(lastEndsOn: string | null, today: string): string {

@@ -5,11 +5,26 @@
 - Yalnız **Türkçe** (next-intl tek dil, URL'de `/tr` yok).
 - Müşteri birimi **kurum** (Edoras `institutions`).
 - **1 dönem = 1 yıl**; ücretli lisans tek tip.
-- **Demo da 1 yıl**, "DEMO" etiketli, uzatma yok; süre dolunca pasife düşmez, yalnız ekranda "Demo bitti".
+- ~~**Demo da 1 yıl**, uzatma yok~~ → 2026-10-12'de değişti (aşağıda). "DEMO" etiketli; süre dolunca pasife düşmez, yalnız
+  ekranda "Demo bitti".
 - Demo için zorunlu: yetkili ad soyad + kurum adı + telefon + e-posta.
 - Ücretli hesap ve ödeme (ve fatura) için zorunlu: adres + (TC Kimlik No veya Vergi No).
 - İki veritabanı: CRM ayrı Supabase projesinde, Edoras'a da bağlanır ("ikisine de bağlan"). Edoras şemasına dokunulmaz.
 - DeepSport'un **tüm** modülleri taşınacak ("tamamen kopyalayalım") — 2026-10-01 itibarıyla tamam.
+
+## Demo süresi kurum bazlı (kurucu, 2026-10-12)
+
+İstek: "demo süresi kurum bazlı değişebilsin, sistemde sabit bir şey olmasın". Seçilen:
+
+- Süre **her demo açılışında seçilir**: hızlı seçim 14 gün / 1 ay / 3 ay / 1 yıl ya da özel bitiş tarihi. Hazır /
+  varsayılan süre YOK — hiçbir seçim önceden işaretli gelmez, alan zorunlu; veritabanı bitişsiz demoyu reddeder
+  (`CRM_DEMO_END_REQUIRED`). CRM'e kaydetmede (CRM öncesi demo) hızlı seçimler girilen başlangıçtan sayılır.
+- Açık demonun bitişini sonradan **yalnız ADMIN** değiştirir (uzatma da kısaltma da; bugünden önceye çekilirse demo hemen
+  bitmiş sayılır, kurum kapanmaz). İşlem kaydı `DEMO_END_UPDATED` (başlangıç, önceki / yeni bitiş).
+- Lisans değişmedi: 1 dönem = 1 yıl.
+- Satışla hesap açma (aday → "Satış oldu") kurumu önce DEMO olarak kayda alıp aynı zincirde ücretliye geçirdiği için
+  orada süre seçilmez; teknik bitiş başlangıç + 1 gün (`saleDemoEndDate`) — yalnız geçmiş olarak kalır, gösterilmez.
+- Kod: `lib/domain/institutions/demo-duration.ts`, SQL `20261012120000_crm_demo_duration`.
 
 ## Uyarlamalar (DeepSport → Edoras)
 

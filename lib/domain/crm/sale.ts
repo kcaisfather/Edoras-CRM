@@ -16,9 +16,9 @@ import {
   billingShape,
   checkBilling,
   checkProfile,
-  newDemoSchema,
+  demoAccountSchema,
   profileShape,
-  type NewDemoInput,
+  type DemoAccountInput,
 } from "@/lib/domain/institutions/schemas";
 import type { BillingProfile, DemoCredentials } from "@/lib/domain/institutions/types";
 import type { CrmLead, CrmLeadDto, CrmStatus } from "./types";
@@ -93,11 +93,11 @@ export const leadSaleSchema = z
   });
 export type LeadSaleInput = z.input<typeof leadSaleSchema>;
 
-/** Hesap alanlarının doğrulaması (demo açmayla aynı kurallar: newDemoSchema). */
+/** Hesap alanlarının doğrulaması (demo açmayla aynı kurallar: demoAccountSchema; satışta demo süresi seçilmez). */
 export function accountIssues(v: LeadSaleInput, mode: SaleAccountMode): { path: string[]; message: string }[] {
   const fields = ACCOUNT_FIELDS[mode];
   if (fields.length === 0) return [];
-  const res = newDemoSchema.safeParse({
+  const res = demoAccountSchema.safeParse({
     institutionName: mode === "NEW" ? v.institutionName : "Kayıtlı kurum",
     program: v.program,
     contactName: v.contactName,
@@ -111,7 +111,7 @@ export function accountIssues(v: LeadSaleInput, mode: SaleAccountMode): { path: 
 }
 
 /** Yeni hesabın (Edoras kurumu + kurum yöneticisi) girdisi. */
-export function toSaleAccount(v: LeadSaleInput): NewDemoInput {
+export function toSaleAccount(v: LeadSaleInput): DemoAccountInput {
   return {
     institutionName: v.institutionName,
     program: v.program,
@@ -122,7 +122,7 @@ export function toSaleAccount(v: LeadSaleInput): NewDemoInput {
 }
 
 /** Kayıtlı kurumu ücretli kayda alırken yetkili bilgisi. */
-export function toSaleContact(v: LeadSaleInput): Pick<NewDemoInput, "contactName" | "contactPhone" | "contactEmail"> {
+export function toSaleContact(v: LeadSaleInput): Pick<DemoAccountInput, "contactName" | "contactPhone" | "contactEmail"> {
   return { contactName: v.contactName, contactPhone: v.contactPhone, contactEmail: v.contactEmail };
 }
 

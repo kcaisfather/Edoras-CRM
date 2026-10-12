@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays,
+  addMonths,
   addYears,
   daysBetween,
-  demoEndDate,
   generateTemporaryPassword,
   initialAcademicPeriod,
   isBillingComplete,
@@ -57,10 +57,17 @@ describe("ad soyad ve fatura", () => {
 });
 
 describe("tarihler", () => {
-  it("1 dönem = 1 yıl: lisans da demo da 1 yıl; 29 Şubat 28 Şubat'a kırpılır (Postgres ile aynı)", () => {
+  it("1 dönem = 1 yıl: lisans 1 yıl; 29 Şubat 28 Şubat'a kırpılır (Postgres ile aynı)", () => {
     expect(licenseEndDate("2026-10-01")).toBe("2027-10-01");
-    expect(demoEndDate("2026-09-29")).toBe("2027-09-29");
     expect(addYears("2028-02-29", 1)).toBe("2029-02-28");
+  });
+
+  it("ay ekleme: ay sonu kırpılır, yıl taşar (Postgres date + interval 'N month' ile aynı)", () => {
+    expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
+    expect(addMonths("2028-01-31", 1)).toBe("2028-02-29");
+    expect(addMonths("2026-11-30", 3)).toBe("2027-02-28");
+    expect(addMonths("2026-10-12", 12)).toBe("2027-10-12");
+    expect(addMonths("2026-03-31", -1)).toBe("2026-02-28");
   });
 
   it("gün ekleme ve fark", () => {

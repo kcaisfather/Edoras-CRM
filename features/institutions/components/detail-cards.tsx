@@ -28,6 +28,7 @@ import type { InstitutionDetail, License, Payment } from "@/lib/domain/instituti
 import { formatDate, formatDateTime, formatPhone } from "../format";
 import { BillingDialog, ContactDialog, LicenseEditDialog, PaymentDialog, PaymentEditDialog, RenewDialog } from "./dialogs";
 import { AdminAccountMenu, LoginKindBadge, SuperAdminBadge } from "./AdminAccountActions";
+import { DemoEndAction } from "./DemoEndDialog";
 
 export function SectionCard({
   icon: Icon,
@@ -184,7 +185,10 @@ function BillingDetails({ billing }: { billing: NonNullable<InstitutionDetail["b
   );
 }
 
-/** Demo: 1 dönem (1 yıl). Başlangıç, bitiş, kalan gün. Süre dolunca kurum kapanmaz, yalnız burada görünür. */
+/**
+ * Demo: başlangıç, bitiş, kalan gün. Süre kurum bazlı (açarken seçilir; bitişi yalnız ADMIN değiştirir → DemoEndAction).
+ * Süre dolunca kurum kapanmaz, yalnız burada görünür.
+ */
 export function DemoCard({ institution }: { institution: InstitutionDetail }) {
   const t = useTranslations("institutions.detail.demo");
   const crm = institution.crm;
@@ -192,7 +196,7 @@ export function DemoCard({ institution }: { institution: InstitutionDetail }) {
   const left = daysBetween(todayIso(), crm.demoEndsAt);
 
   return (
-    <SectionCard icon={CalendarClock} title={t("title")}>
+    <SectionCard icon={CalendarClock} title={t("title")} action={<DemoEndAction institution={institution} />}>
       <dl className="grid grid-cols-2 gap-4">
         <Field label={t("started")}>{formatDate(crm.demoStartedAt)}</Field>
         <Field label={t("ends")}>{formatDate(crm.demoEndsAt)}</Field>

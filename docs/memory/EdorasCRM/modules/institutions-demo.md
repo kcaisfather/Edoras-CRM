@@ -1,12 +1,14 @@
 # Kurumlar, demo, lisans, ödeme
 
 Ekran: `/institutions`, `/institutions/[id]`. Sunucu: `lib/server/institutions.ts`, Edoras: `lib/server/edoras.ts`.
-Kural: `lib/domain/institutions/{rules,schemas,billing-profile}.ts`. DB: `crm_core` (+ fatura profili `crm_invoices`).
+Kural: `lib/domain/institutions/{rules,schemas,billing-profile,demo-duration}.ts`. DB: `crm_core` (+ fatura profili
+`crm_invoices`, demo süresi `crm_demo_duration`).
 
 ## Liste
 
-Edoras `institutions` + CRM kaydı birleşir. CRM kaydı yoksa "kayda al" (`POST /api/institutions/{id}/enroll`: DEMO ya
-da — yalnız ADMIN — UCRETLI). İç kurumlar (Ayarlar → Veri kalitesi) analiz ve görevlerden düşer.
+Edoras `institutions` + CRM kaydı birleşir. CRM kaydı yoksa "kayda al" (`POST /api/institutions/{id}/enroll`: DEMO —
+başlangıç + demo süresi seçilir — ya da yalnız ADMIN UCRETLI). İç kurumlar (Ayarlar → Veri kalitesi) analiz ve görevlerden
+düşer.
 
 ## Kurum ayrıntısı ekranı (`/institutions/[id]`, düzen 2026-10-12)
 
@@ -34,19 +36,45 @@ Sıra (`createDemoInstitution`):
    (`initialAcademicPeriod(bugün)`: Eylül 1'den Ocak sonuna 1. Dönem, Şubat 1–Haziran 30 2. Dönem; örnekler
    `lib/domain/institutions/rules.test.ts`) → Auth kullanıcı (geçici şifre, e-posta
    onaylı) → `profiles` → `institution_users (role 'admin')`
-4. CRM: `crm_enroll_institution` (status DEMO, başlangıç bugün, bitiş +1 yıl)
-5. `recordAudit(DEMO_CREATED)`; yanıt: giriş e-postası + **geçici şifre (bir kez)** + demo bitişi + panel adresi
+4. CRM: `crm_enroll_institution` (status DEMO, başlangıç bugün, bitiş = formda seçilen `demoEndsOn`; hazır süre yok)
+5. `recordAudit(DEMO_CREATED)` (details: program, `demoEndsAt`, `demoDays`); yanıt: giriş e-postası + **geçici şifre
+   (bir kez)** + demo bitişi + panel adresi
    (`NEXT_PUBLIC_EDORAS_PANEL_URL`, varsayılan `https://panel.edorasapp.ai`)
 
 Herhangi bir adım patlarsa compensator Edoras'ta açılanları ters sırayla siler (kurum `delete_institution_guarded` ile).
-Zorunlu: yetkili ad soyad + kurum adı + telefon (E.164) + e-posta.
+Zorunlu: yetkili ad soyad + kurum adı + telefon (E.164) + e-posta + demo süresi. Bitiş bugünden sonra değilse Edoras'a
+yazılmadan 400 `DEMO_INVALID`.
+
+## Demo süresi — kurum bazlı (kurucu kararı 2026-10-12)
+
+Eski kural "demo = 1 yıl, uzatılmaz" kalktı. Kod `lib/domain/institutions/demo-duration.ts` (saf, testli), SQL
+`20261012120000_crm_demo_duration` (**canlıya elle, kod deploy'undan ÖNCE**), PGlite testi `crm-demo-duration.test.ts`.
+
+- **Açarken seçilir, varsayılan yok:** `DemoEndField` (Yeni demo, adaydan demo aç, CRM'e kaydet) — hızlı seçim 14 gün /
+  1 ay / 3 ay / 1 yıl (`DEMO_DURATION_CHOICES`, ay eklemede ay sonu Postgres gibi kırpılır) ya da "Özel tarih". Hiçbiri
+  önceden işaretli değil; şema `demoEndsOn` zorunlu (`newDemoSchema`: > bugün, `enrollSchema`: > başlangıç), RPC
+  `p_demo_ends_on` boşsa `CRM_DEMO_END_REQUIRED` (→ 400 `DEMO_INVALID`), kısıt bitiş > başlangıç (→ 422 `DEMO_INVALID`).
+  CRM'e kaydette hızlı seçim girilen başlangıçtan sayılır, başlangıç değişince bitiş de kayar (özel tarih kalır).
+- **Sonradan yalnız ADMIN:** Demo kartında "Bitişi değiştir" (`DemoEndDialog`) → `PATCH /api/institutions/{id}/demo`
+  (`demoEditSchema`, `updateDemoEnd`). Uzatma da kısaltma da; hızlı seçimler bugünden sayılır (demo başlamadıysa
+  başlangıçtan). Bugün ya da öncesi seçilirse uyarı: demo hemen bitmiş sayılır (kurum kapanmaz). Kayıt yok 404
+  `NOT_ENROLLED`, ücretli 409 `NOT_DEMO` (yazım `status = 'DEMO'` koşullu — arada ücretliye geçerse dokunmaz), bitiş ≤
+  başlangıç 422 `DEMO_INVALID`, aynı tarih yazılmaz. İşlem kaydı `DEMO_END_UPDATED` (`demoStartedAt`,
+  `demoEndsAtBefore`, `demoEndsAt`).
+- **Satışla hesap açma** (NEW / ENROLL yolu) kurumu önce DEMO olarak kayda alır, aynı zincirde `crm_record_lead_sale`
+  ücretliye geçirir (RPC kurumun CRM kaydını şart koşar). Orada süre seçilmez: teknik bitiş başlangıç + 1 gün
+  (`saleDemoEndDate`); demo kartı / kalan gün yalnız `status = 'DEMO'`da göründüğü için hiçbir ekranda demo süresi
+  olarak çıkmaz. `PAID_ACCOUNT_CREATED` kaydına demo tarihi yazılmaz.
+- Gösterim her yerde kayıtlı `demo_ends_at`'ten (liste, ayrıntı şeridi, CSV, görevler, bildirimler, raporlar, büyüme) —
+  değişiklik gerekmedi. Görevlerle ilgili iki bilinen durum: [tasks-rules.md](tasks-rules.md).
 
 **Durum 2026-10-01:** canlıda hiç çalıştırılmadı (`DEMO_CREATED` kaydı yok). Edoras'ta gereken tablo / sütun / RPC'ler salt
 okunur doğrulandı. İlk gerçek demo açılışından sonra edoras-admin panelinde girişi ve aktif dönemi kontrol et.
 
 ## Lisans ve ödeme
 
-- 1 dönem = 1 yıl (`[başlangıç, bitiş)`), ücretli lisans tek tip. Yenileme süren lisansın bitişinden başlar (`renewLicense`).
+- 1 dönem = 1 yıl (`[başlangıç, bitiş)`), ücretli lisans tek tip (demo süresi bundan bağımsız, yukarıda). Yenileme süren
+  lisansın bitişinden başlar (`renewLicense`).
 - Ücretliye geçiş (`convert`, ADMIN): adres + (TC ya da VKN) zorunlu; DB `crm_institutions_paid_billing_check`.
 - Ödeme (`payments`, ADMIN): aynı bilgiler olmadan alınmaz (`crm_guard_payment`).
 - Demo bitince kurum pasife düşmez; yalnız "Demo bitti" rozeti / menü sayacı.

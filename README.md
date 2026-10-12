@@ -35,7 +35,7 @@ Sunucu `service_role` ile bağlandığı için RLS kuralları korumaz. Bu yüzde
 | Kural | Veritabanında (CRM projesi) |
 | --- | --- |
 | 1 dönem = 1 yıl; ücretli lisans 1 dönemdir | `crm_licenses_one_year_check` |
-| Demo da 1 dönemdir (1 yıl), etiketi **DEMO**'dur; uzatılmaz | `crm_institutions_demo_dates_check` |
+| Demo süresi kurum bazlıdır (2026-10-12): açarken seçilir (hazır süre yok), bitiş > başlangıç; açık demonun bitişini yalnız ADMIN uzatır / kısaltır; etiketi **DEMO**'dur | `crm_institutions_demo_dates_check`, `crm_enroll_institution` (`CRM_DEMO_END_REQUIRED`) |
 | Yetkili ad soyad + kurum adı + telefon + e-posta olmadan demo açılamaz | `crm_institutions_contact_*_check`, `institution_name` |
 | Demo süresi dolunca kurum **pasife düşmez**, yalnız ekranda "Demo bitti" görünür | — (hiçbir iş Edoras'ta `is_active`'e dokunmaz) |
 | Adres + (TC Kimlik No veya Vergi No) olmadan ücretli hesap açılamaz | `crm_institutions_paid_billing_check` |
@@ -135,7 +135,7 @@ Tarayıcı (React Query) ──► /api/* (Next route handler)
 - Tamamlarken sunucu görevi yeniden türetir; istemcinin gönderdiği anahtar bugün açık bir görev değilse 404.
 - Görünürlük: kural görevleri ve atanmamış görevler ekip havuzu; atanmış görev yalnız atanan + ADMIN. ADMIN herkese,
   CRM_AGENT yalnız kendine ya da havuza atar. Kuralları yalnız ADMIN değiştirir (`/crm/rules`, Ayarlar → Kurallar).
-- Kural seti (Edoras: demo ve lisans 1 yıl): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine
+- Kural seti (Edoras: lisans 1 yıl, demo süresi kurum bazlı): Planlanan arama, Teklif +3, Demo bitişine 30 gün kala, Lisans bitişine
   60 gün kala, Süresi doldu (+0), Açık bakiye +7, Satış olmadı +90, Tarihsiz Aranacak/Takipte +0, Soğuk liste (aranmamış
   kişi bugün, ulaşılamayan son denemeden +2), Anket araması (gönderilmiş / açılmış, yanıtsız ve süresi dolmamış davet →
   gönderimden +5; aday başına en son davet). İç kurumlar görev üretmez.

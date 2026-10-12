@@ -14,7 +14,7 @@ const one = <T,>(sql: string, params: unknown[] = []) => helpers(db).one<T>(sql,
 const failure = (sql: string, params: unknown[] = []) => helpers(db).failure(sql, params);
 
 const ENROLL =
-  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::numeric, null)";
+  "select public.crm_enroll_institution($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::date, $11::date, $12::date, $13::numeric, null)";
 
 let institutionId: string;
 let licenseId: string;
@@ -39,7 +39,7 @@ beforeAll(async () => {
   institutionId = (await one<{ id: string }>("select gen_random_uuid() as id")).id;
   await db.query(ENROLL, [
     institutionId, "Referans Kolej", "UCRETLI", "Ayşe Yılmaz", "+905321234567", "ayse@kurum.test",
-    ADDRESS, TCKN, null, null, todayIso(), 45000,
+    ADDRESS, TCKN, null, null, null, todayIso(), 45000,
   ]);
   licenseId = (await one<{ id: string }>("select id from crm_licenses where institution_id = $1", [institutionId])).id;
 }, 60_000);

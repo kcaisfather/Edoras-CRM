@@ -2,8 +2,15 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { crmKeys } from "@/features/crm";
+import { crmNoteKeys } from "@/features/crm-notes";
 import type { ImportItem } from "@/lib/import/bulk";
-import type { ProspectConvertInput, ProspectListCreateInput, ProspectPatchInput } from "@/lib/domain/cold-lists/schemas";
+import type {
+  LeadToColdListInput,
+  ProspectConvertInput,
+  ProspectCreateInput,
+  ProspectListCreateInput,
+  ProspectPatchInput,
+} from "@/lib/domain/cold-lists/schemas";
 import { coldListsApi } from "./api";
 import { TASKS_ROOT_KEY, coldListKeys } from "./queries";
 
@@ -32,6 +39,15 @@ export function useCreateProspectList() {
 export function useBulkAddProspects() {
   return useMutation({
     mutationFn: ({ listId, items }: { listId: string; items: ImportItem[] }) => coldListsApi.bulkAdd(listId, items),
+  });
+}
+
+/** "Kişi ekle": listeye tek kişi (elle). Yeni kişi "Aranmadı" — Görevlerim de tazelenir. */
+export function useCreateProspect() {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: ({ listId, body }: { listId: string; body: ProspectCreateInput }) => coldListsApi.createProspect(listId, body),
+    onSuccess: () => Promise.all([inv.coldLists(), inv.tasks()]),
   });
 }
 
@@ -66,6 +82,19 @@ export function useConvertProspect() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: ProspectConvertInput }) => coldListsApi.convert(id, body),
     onSuccess: () => inv.crm(),
+  });
+}
+
+/**
+ * "Soğuk listeye geri gönder" (Sıcağa taşı'nın tersi; sunucu): aday "Satış olmadı" olur, kişi listeye döner →
+ * crmKeys.all (adaylar, görevler ve soğuk listeler onun altında) + adayın notları (sunucu bir not ekler).
+ */
+export function useReturnLeadToColdList() {
+  const inv = useInvalidate();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, body }: { leadId: string; body: LeadToColdListInput }) => coldListsApi.returnLead(leadId, body),
+    onSuccess: (_data, { leadId }) => Promise.all([inv.crm(), qc.invalidateQueries({ queryKey: crmNoteKeys.lead(leadId) })]),
   });
 }
 

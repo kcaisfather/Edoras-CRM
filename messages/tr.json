@@ -70,6 +70,7 @@
         "PAYLOAD_TOO_LARGE": "İstek çok büyük. Dosyayı daha küçük parçalar hâlinde gönderin.",
         "PROSPECT_ALREADY_MOVED": "Kişi zaten CRM'e taşınmış.",
         "PROSPECT_DUPLICATE": "Bu telefon ya da e-posta bu listede zaten var.",
+        "LEAD_IS_CUSTOMER": "Satışı olmuş müşteri soğuk listeye geri gönderilemez.",
         "SURVEY_EXPIRED": "Anket linkinin süresi dolmuş.",
         "SURVEY_ANSWERED": "Bu anket zaten yanıtlanmış.",
         "SURVEY_NO_CONTACT": "Alıcının bu kanal için e-postası ya da telefonu yok.",

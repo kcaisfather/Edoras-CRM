@@ -11,9 +11,10 @@ import { formatCrmDate } from "@/lib/domain/crm/utils";
 import { csvDate } from "@/lib/utils/csv";
 import { listSlug } from "@/lib/domain/cold-lists/utils";
 import { OUTCOME_FILTERS, type ColdListView, type OutcomeFilter } from "../hooks";
+import { AddProspectButton } from "./AddProspectDialog";
 import { ImportButton, ImportTemplateButton } from "./import/ImportDialog";
 
-/** Üst satır: liste seçici + bilgi; içe aktar, şablon, CSV, listeyi sil (yalnız yönetici). */
+/** Üst satır: liste seçici + bilgi; kişi ekle (tek kişi, elle), içe aktar, şablon, CSV, listeyi sil (yalnız yönetici). */
 export function ColdListToolbar({ view, onDeleteList }: { view: ColdListView; onDeleteList: () => void }) {
   const t = useTranslations("growth.coldLists");
   const { isAdmin } = usePermissions();
@@ -45,6 +46,7 @@ export function ColdListToolbar({ view, onDeleteList }: { view: ColdListView; on
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        <AddProspectButton list={list ?? null} />
         <ImportButton targets={["coldList"]} defaultListId={listId} onCompleted={(s) => s.listId && view.selectList(s.listId)} />
         <ImportTemplateButton />
         <CsvButton

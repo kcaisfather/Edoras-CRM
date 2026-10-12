@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CrmList } from "@/features/crm/components/CrmList";
 import type { CrmLead } from "@/lib/domain/crm/types";
 import { AssignTaskDialog, useAddToCallList } from "@/features/tasks";
-import { ImportButton } from "@/features/cold-lists";
+import { ImportButton, ReturnToColdListAction } from "@/features/cold-lists";
 import { SatisfactionBadge, SendSurveyDialog, leadRecipient } from "@/features/surveys";
 import { InvoiceDialog } from "@/features/invoices";
 
@@ -19,6 +19,9 @@ const renderSatisfaction = (lead: CrmLead) => <SatisfactionBadge leadId={lead.id
  * içe aktarma bitince mutasyonun önbellek tazelemesiyle yenilenir (crm → cold-lists bağımlılığı olmasın diye burada).
  */
 const renderImport = () => <ImportButton targets={["crm", "coldList"]} defaultTarget="crm" />;
+
+/** Aday panelinde "Soğuk listeye geri gönder" ("Sıcağa taşı"nın tersi; crm → cold-lists bağımlılığı olmasın diye burada). */
+const renderSheetActions = (lead: CrmLead) => <ReturnToColdListAction lead={lead} />;
 
 /**
  * Adaylar ekranı + başka modüllerin parçaları (DeepSport app/[locale]/crm/_components/CrmList.tsx): "Görev ata" (görev
@@ -40,6 +43,7 @@ export function CrmScreen() {
         onSendSurvey={setSurveyLead}
         onIssueInvoice={setInvoiceLead}
         renderImport={renderImport}
+        renderSheetActions={renderSheetActions}
       />
       <AssignTaskDialog
         lead={taskLead}

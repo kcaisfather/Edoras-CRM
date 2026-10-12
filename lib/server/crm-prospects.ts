@@ -3,14 +3,30 @@ import "server-only";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
 import { cleanText, normalizeImportEmail, normalizeImportPhone } from "@/lib/import/normalize";
-import { contactSets, screenImportItems, toProspectColumns, type BulkImportResult, type ImportItemValues } from "@/lib/import/bulk";
-import type { ProspectListCreateInput, ProspectPatchValues, ProspectTextField } from "@/lib/domain/cold-lists/schemas";
-import { PROSPECT_TEXT_FIELDS, prospectListCreateSchema } from "@/lib/domain/cold-lists/schemas";
+import {
+  contactSets,
+  normalizeItem,
+  screenImportItems,
+  toProspectColumns,
+  type BulkImportResult,
+  type ImportItemValues,
+} from "@/lib/import/bulk";
+import type {
+  LeadToColdListInput,
+  ProspectCreateValues,
+  ProspectListCreateInput,
+  ProspectPatchValues,
+  ProspectTextField,
+} from "@/lib/domain/cold-lists/schemas";
+import { PROSPECT_TEXT_FIELDS, leadToColdListSchema, prospectListCreateSchema } from "@/lib/domain/cold-lists/schemas";
 import type { MoveStatus, Prospect, ProspectList, ProspectOutcome, ProspectsPage } from "@/lib/domain/cold-lists/types";
 import { convertNoteText, isMoved } from "@/lib/domain/cold-lists/utils";
 import { COLD_LIST_SCAN_LIMIT, type TaskProspectInput } from "@/lib/domain/tasks/cold";
 import { recordAudit } from "./audit";
+import { createCompensator } from "./compensation";
 import { loadContactIndex, skipCounts } from "./crm-import";
+import { listLeads, updateLead } from "./crm-leads";
+import { createNote } from "./crm-notes";
 import { fetchAll } from "./edoras";
 
 /**
@@ -226,6 +242,32 @@ export async function bulkAddProspects(listId: string, items: readonly ImportIte
   return { created, skipped, dryRun: false };
 }
 
+/**
+ * Listeye tek kişiyi elle ekler ("Kişi ekle"; POST /api/crm/prospect-lists/{id}/prospects). Normalleştirme içe
+ * aktarmayla aynı (normalizeItem → toProspectColumns); telefon / e-posta geçerliliği ve kimlik kuralı şemada. Aynı
+ * listede aynı telefon / e-posta → 409 PROSPECT_DUPLICATE (benzersiz dizin). CRM adayı ya da kurum yetkilisiyle
+ * çakışma ENGELLEMEZ (kişiyi bilerek elle ekleyen kullanıcıdır; tablo "CRM'de var" rozetini zaten gösterir).
+ */
+export async function createProspect(listId: string, values: ProspectCreateValues, staff: StaffContext): Promise<Prospect> {
+  const list = await getListRow(listId);
+  const n = normalizeItem(values, 0);
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_prospects")
+    .insert({ list_id: listId, ...toProspectColumns(n), created_by: staff.userId })
+    .select(PROSPECT_COLUMNS)
+    .single();
+  if (error) throw dbError(error);
+  const row = data as ProspectRow;
+  await recordAudit(staff, {
+    action: "PROSPECT_CREATED",
+    entityType: "prospect",
+    entityId: row.id,
+    entityLabel: row.organization ?? list.name,
+    details: { listId, manual: true },
+  });
+  return toProspect(row);
+}
+
 const COLUMN_OF: Record<ProspectTextField, keyof ProspectRow> = {
   firstName: "first_name",
   lastName: "last_name",
@@ -339,6 +381,126 @@ export async function convertProspect(
     details: { status: input.status, source: "COLD_LIST", via: "prospect" },
   });
   return { crmLeadId, prospect: toProspect(await getProspectRow(id)) };
+}
+
+/** Adayın geldiği listeler ("Sıcağa taşı" ile bu adayı açan kişilerin listeleri; geri gönderme penceresi önerir). */
+export async function leadOriginListIds(leadId: string): Promise<string[]> {
+  const { data, error } = await getSupabaseAdminClient().from("crm_prospects").select("list_id").eq("crm_lead_id", leadId);
+  if (error) throw dbError(error);
+  return [...new Set(((data ?? []) as { list_id: string }[]).map((r) => r.list_id))];
+}
+
+/** Listede adayın kişisi: önce adaya bağlı satır, yoksa aynı telefon / e-postalı satır. */
+async function findReturnTarget(listId: string, leadId: string, phone: string | null, email: string | null): Promise<ProspectRow | null> {
+  const db = getSupabaseAdminClient();
+  const one = async (column: "crm_lead_id" | "phone" | "email", value: string | null): Promise<ProspectRow | null> => {
+    if (!value) return null;
+    const { data, error } = await db.from("crm_prospects").select(PROSPECT_COLUMNS).eq("list_id", listId).eq(column, value).limit(1);
+    if (error) throw dbError(error);
+    return ((data ?? []) as ProspectRow[])[0] ?? null;
+  };
+  const [byLead, byPhone, byEmail] = await Promise.all([one("crm_lead_id", leadId), one("phone", phone), one("email", email)]);
+  return byLead ?? byPhone ?? byEmail;
+}
+
+/**
+ * "Soğuk listeye geri gönder" (POST /api/crm/leads/{id}/cold-list; "Sıcağa taşı"nın tersi). Aday SİLİNMEZ — geçmişi
+ * (notlar, görevler, tahsilat) kalır ve statüsü "Satış olmadı" (OLUMSUZ, seçilen kayıp nedeni, sonraki arama yok) olur;
+ * kişi seçilen listeye "Aranmadı" olarak döner ve Görevlerim'deki soğuk liste sırasına girer:
+ *  - Listede adaydan gelen (ya da aynı telefon / e-postalı) kişi varsa o satır geri açılır: "CRM'e taşındı" işareti
+ *    (crm_lead_id, moved_at) ve arama sonucu temizlenir. Hiç taşınmamış bir eşleşme olduğu gibi kalır.
+ *  - Eşleşen kişi BAŞKA bir adaya bağlıysa 409 PROSPECT_DUPLICATE (aynı listede aynı telefon / e-posta bir kez).
+ *  - Yoksa adayın kimlik / iletişim / il-ilçe alanlarından yeni kişi eklenir.
+ * Müşteri (Satış oldu) geri gönderilemez → 409 LEAD_IS_CUSTOMER.
+ *
+ * Adımlar tek transaction değil (migration gerektirmesin diye): kişi → aday notu → aday statüsü sırayla yazılır, her
+ * adım geri alma işini createCompensator()'a kaydeder; statü yazımı (son adım) patlarsa önceki ikisi geri alınır.
+ */
+export async function returnLeadToColdList(
+  leadId: string,
+  input: LeadToColdListInput,
+  staff: StaffContext
+): Promise<{ prospect: Prospect; restored: boolean }> {
+  const { listId, lostReason } = leadToColdListSchema.parse(input);
+  const [[lead], list] = await Promise.all([listLeads(staff, { id: leadId }), getListRow(listId)]);
+  if (!lead) throw new HttpError(404, "NOT_FOUND");
+  if (lead.status === "SATIS_OLDU") throw new HttpError(409, "LEAD_IS_CUSTOMER");
+
+  const db = getSupabaseAdminClient();
+  const email = normalizeImportEmail(lead.contactEmail);
+  const compensator = createCompensator();
+  try {
+    const existing = await findReturnTarget(listId, leadId, lead.contactPhone, email);
+    if (existing?.crm_lead_id && existing.crm_lead_id !== leadId) throw new HttpError(409, "PROSPECT_DUPLICATE");
+
+    let prospectId: string;
+    let restored = false;
+    if (existing) {
+      prospectId = existing.id;
+      if (existing.moved_at || existing.crm_lead_id) {
+        restored = true;
+        const reopen = { crm_lead_id: null, moved_at: null, outcome: "NOT_CALLED", outcome_at: null };
+        const { error } = await db.from("crm_prospects").update(reopen).eq("id", existing.id);
+        if (error) throw dbError(error);
+        const { crm_lead_id, moved_at, outcome, outcome_at } = existing;
+        compensator.push("prospect-reopen", async () => {
+          // Aday silinmediği için işaret aynen geri yazılabilir.
+          const { error: undoError } = await db
+            .from("crm_prospects")
+            .update({ crm_lead_id, moved_at, outcome, outcome_at })
+            .eq("id", existing.id);
+          if (undoError) throw undoError;
+        });
+      }
+    } else {
+      const { data, error } = await db
+        .from("crm_prospects")
+        .insert({
+          list_id: listId,
+          first_name: lead.contactFirstName,
+          last_name: lead.contactLastName,
+          organization: lead.organizationName,
+          phone_raw: lead.contactPhone,
+          phone: lead.contactPhone,
+          email_raw: email,
+          email,
+          city: lead.city,
+          district: lead.district,
+          created_by: staff.userId,
+        })
+        .select("id")
+        .single();
+      if (error) throw dbError(error);
+      const insertedId = (data as { id: string }).id;
+      prospectId = insertedId;
+      compensator.push("prospect-insert", async () => {
+        const { error: undoError } = await db.from("crm_prospects").delete().eq("id", insertedId);
+        if (undoError) throw undoError;
+      });
+    }
+
+    const note = await createNote(leadId, `Soğuk listeye geri gönderildi: ${list.name}`, staff);
+    compensator.push("lead-note", async () => {
+      const { error: undoError } = await db.from("crm_notes").delete().eq("id", note.id);
+      if (undoError) throw undoError;
+    });
+
+    // Statü kuralları (kayıp nedeni, takip tarihinin silinmesi, kayıp ayrıntısı, işlem kaydı) aday güncellemesiyle AYNI yol.
+    await updateLead(leadId, { status: "OLUMSUZ", lostReason, nextFollowUpAt: null }, staff);
+
+    await recordAudit(staff, {
+      action: "LEAD_RETURNED_TO_COLD_LIST",
+      entityType: "lead",
+      entityId: leadId,
+      entityLabel: lead.organizationName,
+      details: { listId, prospectId, restored, from: lead.status, lostReason },
+    });
+    return { prospect: toProspect(await getProspectRow(prospectId)), restored };
+  } catch (e) {
+    const failed = await compensator.rollback();
+    if (failed.length) console.error(`[cold-list] geri gönderme geri alınamadı: ${failed.join(",")}`);
+    throw e;
+  }
 }
 
 // --- Görevlerim ----------------------------------------------------------------------------------

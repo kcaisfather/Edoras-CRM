@@ -32,12 +32,20 @@ export interface CrmTableActions {
    * bağlı adayda çizilir (fatura, kurumun lisansı / ödemesi için kesilir).
    */
   onIssueInvoice?: (lead: CrmLead) => void;
+  /**
+   * Aday panelinin eylem satırına başka modüllerin düğmeleri (ör. soğuk listeler → "Soğuk listeye geri gönder";
+   * crm → cold-lists bağımlılığı olmasın diye ekranı kuran bileşen verir). Yalnız panelde çizilir.
+   */
+  renderSheetActions?: (lead: CrmLead) => ReactNode;
 }
 
-/** Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, Arama listesine ekle, memnuniyet rozeti, Anket gönder, Fatura kes). */
+/**
+ * Ekranı kuran bileşenin verdiği satır parçaları (Görev ata, Arama listesine ekle, memnuniyet rozeti, Anket gönder, Fatura
+ * kes, panel eylem satırı düğmeleri).
+ */
 export type CrmRowSlots = Pick<
   CrmTableActions,
-  "onAssignTask" | "onAddToCallList" | "renderSatisfaction" | "onSendSurvey" | "onIssueInvoice"
+  "onAssignTask" | "onAddToCallList" | "renderSatisfaction" | "onSendSurvey" | "onIssueInvoice" | "renderSheetActions"
 >;
 
 /**

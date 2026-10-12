@@ -6,12 +6,19 @@
  */
 import { z } from "zod";
 import { IMPORT_FIELD_LIMITS } from "@/lib/import/bulk";
+import { normalizeImportEmail, normalizeImportPhone } from "@/lib/import/normalize";
+import { LOST_REASONS } from "@/lib/domain/crm/types";
 import { MOVE_STATUSES, PROSPECT_OUTCOMES } from "./types";
 
 const MSG = {
   name: "Liste adı 1–120 karakter olmalı",
   tooLong: "Çok uzun",
   empty: "Değişiklik yok",
+  identity: "Ad, soyad, kurum, telefon ya da e-postadan en az biri gerekli",
+  phone: "Geçerli bir telefon numarası girin",
+  email: "Geçerli bir e-posta adresi girin",
+  list: "Bir soğuk liste seçin",
+  lostReason: "Kayıp nedeni seçin",
 } as const;
 
 /** Liste adı sınırı (SQL: crm_prospect_lists_name_check). */
@@ -78,6 +85,45 @@ export const prospectConvertSchema = z.object({
   addNote: z.boolean().default(false),
 });
 export type ProspectConvertInput = z.input<typeof prospectConvertSchema>;
+
+/**
+ * POST /api/crm/prospect-lists/{id}/prospects — listeye TEK kişiyi elle ekleme ("Kişi ekle"). Alanlar içe aktarmayla
+ * aynı (ham telefon / e-posta; normalize değeri sunucu hesaplar). İçe aktarmadan farkı: elle girilen telefon / e-posta
+ * geçerli olmalı (içe aktarmada geçersiz değer ham olarak saklanır), en az bir kimlik alanı dolu olmalı
+ * (SQL: crm_prospects_identity_check). Aynı listede aynı telefon / e-posta → 409 PROSPECT_DUPLICATE (benzersiz dizin).
+ */
+export const prospectCreateSchema = z
+  .object({
+    firstName: text(IMPORT_FIELD_LIMITS.firstName).default(""),
+    lastName: text(IMPORT_FIELD_LIMITS.lastName).default(""),
+    organization: text(IMPORT_FIELD_LIMITS.organization).default(""),
+    phoneRaw: text(IMPORT_FIELD_LIMITS.phoneRaw).default(""),
+    emailRaw: text(IMPORT_FIELD_LIMITS.emailRaw).default(""),
+    city: text(IMPORT_FIELD_LIMITS.city).default(""),
+    district: text(IMPORT_FIELD_LIMITS.district).default(""),
+    branch: text(IMPORT_FIELD_LIMITS.branch).default(""),
+    note: text(IMPORT_FIELD_LIMITS.note).default(""),
+  })
+  .superRefine((v, ctx) => {
+    const filled = (s: string) => s.trim().length > 0;
+    if (![v.firstName, v.lastName, v.organization, v.phoneRaw, v.emailRaw].some(filled)) {
+      ctx.addIssue({ code: "custom", path: ["organization"], message: MSG.identity });
+    }
+    if (filled(v.phoneRaw) && !normalizeImportPhone(v.phoneRaw)) ctx.addIssue({ code: "custom", path: ["phoneRaw"], message: MSG.phone });
+    if (filled(v.emailRaw) && !normalizeImportEmail(v.emailRaw)) ctx.addIssue({ code: "custom", path: ["emailRaw"], message: MSG.email });
+  });
+export type ProspectCreateInput = z.input<typeof prospectCreateSchema>;
+export type ProspectCreateValues = z.output<typeof prospectCreateSchema>;
+
+/**
+ * POST /api/crm/leads/{id}/cold-list — "Soğuk listeye geri gönder". Aday SİLİNMEZ: "Satış olmadı" (OLUMSUZ) olur,
+ * bu yüzden kayıp nedeni zorunlu (aday statü kuralı); kişi seçilen listeye "Aranmadı" olarak döner.
+ */
+export const leadToColdListSchema = z.object({
+  listId: z.uuid(MSG.list),
+  lostReason: z.enum(LOST_REASONS, MSG.lostReason),
+});
+export type LeadToColdListInput = z.input<typeof leadToColdListSchema>;
 
 /** GET /api/crm/prospects?listId&page&size */
 export const PROSPECT_PAGE_MAX = 1000;

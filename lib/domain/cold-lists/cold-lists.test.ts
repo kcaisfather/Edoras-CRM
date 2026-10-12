@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ImportRecord } from "@/lib/import/records";
-import { prospectConvertSchema, prospectListCreateSchema, prospectPatchSchema, prospectQuerySchema } from "./schemas";
+import {
+  leadToColdListSchema,
+  prospectConvertSchema,
+  prospectCreateSchema,
+  prospectListCreateSchema,
+  prospectPatchSchema,
+  prospectQuerySchema,
+} from "./schemas";
 import type { Prospect } from "./types";
 import {
   callableProspects,
@@ -129,5 +136,53 @@ describe("şemalar", () => {
     const listId = "00000000-0000-4000-8000-000000000001";
     expect(prospectQuerySchema.parse({ listId })).toEqual({ listId, page: 0, size: 1000 });
     expect(prospectQuerySchema.safeParse({ listId, size: "5000" }).success).toBe(false);
+  });
+});
+
+describe("Kişi ekle şeması", () => {
+  it("boş alanlar \"\" olur; tek kimlik alanı yeter", () => {
+    expect(prospectCreateSchema.parse({ organization: "Kurum" })).toEqual({
+      firstName: "",
+      lastName: "",
+      organization: "Kurum",
+      phoneRaw: "",
+      emailRaw: "",
+      city: "",
+      district: "",
+      branch: "",
+      note: "",
+    });
+    expect(prospectCreateSchema.safeParse({ phoneRaw: "0532 000 00 01" }).success).toBe(true);
+  });
+
+  it("kimliksiz kişi (yalnız şehir / not) reddedilir", () => {
+    const r = prospectCreateSchema.safeParse({ city: "İstanbul", note: "fuar" });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.path).toEqual(["organization"]);
+    expect(prospectCreateSchema.safeParse({ firstName: "   " }).success).toBe(false);
+  });
+
+  it("geçersiz telefon / e-posta reddedilir (içe aktarmanın aksine ham saklanmaz)", () => {
+    const phone = prospectCreateSchema.safeParse({ firstName: "Ali", phoneRaw: "12" });
+    expect(phone.success).toBe(false);
+    expect(phone.error?.issues.map((i) => i.path[0])).toEqual(["phoneRaw"]);
+    const email = prospectCreateSchema.safeParse({ firstName: "Ali", emailRaw: "ali@yok" });
+    expect(email.error?.issues.map((i) => i.path[0])).toEqual(["emailRaw"]);
+    expect(prospectCreateSchema.safeParse({ firstName: "Ali", emailRaw: "Ali@Ornek.com" }).success).toBe(true);
+  });
+
+  it("uzunluk sınırları içe aktarmayla aynı", () => {
+    expect(prospectCreateSchema.safeParse({ organization: "x".repeat(201) }).success).toBe(false);
+    expect(prospectCreateSchema.safeParse({ organization: "x".repeat(200) }).success).toBe(true);
+  });
+});
+
+describe("Soğuk listeye geri gönder şeması", () => {
+  const listId = "00000000-0000-4000-8000-000000000001";
+  it("liste ve kayıp nedeni zorunlu", () => {
+    expect(leadToColdListSchema.parse({ listId, lostReason: "OTHER" })).toEqual({ listId, lostReason: "OTHER" });
+    expect(leadToColdListSchema.safeParse({ listId }).success).toBe(false);
+    expect(leadToColdListSchema.safeParse({ listId: "liste", lostReason: "OTHER" }).success).toBe(false);
+    expect(leadToColdListSchema.safeParse({ listId, lostReason: "FIYAT" }).success).toBe(false);
   });
 });

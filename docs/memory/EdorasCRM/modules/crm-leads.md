@@ -19,6 +19,7 @@ DB: `crm_leads`, `crm_notes` (migration `crm_leads`).
 - Aktörler: statü TEKLIF_VERILDI / SATIS_OLDU'ya geçince sunucu oturumdaki personeli `offer_by` / `sold_by`'a yazar
   (gövdeden okunmaz; `crm_leads_actor` tetikleyicisi görev tamamlama gibi SQL yollarını da `updated_by`'dan doldurur,
   satıştan çıkınca `sold_by` silinir). DTO `offerBy/offerByName/soldBy/soldByName`; detayda "Teklifi veren / Satışı yapan".
+- Aday panelinde "Soğuk listeye geri gönder" (aday "Satış olmadı" olur, silinmez) → [cold-lists-import.md](cold-lists-import.md).
 - İçe aktarma: Adaylar → "İçe aktar" (sunucu `dryRun` raporu, sonra onay) → [cold-lists-import.md](cold-lists-import.md).
 - Satış Analizleri: satış hunisi, aylık / müşteri kırılımları.
 - **Teklif / satış kuralları (kurucu, 2026-10-05):** teklif verildiyse teklif tutarı, satışta satış tutarı + firma / fatura

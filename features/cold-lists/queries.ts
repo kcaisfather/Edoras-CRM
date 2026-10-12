@@ -14,6 +14,7 @@ export const coldListKeys = {
   all: [...crmKeys.all, "coldLists"] as const,
   lists: () => [...coldListKeys.all, "lists"] as const,
   prospects: (listId: string) => [...coldListKeys.all, "prospects", listId] as const,
+  leadOrigin: (leadId: string) => [...coldListKeys.all, "leadOrigin", leadId] as const,
 };
 
 /** Görevlerim sorgularının kökü (features/tasks → taskKeys.all). Kişinin sonucu değişince görevler yeniden türetilir. */
@@ -26,6 +27,16 @@ export function useProspectLists(enabled = true) {
   return useQuery({
     queryKey: coldListKeys.lists(),
     queryFn: ({ signal }) => coldListsApi.lists(signal),
+    enabled,
+    staleTime: 60 * 1000,
+  });
+}
+
+/** Adayın geldiği soğuk listeler ("Sıcağa taşı" ile açıldıysa; "Soğuk listeye geri gönder" penceresi önerir). */
+export function useLeadOriginLists(leadId: string, enabled = true) {
+  return useQuery({
+    queryKey: coldListKeys.leadOrigin(leadId),
+    queryFn: ({ signal }) => coldListsApi.leadOriginLists(leadId, signal),
     enabled,
     staleTime: 60 * 1000,
   });

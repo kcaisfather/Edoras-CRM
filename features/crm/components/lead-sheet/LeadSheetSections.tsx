@@ -62,6 +62,7 @@ export function LeadActionRow({ lead, title, actions }: { lead: CrmLead; title: 
         </Button>
       )}
       <SendSurveyButton lead={lead} actions={actions} />
+      {actions.renderSheetActions?.(lead)}
       <CrmContactMenu target={contactTargetFor(lead, title, canSeeFinancials)} showLabel />
     </div>
   );

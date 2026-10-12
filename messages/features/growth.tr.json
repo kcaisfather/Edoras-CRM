@@ -98,6 +98,47 @@
       "confirm": "Aday oluştur",
       "success": "{name} CRM'e taşındı.",
       "failed": "Aday oluşturulamadı: {error}"
+    },
+    "add": {
+      "button": "Kişi ekle",
+      "title": "Listeye kişi ekle",
+      "description": "\"{list}\" listesine tek kişi eklenir; \"Aranmadı\" olarak Görevlerim'deki soğuk liste aramalarına girer.",
+      "fields": {
+        "firstName": "Ad",
+        "lastName": "Soyad",
+        "organization": "Kurum",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "city": "Şehir",
+        "district": "İlçe",
+        "branch": "Program / tür",
+        "note": "Not"
+      },
+      "identityHint": "Ad, soyad, kurum, telefon ya da e-postadan en az biri gerekli.",
+      "invalidPhone": "Geçerli bir telefon numarası girin.",
+      "invalidEmail": "Geçerli bir e-posta adresi girin.",
+      "cancel": "Vazgeç",
+      "submit": "Ekle",
+      "success": "{name} listeye eklendi.",
+      "failed": "Kişi eklenemedi: {error}"
+    },
+    "returnToList": {
+      "button": "Soğuk listeye geri gönder",
+      "title": "Soğuk listeye geri gönder",
+      "description": "Aday silinmez: statüsü \"Satış olmadı\" olur, notları ve geçmişi kalır. Kişi seçtiğiniz listeye \"Aranmadı\" olarak döner ve Görevlerim'deki soğuk liste aramalarına girer.",
+      "list": "Soğuk liste",
+      "listPlaceholder": "Liste seçin",
+      "origin": "geldiği liste",
+      "noLists": "Henüz soğuk liste yok; önce Soğuk Listeler ekranında bir liste içe aktarın.",
+      "listsError": "Soğuk listeler okunamadı.",
+      "restoreNote": "Kişi bu listeden gelmiş: \"CRM'e taşındı\" işareti kaldırılır, aynı satır yeniden aranacaklara döner.",
+      "newNote": "Listeye adayın bilgileriyle yeni kişi eklenir.",
+      "lostReason": "Kayıp nedeni",
+      "lostReasonPlaceholder": "Neden seçin",
+      "cancel": "Vazgeç",
+      "confirm": "Geri gönder",
+      "success": "{name} \"{list}\" listesine geri gönderildi.",
+      "failed": "Geri gönderilemedi: {error}"
     }
   },
   "import": {

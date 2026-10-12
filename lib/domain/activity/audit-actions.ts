@@ -51,6 +51,8 @@ export const AUDIT_ACTIONS = [
   "PROSPECT_UPDATED",
   "PROSPECT_DELETED",
   "PROSPECT_CONVERTED",
+  "PROSPECT_CREATED",
+  "LEAD_RETURNED_TO_COLD_LIST",
   "LEADS_IMPORTED",
   // Anketler: e-posta / telefon / yorum yazılmaz; kanal ve bağlı aday / kurum kimliği yeter. Müşterinin (herkese açık
   // sayfadan) yanıtı işlem kaydına yazılmaz — personel işlemi değildir ve kişisel veri taşır.

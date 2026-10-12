@@ -149,6 +149,8 @@
       "PROSPECT_UPDATED": "Soğuk liste kişisi güncellendi",
       "PROSPECT_DELETED": "Soğuk liste kişisi silindi",
       "PROSPECT_CONVERTED": "Kişi sıcak adaya taşındı",
+      "PROSPECT_CREATED": "Soğuk listeye kişi eklendi",
+      "LEAD_RETURNED_TO_COLD_LIST": "Aday soğuk listeye geri gönderildi",
       "LEADS_IMPORTED": "Adaylar içe aktarıldı",
       "SURVEY_INVITATION_CREATED": "Anket daveti oluşturuldu",
       "SURVEY_INVITATION_SENT": "Anket daveti gönderildi",

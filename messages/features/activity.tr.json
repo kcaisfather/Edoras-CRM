@@ -59,6 +59,7 @@
       "PERMISSION_PRESET_CHANGED": "Yetki rolü düzenlendi",
       "PERMISSION_PRESET_DELETED": "Yetki rolü silindi",
       "TEACHER_CREDENTIALS_RESET": "Öğretmen şifresi yenilendi",
+      "TEACHER_PASSWORD_SET": "Öğretmen şifresi belirlendi (elle)",
       "STUDENT_DELETED": "Öğrenci silindi",
       "STUDENT_ACTIVATED": "Öğrenci aktifleştirildi",
       "STUDENT_DEACTIVATED": "Öğrenci pasifleştirildi",

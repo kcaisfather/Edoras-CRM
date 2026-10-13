@@ -189,7 +189,7 @@ export function InstitutionEventsList() {
         {data && data.unavailable.length > 0 ? (
           <CoverageNote>
             {t("events.unavailable", {
-              // 22 önemli işlem türü tek kaynaktan (activity_logs) gelir — okunamazsa tek ad yazılır.
+              // 23 önemli işlem türü tek kaynaktan (activity_logs) gelir — okunamazsa tek ad yazılır.
               sources: [
                 ...data.unavailable.filter((k) => !isImportantEventType(k)).map((k) => t(`events.types.${k}`)),
                 ...(data.unavailable.some(isImportantEventType) ? [t("events.unavailableImportant")] : []),

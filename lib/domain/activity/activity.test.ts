@@ -56,6 +56,7 @@ describe("institutionEventsQuerySchema", () => {
 describe("önemli işlemler (activity_logs)", () => {
   it("eylem ↔ tür eşlemesi; yayın etkinlik türüyle çakışmaz; bilinmeyen eylem düşer", () => {
     expect(actionToEventType("teacher_removed")).toBe("TEACHER_REMOVED");
+    expect(actionToEventType("teacher_password_set")).toBe("TEACHER_PASSWORD_SET");
     expect(actionToEventType("exam_results_published")).toBe("EXAM_RESULTS_PUBLISHED_BY");
     expect(actionToEventType("bilinmeyen_eylem")).toBeNull();
     for (const t of IMPORTANT_EVENT_TYPES) expect(actionToEventType(eventTypeToAction(t))).toBe(t);

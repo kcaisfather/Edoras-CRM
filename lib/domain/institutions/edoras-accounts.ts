@@ -93,7 +93,18 @@ export const ADMIN_ACCOUNT_MESSAGES = {
   emailRequired: "E-posta zorunlu",
   emailInvalid: "Geçerli bir e-posta adresi girin",
   emailReserved: "@edoras.com ve @internal.local adresleri Edoras'ta telefon / TC girişine ayrılmış; giriş e-postası olamaz",
+  passwordSpaces: "Şifrenin başında ya da sonunda boşluk olamaz",
+  passwordTooShort: "Şifre en az 6 karakter olmalı",
+  passwordTooLong: "Şifre çok uzun: en fazla 72 karakter (Türkçe harfler iki sayılır)",
 } as const;
+
+/**
+ * Yöneticinin yazdığı şifre kuralı — edoras-admin `lib/teacher-password-policy.ts` ile AYNI: en az 6 karakter
+ * (Edoras Hesabım formunun alt sınırı), en çok 72 BAYT (Supabase Auth bcrypt'i 72 bayttan sonrasını yok sayar; Türkçe
+ * harf 2 bayt), başta/sonda boşluk REDDEDİLİR (kırpılırsa iletilen şifre ile yazılan ayrışır).
+ */
+export const ADMIN_PASSWORD_MIN_LENGTH = 6;
+export const ADMIN_PASSWORD_MAX_BYTES = 72;
 
 /** PATCH /api/institutions/{id}/admins/{userId} — yeni giriş e-postası (sunucu küçük harfe çevirir). */
 export const adminEmailSchema = z.object({
@@ -116,8 +127,29 @@ export const adminActiveSchema = z.object({
 });
 export type AdminActiveInput = z.infer<typeof adminActiveSchema>;
 
-/** POST /api/institutions/{id}/admins/{userId}/password — gövde boş. */
-export const adminPasswordResetSchema = z.object({}).strict();
+/**
+ * POST /api/institutions/{id}/admins/{userId}/password. `password` isteğe bağlı (2026-10-13): verilirse o yazılır,
+ * boş / yoksa güçlü geçici şifre üretilir. Gönderim (e-posta / SMS) YOK — şifre yanıtta bir kez döner, CRM personeli
+ * iletir. Boş metin "yok" sayılır; yalnız boşluktan oluşan metin kural ihlalidir.
+ */
+export const adminPasswordResetSchema = z
+  .object({
+    password: z
+      .string()
+      .optional()
+      .transform((value) => (value === "" ? undefined : value))
+      .superRefine((value, ctx) => {
+        if (value === undefined) return;
+        if (value.trim() !== value) ctx.addIssue({ code: "custom", message: ADMIN_ACCOUNT_MESSAGES.passwordSpaces });
+        else if (value.length < ADMIN_PASSWORD_MIN_LENGTH)
+          ctx.addIssue({ code: "custom", message: ADMIN_ACCOUNT_MESSAGES.passwordTooShort });
+        else if (new TextEncoder().encode(value).length > ADMIN_PASSWORD_MAX_BYTES)
+          ctx.addIssue({ code: "custom", message: ADMIN_ACCOUNT_MESSAGES.passwordTooLong });
+      }),
+  })
+  .strict();
+export type AdminPasswordResetInput = z.input<typeof adminPasswordResetSchema>;
+export type AdminPasswordResetOutput = z.output<typeof adminPasswordResetSchema>;
 
 /** Şifre sıfırlamanın yanıtı: bir kez gösterilir, hiçbir yerde saklanmaz. */
 export interface AdminPasswordReset {
@@ -125,6 +157,8 @@ export interface AdminPasswordReset {
   loginIdentifier: string;
   loginKind: EdorasLoginKind;
   temporaryPassword: string;
+  /** Şifreyi CRM personeli yazdı (üretilmedi). */
+  passwordChosen: boolean;
   panelUrl: string;
 }
 

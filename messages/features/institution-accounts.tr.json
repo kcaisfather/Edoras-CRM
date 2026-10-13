@@ -33,10 +33,17 @@
     },
     "password": {
       "title": "Şifre sıfırla",
-      "description": "{name} için yeni geçici şifre üretilir.",
+      "description": "{name} için yeni şifre belirlenir: siz yazın ya da boş bırakın, güçlü geçici şifre üretilsin.",
+      "custom": "Yeni şifre (isteğe bağlı)",
+      "customPlaceholder": "Boş = otomatik üret",
+      "customHint": "En az 6 karakter; başta ya da sonda boşluk olamaz. Boş bırakırsanız 12 karakterlik şifre üretilir.",
+      "show": "Şifreyi göster",
+      "hide": "Şifreyi gizle",
       "effectNow": "Eski şifreyle giriş hemen biter; giriş adresi değişmez.",
       "effectOnce": "Yeni şifre yalnız bir kez gösterilir ve hiçbir yerde saklanmaz.",
+      "effectNoDelivery": "Şifre e-posta ya da SMS ile gönderilmez; yöneticiye siz iletirsiniz.",
       "submit": "Yeni şifre üret",
+      "submitCustom": "Şifreyi kaydet",
       "resultTitle": "Yeni giriş bilgisi",
       "resultDescription": "{name} artık bu bilgilerle girer.",
       "login": {
@@ -45,6 +52,7 @@
         "tc": "Giriş TC kimlik no"
       },
       "password": "Geçici şifre",
+      "passwordChosen": "Şifre",
       "panel": "Panel adresi",
       "copy": "Kopyala",
       "copyAll": "Tümünü kopyala",

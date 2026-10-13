@@ -100,8 +100,23 @@ describe("istek şemaları", () => {
     expect(adminActiveSchema.safeParse({ active: "false" }).success).toBe(false);
     expect(adminActiveSchema.safeParse({}).success).toBe(false);
   });
-  it("şifre sıfırlama gövdesi boş olmalı", () => {
-    expect(adminPasswordResetSchema.safeParse({}).success).toBe(true);
-    expect(adminPasswordResetSchema.safeParse({ password: "x" }).success).toBe(false);
+  it("şifre sıfırlama: şifre isteğe bağlı, boş metin 'yok' sayılır", () => {
+    expect(adminPasswordResetSchema.parse({})).toEqual({ password: undefined });
+    expect(adminPasswordResetSchema.parse({ password: "" })).toEqual({ password: undefined });
+    expect(adminPasswordResetSchema.parse({ password: "Mudur2026" })).toEqual({ password: "Mudur2026" });
+    expect(adminPasswordResetSchema.safeParse({ other: 1 }).success).toBe(false);
+  });
+
+  it("şifre sıfırlama: Edoras paneliyle aynı kural (6 karakter – 72 bayt, kenarda boşluk yok)", () => {
+    expect(adminPasswordResetSchema.safeParse({ password: "abc12" }).success).toBe(false);
+    expect(adminPasswordResetSchema.safeParse({ password: "abc123" }).success).toBe(true);
+    expect(adminPasswordResetSchema.safeParse({ password: " abc123" }).success).toBe(false);
+    expect(adminPasswordResetSchema.safeParse({ password: "abc123 " }).success).toBe(false);
+    expect(adminPasswordResetSchema.safeParse({ password: "      " }).success).toBe(false);
+    expect(adminPasswordResetSchema.safeParse({ password: "a".repeat(72) }).success).toBe(true);
+    expect(adminPasswordResetSchema.safeParse({ password: "a".repeat(73) }).success).toBe(false);
+    // Türkçe harf UTF-8'de 2 bayt: 37 × "ş" = 74 bayt.
+    expect(adminPasswordResetSchema.safeParse({ password: "ş".repeat(36) }).success).toBe(true);
+    expect(adminPasswordResetSchema.safeParse({ password: "ş".repeat(37) }).success).toBe(false);
   });
 });

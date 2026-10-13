@@ -11,6 +11,8 @@ import {
   AtSign,
   Copy,
   ExternalLink,
+  Eye,
+  EyeOff,
   IdCard,
   KeyRound,
   Loader2,
@@ -32,12 +34,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { apiErrorCode } from "@/lib/api/errors";
 import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import {
   adminEmailSchema,
+  adminPasswordResetSchema,
   leavesNoActiveAdmin,
   type AdminEmailInput,
   type AdminPasswordReset,
@@ -223,6 +227,23 @@ function AdminPasswordDialog({ institution, admin, name, onOpenChange }: Account
   const mutation = useResetAdminPassword(institution.id);
   const result = mutation.data;
   const pending = mutation.isPending;
+  // İsteğe bağlı "şifreyi ben yazayım" (2026-10-13): boş = güçlü geçici şifre üretilir.
+  const [customPassword, setCustomPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+
+  const submit = () => {
+    const parsed = adminPasswordResetSchema.safeParse({ password: customPassword });
+    if (!parsed.success) {
+      setFieldError(parsed.error.issues[0]?.message ?? t("password.error"));
+      return;
+    }
+    setFieldError(null);
+    mutation.mutate(
+      { userId: admin.userId, input: { password: customPassword } },
+      { onSuccess: () => setCustomPassword("") }
+    );
+  };
 
   return (
     <Dialog open onOpenChange={(next) => (pending ? undefined : onOpenChange(next))}>
@@ -234,10 +255,45 @@ function AdminPasswordDialog({ institution, admin, name, onOpenChange }: Account
         {result ? (
           <PasswordResult result={result} />
         ) : (
-          <Effects
-            items={[t("password.effectNow"), t("password.effectOnce")]}
-            warning={admin.otherMembershipCount > 0 ? t("otherMemberships", { count: admin.otherMembershipCount }) : null}
-          />
+          <>
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-custom-password">{t("password.custom")}</Label>
+              <div className="relative">
+                <Input
+                  id="admin-custom-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  spellCheck={false}
+                  value={customPassword}
+                  onChange={(event) => {
+                    setCustomPassword(event.target.value);
+                    setFieldError(null);
+                  }}
+                  placeholder={t("password.customPlaceholder")}
+                  disabled={pending}
+                  aria-invalid={fieldError ? true : undefined}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? t("password.hide") : t("password.show")}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {fieldError ? (
+                <p className="text-xs text-destructive">{fieldError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("password.customHint")}</p>
+              )}
+            </div>
+            <Effects
+              items={[t("password.effectNow"), t("password.effectOnce"), t("password.effectNoDelivery")]}
+              warning={admin.otherMembershipCount > 0 ? t("otherMemberships", { count: admin.otherMembershipCount }) : null}
+            />
+          </>
         )}
         {mutation.error ? (
           <Alert variant="destructive">
@@ -253,9 +309,9 @@ function AdminPasswordDialog({ institution, admin, name, onOpenChange }: Account
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
                 {tCommon("cancel")}
               </Button>
-              <Button onClick={() => mutation.mutate(admin.userId)} disabled={pending} aria-busy={pending}>
+              <Button onClick={submit} disabled={pending} aria-busy={pending}>
                 {pending ? <Loader2 className="animate-spin" /> : <KeyRound />}
-                {t("password.submit")}
+                {customPassword ? t("password.submitCustom") : t("password.submit")}
               </Button>
             </>
           )}
@@ -277,13 +333,14 @@ function PasswordResult({ result }: { result: AdminPasswordReset }) {
     }
   };
   const loginLabel = t(`login.${result.loginKind}`);
+  const passwordLabel = result.passwordChosen ? t("passwordChosen") : t("password");
   const block = t("copyBlock", { url: result.panelUrl, login: result.loginIdentifier, password: result.temporaryPassword });
   const LoginIcon = LOGIN_KIND_ICON[result.loginKind];
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <CopyItem icon={<LoginIcon className="h-4 w-4" />} label={loginLabel} value={result.loginIdentifier} onCopy={copy} copyLabel={t("copy")} />
-        <CopyItem icon={<KeyRound className="h-4 w-4" />} label={t("password")} value={result.temporaryPassword} mono onCopy={copy} copyLabel={t("copy")} />
+        <CopyItem icon={<KeyRound className="h-4 w-4" />} label={passwordLabel} value={result.temporaryPassword} mono onCopy={copy} copyLabel={t("copy")} />
         <CopyItem
           icon={<ExternalLink className="h-4 w-4" />}
           label={t("panel")}

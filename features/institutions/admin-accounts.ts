@@ -8,6 +8,7 @@ import type {
   AdminEmailChangeResult,
   AdminEmailInput,
   AdminPasswordReset,
+  AdminPasswordResetInput,
 } from "@/lib/domain/institutions/edoras-accounts";
 import { institutionKeys } from "./queries";
 
@@ -21,8 +22,8 @@ const adminBase = (institutionId: string, userId: string) =>
 export const adminAccountsApi = {
   changeEmail: (institutionId: string, userId: string, input: AdminEmailInput) =>
     apiRequest<AdminEmailChangeResult>(adminBase(institutionId, userId), { method: "PATCH", body: input }),
-  resetPassword: (institutionId: string, userId: string) =>
-    apiRequest<AdminPasswordReset>(`${adminBase(institutionId, userId)}/password`, { method: "POST", body: {} }),
+  resetPassword: (institutionId: string, userId: string, input: AdminPasswordResetInput) =>
+    apiRequest<AdminPasswordReset>(`${adminBase(institutionId, userId)}/password`, { method: "POST", body: input }),
   setActive: (institutionId: string, userId: string, input: AdminActiveInput) =>
     apiRequest<AdminActiveChangeResult>(`${adminBase(institutionId, userId)}/active`, { method: "PATCH", body: input }),
 };
@@ -47,7 +48,8 @@ export function useChangeAdminEmail(institutionId: string) {
 
 export function useResetAdminPassword(institutionId: string) {
   return useMutation({
-    mutationFn: (userId: string) => adminAccountsApi.resetPassword(institutionId, userId),
+    mutationFn: ({ userId, input }: { userId: string; input: AdminPasswordResetInput }) =>
+      adminAccountsApi.resetPassword(institutionId, userId, input),
   });
 }
 

@@ -12,6 +12,7 @@ import {
   type AdminEmailChangeResult,
   type AdminEmailInput,
   type AdminPasswordReset,
+  type AdminPasswordResetOutput,
 } from "@/lib/domain/institutions/edoras-accounts";
 import { recordAudit } from "./audit";
 import { getEdorasInstitution, setEdorasAdminActive, setEdorasAdminPassword, updateEdorasAdminEmail } from "./edoras";
@@ -46,21 +47,31 @@ export async function changeAdminEmail(
   return result;
 }
 
-/** Yeni geçici şifre (demo şifresiyle aynı üretici). Yanıtta bir kez döner; hiçbir yerde saklanmaz, loglanmaz. */
-export async function resetAdminPassword(institutionId: string, userId: string, staff: StaffContext): Promise<AdminPasswordReset> {
-  const temporaryPassword = generateTemporaryPassword((max) => randomInt(max));
+/**
+ * Yeni şifre: CRM personeli yazdıysa o (2026-10-13 — Edoras panelinden yönetici şifresi belirlenmez, yalnız buradan),
+ * yoksa güçlü geçici şifre (demo şifresiyle aynı üretici). Yanıtta bir kez döner; hiçbir yerde saklanmaz, loglanmaz.
+ */
+export async function resetAdminPassword(
+  institutionId: string,
+  userId: string,
+  input: AdminPasswordResetOutput,
+  staff: StaffContext
+): Promise<AdminPasswordReset> {
+  const passwordChosen = input.password !== undefined;
+  const temporaryPassword = input.password ?? generateTemporaryPassword((max) => randomInt(max));
   const { authEmail } = await setEdorasAdminPassword(institutionId, userId, temporaryPassword);
   await recordAudit(staff, {
     action: "EDORAS_ADMIN_PASSWORD_RESET",
     entityType: "institution",
     entityId: institutionId,
     entityLabel: await institutionLabel(institutionId),
-    details: { userId },
+    details: { userId, passwordChosen },
   });
   return {
     loginIdentifier: authEmail ? loginIdentifierFor(authEmail) : "",
     loginKind: edorasLoginKind(authEmail),
     temporaryPassword,
+    passwordChosen,
     panelUrl: EDORAS_PANEL_URL,
   };
 }

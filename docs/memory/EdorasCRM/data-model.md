@@ -3,7 +3,10 @@
 Kurallar üç katmanda: zod (form) → `/api` (sunucu) → **veritabanı** (CHECK + tetikleyici). Sunucu `service_role`
 kullandığı için RLS korumaz; kural mutlaka DB'de de durur. Tam kural tablosu: `README.md` → "Kurallar".
 
-## CRM projesi migration'ları (hepsi uygulandı, 2026-10-01)
+## CRM projesi migration'ları (hepsi canlıda — 2026-10-14 şemadan doğrulandı)
+
+Bazıları panel SQL Editor ile elle uygulandığı için MCP `list_migrations` geçmişinde yok (`crm_license_pricing`,
+`crm_demo_duration`); "uygulandı mı" sorusunu geçmiş listesiyle değil şemayla (tablo / sütun / kısıt / imza) yanıtla.
 
 | Dosya | İçerik |
 | --- | --- |
@@ -18,11 +21,10 @@ kullandığı için RLS korumaz; kural mutlaka DB'de de durur. Tam kural tablosu
 | `20260929230000_crm_reports` | `crm_report_subscriptions`, `crm_report_runs` |
 | `20261001090000_crm_invoice_provider_refs` | `crm_invoices.provider_ref` (Paraşüt satış faturası id, bir kez yazılır) + `provider_job` (süren iş) |
 | `20261005100000_crm_loss_actor` | `crm_leads`: kayıp nedeni 12'li küme (eski 6 değer dönüştürüldü), `lost_note` / `competitor` / `recall_at` (yalnız OLUMSUZ), `offer_by` / `sold_by` (+ `crm_leads_actor` tetikleyicisi); `crm_complete_task` yeni anahtarları kabul eder |
-| `20261005170000_crm_lead_sale_rules` | **CANLIYA UYGULANMADI (2026-10-05, kullanıcı onayı bekliyor).** `crm_leads_sale_rules` tetikleyicisi: Teklif verildi'ye geçişte / bu statüde tutar değişirken `offer_amount > 0`, Satış oldu'da `sale_amount > 0`, satışa geçişte aday UCRETLI + `billing_type` dolu kuruma bağlı; RPC `crm_record_lead_sale` (fatura profili + DEMO ise ücretliye geçiş ve satış tutarıyla 1 yıllık lisans + aday SATIS_OLDU, tek transaction) |
+| `20261005170000_crm_lead_sale_rules` | `crm_leads_sale_rules` tetikleyicisi: Teklif verildi'ye geçişte / bu statüde tutar değişirken `offer_amount > 0`, Satış oldu'da `sale_amount > 0`, satışa geçişte aday UCRETLI + `billing_type` dolu kuruma bağlı; RPC `crm_record_lead_sale` (fatura profili + DEMO ise ücretliye geçiş ve satış tutarıyla 1 yıllık lisans + aday SATIS_OLDU, tek transaction) |
 | `20261005190000_crm_license_pricing` (2026-10-05 panel SQL Editor ile elle uygulandı; MCP migration geçmişinde yok) | `crm_license_pricing` (tek liste fiyatı), `crm_licenses.list_price` / `discount_percent` (`crm_licenses_discount_check`: bedel = liste × (100 − %) / 100), faturalı lisans / ödeme düzeltilemez (`CRM_SALE_INVOICED`), bedel düzelince "Satış oldu" adayın `sale_amount`'ı (eski bedele eşitse) da düzelir |
-| `20261012120000_crm_demo_duration` | **CANLIYA ELLE UYGULANACAK — kod deploy'undan ÖNCE** (panel SQL Editor; migration ile deploy arasında demo açma / CRM'e kaydetme / satışla hesap açma çalışmaz → ikisi art arda). Demo süresi kurum bazlı (2026-10-12): `crm_institutions_demo_dates_check` = DEMO'da bitiş dolu ve > başlangıç (eski: tam 1 yıl; mevcut satırlar uyar); `crm_enroll_institution` 14 parametre (`p_demo_ends_on`, DEMO'da boşsa `CRM_DEMO_END_REQUIRED` — hazır süre yok), eski 13 parametreli imza DROP, revoke / grant yeniden. Bitişi sonradan değiştirmek ayrı fonksiyon değil: sunucu `updateDemoEnd` (ADMIN, `PATCH /api/institutions/{id}/demo`) |
-
-| `20261014120000_crm_kca_links` | **CANLIYA UYGULANMADI (2026-10-14; MCP `supabase-crm` bağlanamadı).** `crm_kca_links`: CRM personeli ↔ KCA Panel kullanıcısı (Turso `users.id`), personel başına tek, KCA hesabı başına tek (`crm_kca_links_kca_user_key`); `kca_password_fp` (KCA şifre özetinin SHA-256'sı, 64 onaltılık) — şifre değişince bağ düşer; personel silinince bağ da. Uygulanmadan Yönetim sayfaları 503 `CONFIG_MISSING` → [modules/management-kca.md](modules/management-kca.md) |
+| `20261012120000_crm_demo_duration` (panel SQL Editor ile elle uygulandı; MCP migration geçmişinde yok) | Demo süresi kurum bazlı (2026-10-12): `crm_institutions_demo_dates_check` = DEMO'da bitiş dolu ve > başlangıç (eski: tam 1 yıl; mevcut satırlar uyar); `crm_enroll_institution` 14 parametre (`p_demo_ends_on`, DEMO'da boşsa `CRM_DEMO_END_REQUIRED` — hazır süre yok), eski 13 parametreli imza DROP, revoke / grant yeniden. Bitişi sonradan değiştirmek ayrı fonksiyon değil: sunucu `updateDemoEnd` (ADMIN, `PATCH /api/institutions/{id}/demo`) |
+| `20261014120000_crm_kca_links` (2026-10-14 MCP `apply_migration` ile uygulandı) | `crm_kca_links`: CRM personeli ↔ KCA Panel kullanıcısı (Turso `users.id`), personel başına tek, KCA hesabı başına tek (`crm_kca_links_kca_user_key`); `kca_password_fp` (KCA şifre özetinin SHA-256'sı, 64 onaltılık) — şifre değişince bağ düşer; personel silinince bağ da. Uygulanmadan Yönetim sayfaları 503 `CONFIG_MISSING` → [modules/management-kca.md](modules/management-kca.md) |
 
 Hepsinde: RLS açık + politika yok (bilinçli; Supabase danışmanı "RLS Enabled No Policy" INFO verir, sorun değil),
 yalnız `service_role`'e grant, fonksiyonlar PUBLIC'ten revoke. Her dosyanın sonunda geri alma bloğu var.

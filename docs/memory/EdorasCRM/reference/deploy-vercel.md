@@ -3,7 +3,8 @@
 Durum (2026-10-01): **dağıtıldı** — Vercel ekibi `kamil-nissas-projects`, proje `edorascrm`, adres
 `https://edorascrm.vercel.app` (**GitHub push'u üretimi GÜNCELLEMEZ** — dağıtım CLI ile elle, bkz. "Yayın yöntemi";
 yerel klasör `vercel link` ile bağlı, `.vercel/` git dışı). Production env'leri eklendi: Supabase CRM (3), Edoras (2), `NEXT_PUBLIC_EDORAS_PANEL_URL`,
-`NEXT_PUBLIC_APP_URL=https://edorascrm.vercel.app`, `CRON_SECRET` (aynı değer yerel `.env.local`'da). **Eksik:** Resend
+`NEXT_PUBLIC_APP_URL=https://edorascrm.vercel.app`, `CRON_SECRET` (aynı değer yerel `.env.local`'da), KCA Turso (2,
+2026-10-14). **Eksik:** Resend
 (`RESEND_API_KEY`, `EMAIL_FROM`), `ACCOUNTANT_EMAIL`, `PARASUT_*`. Preview ortamına env eklenmedi (CLI dal adı istiyor).
 Özel alan adı bağlanınca `NEXT_PUBLIC_APP_URL`'i değiştirip yeniden dağıt. Framework: Next.js 16 (otomatik algılanır), build `next build`, Node 20+ (22 önerilir).
 `vercel.json` yalnız cron içerir. Tüm değişkenler **Production** (+ istenirse Preview) ortamına eklenir. `NEXT_PUBLIC_*`
@@ -20,6 +21,12 @@ kaldı (yeni uçlar 404). Yayın:
 2. `<yol>` içinde: `npx vercel deploy --prod --yes --scope kamil-nissas-projects` (scope verilmezse kişisel takımda arar).
 3. Doğrula: yeni bir ucun kimliksiz isteği **404 → 401** olmalı; `vercel inspect <url> --scope kamil-nissas-projects`.
 4. `git worktree remove <yol>`.
+
+**Commit yazarı Vercel ekibinde olmalı.** CLI, klasördeki git bilgisini (HEAD commit'i, yazarı) de gönderir; HEAD'in
+yazarı ekip üyesi değilse dağıtım **Blocked** kalır ("the commit author doesn't have permission…", `vercel inspect`'te
+`reason`) ve CLI bitmeden bekler. Bulut oturumunun (claude.ai/code) commit'leri `Claude <noreply@anthropic.com>`
+yazarlıdır → 2026-10-14 KCA commit'i (`8bb6295`) böyle takıldı. Çözüm: üstüne ekip üyesinin yazdığı bir commit (ör.
+hafıza güncellemesi) ve onu yayınla. `Co-Authored-By: Claude` satırı sorun değil, yalnız yazar alanına bakılır.
 
 Örnek: 2026-10-09 `2ff502b` → `dpl_51LNioBq8wy4QE5pnhfnvDBxg6sd` (`/api/institutions/<id>/modules` ve
 `/api/growth/institutions/<id>/staff-activity` 401).
@@ -45,7 +52,7 @@ kaldı (yeni uçlar 404). Yayın:
 | `ACCOUNTANT_EMAIL` | "Fatura kes → E-posta ile talep" (Resend de gerekir) | hayır |
 | `PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`, `PARASUT_COMPANY_ID` | "Platforma aktar" (beşi birden) | secret + şifre **evet** |
 | `PARASUT_PRODUCT_ID` | faturadaki hizmet (boşsa `EDORAS-LISANS` kodlu hizmet açılır) | hayır |
-| `KCA_TURSO_DATABASE_URL` + `KCA_TURSO_AUTH_TOKEN` | Yönetim (Yönetim Görevleri, Network, Toplantı Notları): KCA Panel'in Turso veritabanı — değerler KCA Panel Vercel projesindeki `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`. **Henüz eklenmedi (2026-10-14).** Yoksa sayfa "ayarlanmamış" der | token **evet** |
+| `KCA_TURSO_DATABASE_URL` + `KCA_TURSO_AUTH_TOKEN` | Yönetim (Yönetim Görevleri, Network, Toplantı Notları): KCA Panel'in Turso veritabanı — değerler KCA Panel Vercel projesindeki `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`. **Production'a eklendi (2026-10-14; URL Config, token Secret).** Yoksa sayfa "ayarlanmamış" der | token **evet** |
 | `KCA_EDORAS_PROJECT_ID` | Edoras ana projesinin KCA kimliği (boşsa adı "Edoras" olan tek ana proje) | hayır |
 
 ## Dağıtım sonrası

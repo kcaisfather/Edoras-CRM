@@ -74,6 +74,10 @@ adı, telefon, e-posta YAZILMAZ (network ve toplantı notu KCA Panel'de kişiye 
 (`TURSO_AUTH_TOKEN`), isteğe bağlı `KCA_EDORAS_PROJECT_ID`. URL yoksa sayfa "ayarlanmamış" der (`NOT_CONFIGURED`), uçlar
 503 `CONFIG_MISSING`. Turso'ya ulaşılamazsa 502 `KCA_UNAVAILABLE` (Turso yanıt gövdesi / SQL mesajı taşınmaz).
 
+Canlı (2026-10-14): migration CRM projesine uygulandı, iki Turso değişkeni Vercel Production'da (`KCA_EDORAS_PROJECT_ID`
+verilmedi → kök adı "Edoras" olan tek ana proje), üretime CLI ile yayınlandı. Hesap bağını her personel kendisi kurar
+(Yönetim → KCA Panel e-posta + şifre).
+
 ## Yapılmayanlar (2026-10-14)
 
 - Toplantı notunu yapıştırınca aksiyon tablosundan toplu görev / kişi çıkaran önizleme (KCA Panel `meeting-import.js`)

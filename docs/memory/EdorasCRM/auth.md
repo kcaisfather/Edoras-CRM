@@ -7,7 +7,8 @@
 | `ADMIN` | her şey: ücretliye geçiş, ödeme, fatura, maliyet, aktivite, kurallar, raporlar, ekip | — |
 | `CRM_AGENT` | demo açar, iletişim düzenler, aday / not / görev / soğuk liste / anket | tutar (teklif, satış, tahsilat, lisans bedeli), TC/VKN, adres |
 
-- Tek yönetici (2026-10-01): `kamil@edorasapp.ai` (ADMIN). Yeni personel: Ayarlar → Ekip ya da `npm run staff:add`.
+- Yöneticiler (ADMIN, 2026-10-14): Kamil, Ceren Celbek, Eren Çolak; güncel liste `crm_staff` tablosunda. Yeni personel:
+  Ayarlar → Ekip ya da `npm run staff:add` (şifre en az 8 karakter; kullanıcı varsa verilen şifreyi ÜZERİNE yazar).
 - Rol bilinmiyorsa en dar yetki (`panelRoleOf` → CRM_AGENT, fail-closed).
 
 ## Koruma nerede

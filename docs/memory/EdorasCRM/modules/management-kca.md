@@ -4,7 +4,7 @@ Kurucu isteği (2026-10-14): "kca-panel.vercel.app ile burayı birleştir; navba
 notları; Turso'daki backend burada kullanılsın, KCA Panel ile aynı dataları işlesin, orada yapılan toplantı notlarını
 buradan göreyim; Edoras etiketi olmayan hiçbir görevi / toplantı notunu / network'ü görmesin."
 
-Ekran: menü **Yönetim** grubu → `/management/tasks`, `/management/network`, `/management/meetings` (açık kayıt URL'de:
+Ekran: menü **Yönetim** grubu (CRM grubunun altında — kurucu isteği 2026-10-14) → `/management/tasks`, `/management/network`, `/management/meetings` (açık kayıt URL'de:
 `?task=`, `?meeting=`). Uçlar: `/api/management/**` (hepsi `requireStaff()`). Sunucu: `lib/server/kca.ts` (bağlantı, bağ,
 işlem kaydı) + `lib/server/kca-store.ts` (kurallar, SQL) + `lib/server/kca-turso.ts` (Hrana HTTP istemcisi). Saf:
 `lib/domain/kca/{types,rules,markdown}.ts`. Ekran: `features/management/`. Metin: `messages/features/management.tr.json`.

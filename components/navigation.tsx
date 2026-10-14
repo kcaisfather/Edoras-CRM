@@ -58,14 +58,14 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-export type NavGroupKey = "main" | "management" | "crm" | "customers" | "sales" | "analysis" | "activity" | "operations";
+export type NavGroupKey = "main" | "crm" | "management" | "customers" | "sales" | "analysis" | "activity" | "operations";
 
 export interface NavGroup {
   key: NavGroupKey;
   /** Bölüm başlığı; ana grupta başlık yok. */
   labelKey?:
-    | "sidebarManagement"
     | "sidebarCrm"
+    | "sidebarManagement"
     | "sidebarCustomers"
     | "sidebarSales"
     | "sidebarAnalysis"
@@ -84,18 +84,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [{ href: "/dashboard", icon: LayoutDashboard, translationKey: "dashboard" }],
   },
   {
-    // Yönetim (2026-10-14): KCA Panel (kca-panel.vercel.app) ile ortak veri — görevler, toplantı notları, network KCA
-    // Panel'in Turso veritabanından, YALNIZ Edoras etiketli. Her rol görür; ne göreceğini kişinin bağladığı KCA Panel
-    // hesabının yetkisi belirler (lib/server/kca.ts).
-    key: "management",
-    labelKey: "sidebarManagement",
-    items: [
-      { href: "/management/tasks", icon: SquareKanban, translationKey: "managementTasks" },
-      { href: "/management/network", icon: Users, translationKey: "managementNetwork" },
-      { href: "/management/meetings", icon: NotebookPen, translationKey: "managementMeetings" },
-    ],
-  },
-  {
     // CRM: adaylar, Görevlerim, soğuk listeler ve anketler (DeepSport ile aynı sıra; her iki rol de görür).
     key: "crm",
     labelKey: "sidebarCrm",
@@ -105,6 +93,18 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/crm/cold-lists", icon: Snowflake, translationKey: "crmColdLists" },
       { href: "/crm/surveys", icon: MessageSquareHeart, translationKey: "crmSurveys" },
       { href: "/crm/tickets", icon: LifeBuoy, translationKey: "crmTickets" },
+    ],
+  },
+  {
+    // Yönetim (2026-10-14): KCA Panel (kca-panel.vercel.app) ile ortak veri — görevler, toplantı notları, network KCA
+    // Panel'in Turso veritabanından, YALNIZ Edoras etiketli. Her rol görür; ne göreceğini kişinin bağladığı KCA Panel
+    // hesabının yetkisi belirler (lib/server/kca.ts). Menüde CRM grubunun altında (kurucu isteği, 2026-10-14).
+    key: "management",
+    labelKey: "sidebarManagement",
+    items: [
+      { href: "/management/tasks", icon: SquareKanban, translationKey: "managementTasks" },
+      { href: "/management/network", icon: Users, translationKey: "managementNetwork" },
+      { href: "/management/meetings", icon: NotebookPen, translationKey: "managementMeetings" },
     ],
   },
   {

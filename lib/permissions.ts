@@ -6,8 +6,10 @@ import type { CurrentUser, PanelRole } from "@/lib/domain/auth/types";
  * listeler, Anketler ve Satış Analizleri) açık — DeepSport'ta da CRM_AGENT soğuk listelere ve anketlere giriyordu; liste
  * silme yalnız ADMIN (DELETE /api/crm/prospect-lists/{id} 403). Tutarlar sunucuda boşaltılır, arayüzde FinancialOnly
  * gizler. Yalnız arayüz koruması — asıl koruma sunucuda (lib/api/server.ts → requireStaff({ role: "ADMIN" })).
+ * `/management` (Yönetim — KCA Panel ortak verisi) açık: görünen veriyi CRM rolü değil, kişinin şifresiyle bağladığı KCA
+ * Panel hesabının yetkisi belirler (yalnız Edoras etiketli kayıtlar; lib/server/kca.ts).
  */
-export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/growth/customers", "/settings"] as const;
+export const CRM_AGENT_PATHS = ["/dashboard", "/crm", "/institutions", "/growth/customers", "/settings", "/management"] as const;
 
 /**
  * CRM_AGENT_PATHS altında olsa da CRM_AGENT'a kapalı yollar (DeepSport CRM_AGENT_DENIED_PATHS): kural motoru

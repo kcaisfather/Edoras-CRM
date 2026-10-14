@@ -102,6 +102,23 @@ export const AUDIT_ACTIONS = [
   "TICKET_NOTE_ADDED",
   "TICKET_LINK_CREATED",
   "TICKET_LINK_ROTATED",
+  // Yönetim (KCA Panel — veri Turso'da): yalnız KCA kimliği, proje kimliği, durum ve değişen alan adları yazılır; görev /
+  // toplantı başlığı, not metni, kişi adı, telefon, e-posta yazılmaz (network ve toplantı notu KCA Panel'de kişiye özel).
+  "KCA_ACCOUNT_LINKED",
+  "KCA_ACCOUNT_UNLINKED",
+  "KCA_TASK_CREATED",
+  "KCA_TASK_UPDATED",
+  "KCA_TASK_DELETED",
+  "KCA_TASK_COMMENTED",
+  "KCA_TASK_APPROVED",
+  "KCA_TASK_CHANGES_REQUESTED",
+  "KCA_MEETING_CREATED",
+  "KCA_MEETING_UPDATED",
+  "KCA_MEETING_DELETED",
+  "KCA_MEETING_PROCESSED",
+  "KCA_CONTACT_CREATED",
+  "KCA_CONTACT_UPDATED",
+  "KCA_CONTACT_DELETED",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -124,6 +141,10 @@ export const AUDIT_ENTITY_TYPES = [
   "report_subscription",
   "appointment",
   "ticket",
+  "kca_account",
+  "kca_task",
+  "kca_meeting",
+  "kca_contact",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

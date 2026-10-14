@@ -79,7 +79,7 @@
         "MAIL_SEND_FAILED": "E-posta gönderilemedi. Davet listede \"Başarısız\" olarak duruyor; daha sonra yeniden gönderebilirsiniz.",
         "RATE_LIMITED": "Çok fazla istek. Lütfen biraz sonra tekrar deneyin.",
         "REPORT_RECIPIENT_INVALID": "Rapor alıcıları yalnız aktif CRM personeli olabilir; listeyi güncelleyin.",
-        "COST_BUDGET_EXISTS":"Bu kapsam için zaten aktif bir bütçe var. Önce onu pasife alın ya da düzenleyin.",
+        "COST_BUDGET_EXISTS": "Bu kapsam için zaten aktif bir bütçe var. Önce onu pasife alın ya da düzenleyin.",
         "PROVIDER_NOT_CONFIGURED": "Fatura platformunun (Paraşüt) API anahtarları tanımlı değil.",
         "INVOICE_NOT_RETRYABLE": "Yalnız başarısız e-posta ya da platform faturası yeniden denenebilir.",
         "INVOICE_PDF_NOT_READY": "Faturanın PDF'i Paraşüt'te henüz hazır değil; birkaç dakika sonra yeniden deneyin.",
@@ -87,7 +87,16 @@
         "BILLING_PROFILE_INCOMPLETE": "Fatura profili eksik: unvan, il, ilçe, fatura e-postası (kurumsalda vergi dairesi) kurum sayfasından tamamlanmalı.",
         "EDORAS_LOGIN_NOT_EMAIL": "Bu yönetici Edoras'a telefon ya da TC ile giriyor; giriş adresi değiştirilirse girişi bozulur. Şifre sıfırlama ve aktif / pasif kullanılabilir.",
         "EDORAS_SUPER_ADMIN": "Edoras süper yönetici hesabı CRM'den değiştirilemez.",
-        "EDORAS_LAST_ADMIN": "Kurumda başka aktif yönetici kalmıyor; pasife almak için bunu açıkça onaylayın."
+        "EDORAS_LAST_ADMIN": "Kurumda başka aktif yönetici kalmıyor; pasife almak için bunu açıkça onaylayın.",
+        "KCA_NOT_LINKED": "KCA Panel hesabın bağlı değil ya da bağ düştü (şifre değişmiş olabilir). Yönetim sayfasından yeniden bağla.",
+        "KCA_LOGIN_FAILED": "KCA Panel e-postası ya da şifresi hatalı.",
+        "KCA_LOGIN_LOCKED": "Çok fazla hatalı deneme. KCA Panel girişi 15 dakika kilitli.",
+        "KCA_SCOPE_MISSING": "KCA Panel'de \"Edoras\" ana projesi bulunamadı; Edoras dışındaki kayıtlar gösterilmez.",
+        "KCA_FORBIDDEN": "KCA Panel'de bu işlem için yetkin yok (proje yetkilerine bak).",
+        "KCA_NOT_OWNER": "Toplantı notunu yalnız sahibi değiştirebilir.",
+        "KCA_ASSIGNEE_INVALID": "Sorumlu kişi bu projenin üyesi değil. Önce KCA Panel'de projeye ekleyin.",
+        "KCA_TASK_NOT_REVIEW": "Görev onay beklemiyor.",
+        "KCA_UNAVAILABLE": "KCA Panel veritabanına (Turso) ulaşılamadı. Biraz sonra tekrar deneyin."
       }
     },
     "cancel": "İptal",
@@ -228,7 +237,14 @@
     "costsInstitutions": "Maliyet · Kurumlar",
     "costsBudgets": "Maliyet · Bütçeler",
     "costsAlerts": "Maliyet · Uyarılar",
-    "costsExports": "Maliyet · Dışa aktar"
+    "costsExports": "Maliyet · Dışa aktar",
+    "sidebarManagement": "Yönetim",
+    "managementTasks": "Yönetim Görevleri",
+    "managementTasksDescription": "KCA Panel'deki Edoras görevleri",
+    "managementNetwork": "Network",
+    "managementNetworkDescription": "Edoras için görüşülecek kişiler (kişiye özel)",
+    "managementMeetings": "Toplantı Notları",
+    "managementMeetingsDescription": "Edoras toplantı notları (KCA Panel ile ortak)"
   },
   "shell": {
     "infoTip": {

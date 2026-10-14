@@ -26,6 +26,18 @@
   orada süre seçilmez; teknik bitiş başlangıç + 1 gün (`saleDemoEndDate`) — yalnız geçmiş olarak kalır, gösterilmez.
 - Kod: `lib/domain/institutions/demo-duration.ts`, SQL `20261012120000_crm_demo_duration`.
 
+## KCA Panel birleşmesi — Yönetim (kurucu, 2026-10-14)
+
+İstek: "kca-panel.vercel.app ile burayı birleştir: Yönetim Görevleri - Network - Toplantı notları; Turso'daki backend
+burada kullanılsın, aynı dataları işlesin; Edoras etiketi olmayan hiçbir görevi / toplantı notunu / network'ü görmesin."
+Seçilen:
+
+- Veri KCA Panel'in Turso'sunda kalır, CRM doğrudan okur / yazar (kopya / eşitleme yok → iki panel hep aynı).
+- "Edoras etiketi" = KCA'daki "Edoras" ana projesi + alt projeleri; projesiz toplantı / kişi Edoras sayılmaz.
+- Yetki KCA Panel'in kuralı (network kişiye özel, toplantı sahibine ait); CRM personeli KCA hesabını şifresiyle bağlar
+  (e-posta eşleşmesi yok). Menü her CRM rolüne açık; veriyi KCA hesabı belirler.
+- Kod: `lib/server/kca*.ts`, `lib/domain/kca/`, `features/management/`; SQL `20261014120000_crm_kca_links`.
+
 ## Uyarlamalar (DeepSport → Edoras)
 
 - Zamanlayıcı yok → görevler istekte türetilir; tek cron rapor dağıtıcısı.

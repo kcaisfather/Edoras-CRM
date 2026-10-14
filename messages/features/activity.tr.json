@@ -141,7 +141,11 @@
       "cost_budget": "Maliyet bütçesi",
       "cost_settings": "Maliyet ayarı",
       "license_pricing": "Lisans liste fiyatı",
-      "report_subscription": "Rapor aboneliği"
+      "report_subscription": "Rapor aboneliği",
+      "kca_account": "KCA Panel hesabı",
+      "kca_task": "Yönetim görevi",
+      "kca_meeting": "Toplantı notu",
+      "kca_contact": "Network kişisi"
     },
     "actions": {
       "DEMO_CREATED": "Demo kurum açıldı",
@@ -223,7 +227,22 @@
       "TICKET_STATUS_CHANGED": "Destek talebi durumu değişti",
       "TICKET_NOTE_ADDED": "Destek talebine not eklendi",
       "TICKET_LINK_CREATED": "Destek bağlantısı oluşturuldu",
-      "TICKET_LINK_ROTATED": "Destek bağlantısı yenilendi"
+      "TICKET_LINK_ROTATED": "Destek bağlantısı yenilendi",
+      "KCA_ACCOUNT_LINKED": "KCA Panel hesabı bağlandı",
+      "KCA_ACCOUNT_UNLINKED": "KCA Panel hesap bağı kaldırıldı",
+      "KCA_TASK_CREATED": "Yönetim görevi açıldı",
+      "KCA_TASK_UPDATED": "Yönetim görevi güncellendi",
+      "KCA_TASK_DELETED": "Yönetim görevi silindi",
+      "KCA_TASK_COMMENTED": "Yönetim görevine not eklendi",
+      "KCA_TASK_APPROVED": "Yönetim görevi onaylandı (OK)",
+      "KCA_TASK_CHANGES_REQUESTED": "Yönetim görevi için düzeltme istendi",
+      "KCA_MEETING_CREATED": "Toplantı notu yazıldı",
+      "KCA_MEETING_UPDATED": "Toplantı notu güncellendi",
+      "KCA_MEETING_DELETED": "Toplantı notu silindi",
+      "KCA_MEETING_PROCESSED": "Toplantı notu işlendi durumu değişti",
+      "KCA_CONTACT_CREATED": "Network kişisi eklendi",
+      "KCA_CONTACT_UPDATED": "Network kişisi güncellendi",
+      "KCA_CONTACT_DELETED": "Network kişisi silindi"
     },
     "detailKeys": {
       "amount": "Tutar",
@@ -275,7 +294,13 @@
       "hardPct": "Sert eşik (%)",
       "active": "Aktif",
       "userId": "Edoras kullanıcısı",
-      "smsUnitPriceTry": "SMS birim fiyatı (TL)"
+      "smsUnitPriceTry": "SMS birim fiyatı (TL)",
+      "projectId": "KCA projesi",
+      "assigned": "Sorumlu atandı",
+      "meetingId": "Toplantı",
+      "shared": "Ekiple paylaşılan",
+      "ai": "AI işlesin",
+      "done": "İşlendi"
     }
   }
 }

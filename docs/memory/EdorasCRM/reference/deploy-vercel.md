@@ -45,6 +45,8 @@ kaldı (yeni uçlar 404). Yayın:
 | `ACCOUNTANT_EMAIL` | "Fatura kes → E-posta ile talep" (Resend de gerekir) | hayır |
 | `PARASUT_CLIENT_ID`, `PARASUT_CLIENT_SECRET`, `PARASUT_USERNAME`, `PARASUT_PASSWORD`, `PARASUT_COMPANY_ID` | "Platforma aktar" (beşi birden) | secret + şifre **evet** |
 | `PARASUT_PRODUCT_ID` | faturadaki hizmet (boşsa `EDORAS-LISANS` kodlu hizmet açılır) | hayır |
+| `KCA_TURSO_DATABASE_URL` + `KCA_TURSO_AUTH_TOKEN` | Yönetim (Yönetim Görevleri, Network, Toplantı Notları): KCA Panel'in Turso veritabanı — değerler KCA Panel Vercel projesindeki `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`. **Henüz eklenmedi (2026-10-14).** Yoksa sayfa "ayarlanmamış" der | token **evet** |
+| `KCA_EDORAS_PROJECT_ID` | Edoras ana projesinin KCA kimliği (boşsa adı "Edoras" olan tek ana proje) | hayır |
 
 ## Dağıtım sonrası
 

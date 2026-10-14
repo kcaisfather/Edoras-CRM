@@ -293,6 +293,16 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
   değil), giriş logu / "Hiç giriş yapmamış" (yerine etkinlik), kanal sekmeleri (tek ürün), AWS maliyeti / kur / CAC-ROAS (veri yok),
   kampanyada e-posta kanalı (onay / çıkış kaydı yok; WhatsApp bağlantıları ve CSV var), `/analytics` telemetri (Edoras'ta telemetri yok).
 
+### Yönetim (KCA Panel ortak verisi)
+
+Menü **Yönetim** → Yönetim Görevleri (`/management/tasks`), Network (`/management/network`), Toplantı Notları
+(`/management/meetings`). Veri `kca-panel.vercel.app`'in Turso veritabanındadır; CRM doğrudan okur ve KCA Panel'in kendi
+işlemleriyle aynı satırları yazar (kopya yok — iki panel hep aynı veriyi gösterir). **Yalnız Edoras etiketli** kayıtlar:
+kök "Edoras" ana projesi (ya da `KCA_EDORAS_PROJECT_ID`) + alt projeleri; projesiz toplantı / kişi görünmez. Yetki KCA
+Panel'in kuralıdır (proje üyeliği; toplantı sahibine ait, paylaşılırsa proje ekibine açık; network kişiye özel): personel
+KCA Panel e-posta + şifresiyle hesabını bir kez bağlar (`crm_kca_links`, migration `20261014120000_crm_kca_links`).
+Ortam: `KCA_TURSO_DATABASE_URL`, `KCA_TURSO_AUTH_TOKEN`. Ayrıntı: `docs/memory/EdorasCRM/modules/management-kca.md`.
+
 ## Klasörler
 
 | Yol | İçerik |
@@ -301,7 +311,7 @@ her şey Edoras'tan (salt okunur) ve mevcut `crm_*` tablolarından türetilir. E
 | `features/<ad>/` | Ekran bileşenleri, sorgular (`queries.ts`), yazımlar (`mutations.ts`); dışarıya `index.ts` |
 | `lib/domain/` | Saf iş kuralları (framework'süz, testli) |
 | `lib/import/` | İçe aktarma: dosya okuma, sütun eşleme, normalleştirme, mükerrer önizlemesi ve sunucu ayıklaması (saf, testli) |
-| `lib/server/` | Sunucu veri erişimi (`server-only`); Edoras erişimi yalnız `edoras.ts` ve `edoras-usage.ts` |
+| `lib/server/` | Sunucu veri erişimi (`server-only`); Edoras erişimi yalnız `edoras.ts` ve `edoras-usage.ts`; KCA Panel (Turso) yalnız `kca.ts` + `kca-store.ts` |
 | `lib/api/` | İstemci ve sunucu API yardımcıları, hata kodları |
 | `components/` | Kabuk (menü, üst bar, komut paleti) ve UI kiti |
 | `messages/tr.json` | Tüm metinler |

@@ -38,6 +38,8 @@ Supabase'e taşındı. Bu klasör ajanlar ve ekip için **modüler hafızadır**
 - Aktivite geçmişi + Maliyetler → [modules/activity-costs.md](modules/activity-costs.md)
 - Zamanlanmış raporlar (cron) → [modules/reports.md](modules/reports.md)
 - Ayarlar ve ekip (personel, iç kurumlar, hata kaydı, KVKK) → [modules/settings-team.md](modules/settings-team.md)
+- **Yönetim (KCA Panel ortak verisi, 2026-10-14):** Yönetim Görevleri, Network, Toplantı Notları — KCA Panel'in Turso
+  veritabanı, yalnız Edoras etiketli → [modules/management-kca.md](modules/management-kca.md)
 
 ## Referans (`reference/`)
 

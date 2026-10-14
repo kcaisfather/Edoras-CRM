@@ -8,6 +8,9 @@ Tarayıcı (React Query, features/*) ──► /api/* (Next 16 route handler, ap
                                         ├──► Edoras canlı DB bmjkpxbrmwxuildwakly (service_role)
                                         │      YALNIZ lib/server/edoras.ts (kurum listesi, demo açma, panel modülü, kurum yöneticisi hesapları)
                                         │      ve lib/server/edoras-usage.ts (salt okunur kullanım sinyali)
+                                        ├──► KCA Panel Turso DB (kca-panel.vercel.app'in veritabanı, HTTP /v2/pipeline)
+                                        │      YALNIZ lib/server/kca.ts + kca-store.ts: Yönetim Görevleri, Toplantı Notları,
+                                        │      Network — yalnız Edoras etiketli, bağlı KCA hesabının yetkisiyle
                                         └──► Dış: Resend (lib/server/mail.ts), Paraşüt (lib/server/parasut-client.ts)
 ```
 
@@ -20,6 +23,8 @@ Tarayıcı (React Query, features/*) ──► /api/* (Next 16 route handler, ap
 | Şema | `supabase/migrations/` | **değiştirilmez** (şema gerçeği: YKS `docs/memory/YKS/data-model.md`) |
 
 - Bağ: `crm_institutions.institution_id` = Edoras `institutions.id` (FK yok). Edoras'ta silinen kurum CRM'de "Edoras'ta yok".
+- Üçüncü kaynak **KCA Panel (Turso)**: CRM okur + yazar ama şemasına dokunmaz; veri KCA Panel ile ortak, CRM'de kopya
+  yok (yalnız hesap bağı `crm_kca_links`). → [modules/management-kca.md](modules/management-kca.md)
 - İki DB arasında transaction yok → çok adımlı yazım `createCompensator()` (`lib/server/compensation.ts`) ile telafi edilir.
 
 ## Katmanlar

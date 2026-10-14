@@ -12,7 +12,7 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
 >   [data-model.md](docs/memory/EdorasCRM/data-model.md) · Yetki → [auth.md](docs/memory/EdorasCRM/auth.md) ·
 >   Kalıplar → [patterns.md](docs/memory/EdorasCRM/patterns.md)
 > - Modüller → `docs/memory/EdorasCRM/modules/` (kurum-demo, crm-leads, tasks-rules, cold-lists-import, surveys,
->   sales-invoices + Paraşüt, growth-analytics, activity-costs, reports, settings-team)
+>   sales-invoices + Paraşüt, growth-analytics, activity-costs, reports, settings-team, management-kca)
 > - Vercel env listesi → [reference/deploy-vercel.md](docs/memory/EdorasCRM/reference/deploy-vercel.md) · Entegrasyonlar,
 >   kararlar, runbook → `docs/memory/EdorasCRM/reference/`
 
@@ -26,6 +26,9 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
    giriş e-postası = Auth + `profiles.email` birlikte, şifre sıfırlama, o kurumdaki üyeliğin `is_active`'i; telefon / TC
    ile giren hesabın adresi değişmez, süper yöneticiye dokunulmaz — `lib/domain/institutions/edoras-accounts.ts`).
    **Edoras şeması değiştirilmez**; şema gerçeği edoras-admin'dedir (`docs/memory/YKS/data-model.md`).
+   **Üçüncü kaynak KCA Panel (Turso, kca-panel.vercel.app — Yönetim menüsü):** yalnız `lib/server/kca.ts` + `kca-store.ts`;
+   yalnız Edoras etiketli kayıtlar (kök "Edoras" ana projesi + alt projeleri), KCA Panel yetkisiyle (personel KCA hesabını
+   şifresiyle bağlar); KCA şeması değiştirilmez → `docs/memory/EdorasCRM/modules/management-kca.md`.
 2. **İki veritabanı arasında transaction yok.** Birden fazla adımlı yazım (demo açma) her adımın geri alma
    işini `createCompensator()`'a kaydeder; hata olursa `rollback()`.
 3. **Kural veritabanında da durur.** Sunucu `service_role` kullanır, RLS'i görmez. Demo, ücretli ve ödeme

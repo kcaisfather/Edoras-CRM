@@ -20,6 +20,15 @@
   `delete_institution_guarded`, `lib/login-identifier.ts` (telefon / TC alan adları) değişikliklerini takip et.
 - Hızlı salt okunur kontrol betiği: [runbooks.md](runbooks.md) → "Bağlantı kontrolü".
 
+## KCA Panel (Turso) — Yönetim (2026-10-14)
+
+- `kca-panel.vercel.app` (repo `kcaisfather/KCAPanel`): Kamil'in çok şirketli proje / görev paneli; Vercel + Turso, npm
+  bağımlılığı yok. CRM aynı Turso veritabanına doğrudan bağlanır (`lib/server/kca-turso.ts`, Hrana v2 HTTP), KCA Panel'in
+  API'sine (`/api/rpc`) değil — RPC çerez oturumu ister, API anahtarı yalnız AI ekibe verilir.
+- Yalnız `lib/server/kca.ts` + `kca-store.ts`; KCA şeması değiştirilmez. KCA Panel `lib/schema.js` / `lib/actions.js`
+  değişirse (tablo, sütun, görev geçmişi türleri, şifre biçimi) `kca-store.ts` + `kca-test-support.ts` birlikte güncellenir.
+- Ayrıntı → [../modules/management-kca.md](../modules/management-kca.md).
+
 ## Paraşüt (fatura)
 
 - API v4, `https://api.parasut.com`, şema `https://apidocs.parasut.com/swagger.json`.

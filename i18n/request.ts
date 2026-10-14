@@ -50,6 +50,8 @@ async function loadFeatureMessages(): Promise<Record<string, Messages>> {
     tickets: (await import("@/messages/features/tickets.tr.json")).default,
     // Edoras kurum yöneticisi hesap işlemleri: tr.json'daki institutions.* ad alanına birleşir (institutions.adminAccounts).
     institutions: (await import("@/messages/features/institution-accounts.tr.json")).default,
+    // Yönetim (KCA Panel ortak verisi): Yönetim Görevleri, Toplantı Notları, Network → management.*
+    management: (await import("@/messages/features/management.tr.json")).default,
   };
 }
 

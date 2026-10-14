@@ -74,6 +74,16 @@ export const API_ERROR_CODES = [
   "EDORAS_LOGIN_NOT_EMAIL",
   "EDORAS_SUPER_ADMIN",
   "EDORAS_LAST_ADMIN",
+  // Yönetim (KCA Panel, lib/server/kca.ts): hesap bağı, Edoras kapsamı, KCA Panel yetkileri, Turso erişimi.
+  "KCA_NOT_LINKED",
+  "KCA_LOGIN_FAILED",
+  "KCA_LOGIN_LOCKED",
+  "KCA_SCOPE_MISSING",
+  "KCA_FORBIDDEN",
+  "KCA_NOT_OWNER",
+  "KCA_ASSIGNEE_INVALID",
+  "KCA_TASK_NOT_REVIEW",
+  "KCA_UNAVAILABLE",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

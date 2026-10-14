@@ -28,6 +28,13 @@ describe("permissions", () => {
     expect(canAccessPathFor("CRM_AGENT", "/crm/cold-lists")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/crm/cold-lists?list=x&outcome=UNREACHABLE")).toBe(true);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules")).toBe(false);
+  });
+
+  it("Yönetim (KCA Panel) her role açık; veriyi bağlı KCA hesabının yetkisi belirler", () => {
+    for (const path of ["/management/tasks", "/management/meetings?meeting=3", "/management/network"]) {
+      expect(canAccessPathFor("CRM_AGENT", path), path).toBe(true);
+    }
+    expect(canAccessPathFor("CRM_AGENT", "/managementx")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules/")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rules?x=1")).toBe(false);
     expect(canAccessPathFor("CRM_AGENT", "/crm/rulesx")).toBe(true);

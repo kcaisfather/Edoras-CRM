@@ -18,6 +18,9 @@ import {
   MessageSquareHeart,
   Snowflake,
   LifeBuoy,
+  NotebookPen,
+  SquareKanban,
+  Users,
   Workflow,
 } from "lucide-react";
 import { useCurrentUser, usePermissions } from "@/features/auth";
@@ -41,7 +44,10 @@ export type NavTranslationKey =
   | "paymentHistory"
   | "salesInvoices"
   | "activityHistory"
-  | "costs";
+  | "costs"
+  | "managementTasks"
+  | "managementNetwork"
+  | "managementMeetings";
 
 export interface NavItem {
   /** Sorgu dizesi içerebilir; aktiflik yalnız yol kısmına bakar. */
@@ -52,12 +58,19 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-export type NavGroupKey = "main" | "crm" | "customers" | "sales" | "analysis" | "activity" | "operations";
+export type NavGroupKey = "main" | "management" | "crm" | "customers" | "sales" | "analysis" | "activity" | "operations";
 
 export interface NavGroup {
   key: NavGroupKey;
   /** Bölüm başlığı; ana grupta başlık yok. */
-  labelKey?: "sidebarCrm" | "sidebarCustomers" | "sidebarSales" | "sidebarAnalysis" | "sidebarActivity" | "sidebarOperations";
+  labelKey?:
+    | "sidebarManagement"
+    | "sidebarCrm"
+    | "sidebarCustomers"
+    | "sidebarSales"
+    | "sidebarAnalysis"
+    | "sidebarActivity"
+    | "sidebarOperations";
   items: NavItem[];
 }
 
@@ -69,6 +82,18 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "main",
     items: [{ href: "/dashboard", icon: LayoutDashboard, translationKey: "dashboard" }],
+  },
+  {
+    // Yönetim (2026-10-14): KCA Panel (kca-panel.vercel.app) ile ortak veri — görevler, toplantı notları, network KCA
+    // Panel'in Turso veritabanından, YALNIZ Edoras etiketli. Her rol görür; ne göreceğini kişinin bağladığı KCA Panel
+    // hesabının yetkisi belirler (lib/server/kca.ts).
+    key: "management",
+    labelKey: "sidebarManagement",
+    items: [
+      { href: "/management/tasks", icon: SquareKanban, translationKey: "managementTasks" },
+      { href: "/management/network", icon: Users, translationKey: "managementNetwork" },
+      { href: "/management/meetings", icon: NotebookPen, translationKey: "managementMeetings" },
+    ],
   },
   {
     // CRM: adaylar, Görevlerim, soğuk listeler ve anketler (DeepSport ile aynı sıra; her iki rol de görür).

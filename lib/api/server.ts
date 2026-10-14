@@ -177,3 +177,11 @@ export function requireUuid(value: string): string {
   }
   return value;
 }
+
+/** Pozitif tamsayı kimlik (dış sistemlerin, ör. KCA Panel'in yol parametresi) — hatalıysa 404. */
+export function requireIntId(value: string): number {
+  if (!/^[1-9][0-9]{0,15}$/.test(value)) throw new HttpError(404, "NOT_FOUND");
+  const n = Number(value);
+  if (!Number.isSafeInteger(n)) throw new HttpError(404, "NOT_FOUND");
+  return n;
+}

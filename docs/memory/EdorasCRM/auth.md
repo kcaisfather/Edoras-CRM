@@ -16,7 +16,8 @@
 - Finansal alanlar CRM_AGENT için **sunucuda boşaltılır** (yalnız arayüzde gizlemek yetmez). Arayüzde ayrıca
   `FinancialOnly` / `canSeeFinancials`.
 - Menü / sayfa: `lib/permissions.ts` → `CRM_AGENT_PATHS` = `/dashboard`, `/crm`, `/institutions`, `/growth/customers`,
-  `/settings`; `CRM_AGENT_DENIED_PATHS` = `/crm/rules`. Satış & Fatura, Aktivite, Maliyetler, Müşteri Analizleri yalnız ADMIN.
+  `/settings`, `/management` (Yönetim: veriyi CRM rolü değil bağlı KCA Panel hesabının yetkisi belirler →
+  [modules/management-kca.md](modules/management-kca.md)); `CRM_AGENT_DENIED_PATHS` = `/crm/rules`. Satış & Fatura, Aktivite, Maliyetler, Müşteri Analizleri yalnız ADMIN.
 - Yazan uçlar `assertSameOrigin(request)` ile CSRF'e karşı köken denetler.
 
 ## Oturumsuz yollar
@@ -44,3 +45,11 @@
   ele geçirme riski).
 - Edoras Auth hesabı tekildir: e-posta / şifre değişikliği kişinin tüm Edoras üyeliklerine işler.
 - ⚠️ Edoras web paneli pasif yöneticiyi engellemiyor (yalnız mobil engelliyor) — kesin kapatma = şifre sıfırla.
+
+## KCA Panel hesabı (Yönetim, 2026-10-14)
+
+- CRM personeli KCA Panel e-posta + şifresiyle bir kez bağlanır (`crm_kca_links`); e-posta eşleşmesiyle otomatik bağ YOK
+  (personel açabilen biri başkasının e-postasıyla hesap açıp onun kişiye özel network / toplantı notunu görmesin).
+- Hatalı denemeler KCA Panel'in kilidine sayılır; KCA şifresi değişince / hesap pasifleşince bağ düşer. AI ekip bağlanamaz.
+- Görünürlük: yalnız Edoras etiketli kayıtlar ∩ KCA Panel yetkisi (üyelik, toplantı sahipliği, kişiye özel network).
+

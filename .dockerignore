@@ -1,0 +1,27 @@
+# Derleme bağlamına girmeyenler: yerel sırlar (.env*), Vercel bağı, MCP ayarı, belgeler, SQL/migration ve
+# testler (PGlite), tek seferlik betikler. Uygulama bunların hiçbirini içe aktarmıyor.
+.git
+.claude
+.vercel
+.mcp.json
+.next
+node_modules
+.env
+.env.*
+!.env.example
+docs
+supabase
+scripts
+**/*.md
+**/*.test.ts
+**/*.test.tsx
+**/*.test.mts
+vitest.config.mts
+eslint.config.mjs
+**/*.tsbuildinfo
+**/*.log
+coverage
+Dockerfile
+.dockerignore
+# Windows'ta bildirim kancasının bıraktığı çöp dosyalar (git dışı).
+C:Userserenn*

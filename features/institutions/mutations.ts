@@ -14,6 +14,7 @@ import type {
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
 import type { PanelModuleToggleInput } from "@/lib/domain/institutions/panel-modules";
+import type { MessagingSettingToggleInput, TeacherMessagingScopeInput } from "@/lib/domain/institutions/messaging-permissions";
 import type { DemoCredentials } from "@/lib/domain/institutions/types";
 import { institutionsApi } from "./api";
 import { institutionKeys } from "./queries";
@@ -156,6 +157,26 @@ export function useSetPanelModule(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: PanelModuleToggleInput) => institutionsApi.setPanelModule(id, input),
-    onSuccess: (modules) => queryClient.setQueryData(institutionKeys.panelModules(id), modules),
+    onSuccess: (modules) => {
+      queryClient.setQueryData(institutionKeys.panelModules(id), modules);
+      // Mesajlaşma modülü açılıp kapanınca yetki kartı da tazelenir (kapalıyken uç boş liste döner).
+      void queryClient.invalidateQueries({ queryKey: institutionKeys.messaging(id) });
+    },
+  });
+}
+
+export function useSetMessagingSetting(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MessagingSettingToggleInput) => institutionsApi.setMessagingSetting(id, input),
+    onSuccess: (state) => queryClient.setQueryData(institutionKeys.messaging(id), state),
+  });
+}
+
+export function useSetTeacherMessagingScope(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TeacherMessagingScopeInput) => institutionsApi.setTeacherMessagingScope(id, input),
+    onSuccess: (state) => queryClient.setQueryData(institutionKeys.messaging(id), state),
   });
 }

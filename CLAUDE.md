@@ -22,7 +22,9 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
    migration'lar `supabase/migrations/`). Edoras'ın canlı veritabanına (`bmjkpxbrmwxuildwakly`, edoras-admin
    `Desktop/YKS` + mobil `Desktop/EdorasApp`) yalnız sunucudan ve yalnız `lib/server/edoras.ts` ve `lib/server/edoras-usage.ts` (Müşteri analizleri: salt okunur `select` / `head` sayım + tek hafif okuma RPC'si `staff_activity_summary`; yazan ya da ağır RPC yok) üzerinden
    gidilir: kurum listesi, kullanım sayıları, demo açarken kurum + dönem + kurum yöneticisi, kurumun panel modülü
-   satırı (`institution_panel_modules` upsert — Muhasebe vb. aç/kapa), **kurum yöneticisi hesapları** (yalnız ADMIN:
+   satırı (`institution_panel_modules` upsert — Muhasebe vb. aç/kapa), **mesajlaşma yetkileri** (yalnız ADMIN, yalnız
+   `messaging` modülü açıkken: 4 anahtar `institution_feature_settings` upsert + öğretmenin `permission_overrides` içinde
+   yalnız `messaging.parents` — `lib/domain/institutions/messaging-permissions.ts`), **kurum yöneticisi hesapları** (yalnız ADMIN:
    giriş e-postası = Auth + `profiles.email` birlikte, şifre sıfırlama, o kurumdaki üyeliğin `is_active`'i; telefon / TC
    ile giren hesabın adresi değişmez, süper yöneticiye dokunulmaz — `lib/domain/institutions/edoras-accounts.ts`).
    **Edoras şeması değiştirilmez**; şema gerçeği edoras-admin'dedir (`docs/memory/YKS/data-model.md`).

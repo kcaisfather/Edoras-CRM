@@ -118,6 +118,27 @@ migration 300: `panel_modules` katalog (CRM yalnız okur) + `institution_panel_m
   `edoras.ts` `getEdorasPanelModules` / `setEdorasPanelModule`. Test: `panel-modules.test.ts`.
 - Yeni modül eklemek Edoras işidir (katalog satırı + kod kapısı); CRM kartı katalogdan kendiliğinden listeler.
 
+## Mesajlaşma yetkileri — Edoras'a YAZAR (`GET/PATCH /api/institutions/{id}/messaging[/teachers]`, 2026-10-21)
+
+Kurum ayrıntısı yan sütununda Panel modüllerinin altında "Mesajlaşma yetkileri" kartı
+(`features/institutions/components/MessagingPermissionsCard.tsx`). **Yalnız kurumda `messaging` modülü AÇIKKEN çizilir**
+(Edoras paneli de modül kapalıyken bu ayarları göstermez); kapalıyken GET boş döner (`moduleEnabled: false`), PATCH
+409 `EDORAS_MODULE_DISABLED`. Edoras panelindeki ayar ekranı (Görev politikası → Mesajlaşma) ve Yetkiler ile AYNI
+satırları yazar — kurum yöneticisi de değiştirebilir, son yazan geçerli.
+
+- **Kurum anahtarları** (`institution_feature_settings` upsert, değer gerçek boolean): `messaging_admin_teacher`,
+  `messaging_teacher_parent`, `messaging_parent_inbox`, `notify_message` — dördü de varsayılan AÇIK (satır yoksa).
+- **Öğretmen yetkisi** `messaging.parents` (Kapalı / Atanan / Kurum) penceresi: aktif öğretmenler (`is_active` NULL ya
+  da true, `deleted_at` null), ad + branş + rol. Yazım `institution_users.permission_overrides` içinde YALNIZ bu
+  anahtar: rolden sapan değer yazılır, role eşit seçim anahtarı siler (Edoras `updateTeacherPermissions` sözleşmesi);
+  öbür yetkilerin override'ına dokunulmaz. Rolsüz öğretmenin değeri = Branş Öğretmeni = Atanan (`SCOPE_WITHOUT_PRESET`).
+  Kurallar + test: `lib/domain/institutions/messaging-permissions.ts`.
+- Görmek her personel, değiştirmek yalnız ADMIN. İşlem kaydı `MESSAGING_SETTING_CHANGED` (`setting`, `enabled`) /
+  `TEACHER_MESSAGING_SCOPE_CHANGED` (`membership` = Edoras üyelik kimliği, `from`, `to`; ad yazılmaz; değer
+  değişmediyse kayıt yok). Edoras tarafında iz yok (sütun yok). Sunucu: `lib/server/messaging-permissions.ts` →
+  `edoras.ts` `getEdorasMessagingPermissions` / `setEdorasMessagingSetting` / `setEdorasTeacherMessagingScope`.
+- Modül anahtarı değişince kart sorgusu da tazelenir (`useSetPanelModule`). Mobil yetkiyi panelden 3 dk önbellekle okur.
+
 ## Kurum yöneticisi hesapları — Edoras'a YAZAR (yalnız ADMIN, 2026-10-12)
 
 Sorun: demo açılırken yetkili e-postası kurum yöneticisinin Edoras giriş adresi oluyor (`createEdorasDemo`), ama Yetkili

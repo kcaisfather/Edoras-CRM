@@ -12,6 +12,11 @@ import type {
   RenewInput,
 } from "@/lib/domain/institutions/schemas";
 import type { PanelModuleState, PanelModuleToggleInput } from "@/lib/domain/institutions/panel-modules";
+import type {
+  MessagingPermissions,
+  MessagingSettingToggleInput,
+  TeacherMessagingScopeInput,
+} from "@/lib/domain/institutions/messaging-permissions";
 import type { DemoCredentials, InstitutionDetail, InstitutionListItem, LicensePricingSettings } from "@/lib/domain/institutions/types";
 
 const base = (id: string) => `/api/institutions/${encodeURIComponent(id)}`;
@@ -40,6 +45,11 @@ export const institutionsApi = {
   panelModules: (id: string, signal?: AbortSignal) => apiRequest<PanelModuleState[]>(`${base(id)}/modules`, { signal }),
   setPanelModule: (id: string, input: PanelModuleToggleInput) =>
     apiRequest<PanelModuleState[]>(`${base(id)}/modules`, { method: "PATCH", body: input }),
+  messaging: (id: string, signal?: AbortSignal) => apiRequest<MessagingPermissions>(`${base(id)}/messaging`, { signal }),
+  setMessagingSetting: (id: string, input: MessagingSettingToggleInput) =>
+    apiRequest<MessagingPermissions>(`${base(id)}/messaging`, { method: "PATCH", body: input }),
+  setTeacherMessagingScope: (id: string, input: TeacherMessagingScopeInput) =>
+    apiRequest<MessagingPermissions>(`${base(id)}/messaging/teachers`, { method: "PATCH", body: input }),
   licensePricing: (signal?: AbortSignal) => apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { signal }),
   updateLicensePricing: (input: LicenseListPriceInput) =>
     apiRequest<LicensePricingSettings>("/api/settings/license-pricing", { method: "PUT", body: input }),

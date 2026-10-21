@@ -4,7 +4,9 @@
 
 - Yalnız sunucudan, `service_role` ile, yalnız `lib/server/edoras.ts` + `lib/server/edoras-usage.ts`.
 - Yazma yalnız şu işlerde: demo açma (kurum, yıl, dönem, yönetici) ve onun geri alması; panel modülü
-  (`institution_panel_modules` upsert); **kurum yöneticisi hesapları** (2026-10-12, yalnız ADMIN): giriş e-postası
+  (`institution_panel_modules` upsert); **mesajlaşma yetkileri** (2026-10-21, yalnız ADMIN, yalnız `messaging` modülü
+  açıkken): 4 anahtar `institution_feature_settings` upsert + öğretmenin `permission_overrides.messaging.parents`;
+  **kurum yöneticisi hesapları** (2026-10-12, yalnız ADMIN): giriş e-postası
   (Auth `updateUserById` + `profiles.email`), şifre sıfırlama (Auth), bu kurumdaki üyeliğin aktifliği
   (`institution_users.is_active` + `profiles.is_active`). Kurumun kendi `is_active`'ine dokunulmaz.
 - Kurum yöneticisi hesap kuralları (`lib/domain/institutions/edoras-accounts.ts`): telefonla giren hesap

@@ -12,6 +12,7 @@ export const institutionKeys = {
   detail: (id: string) => [...institutionKeys.all, "detail", id] as const,
   licensePricing: () => [...institutionKeys.all, "license-pricing"] as const,
   panelModules: (id: string) => [...institutionKeys.all, "panel-modules", id] as const,
+  messaging: (id: string) => [...institutionKeys.all, "messaging", id] as const,
 };
 
 export function useInstitutions() {
@@ -34,6 +35,15 @@ export function useInstitutionPanelModules(id: string, enabled = true) {
   return useQuery({
     queryKey: institutionKeys.panelModules(id),
     queryFn: ({ signal }) => institutionsApi.panelModules(id, signal),
+    enabled: !!id && enabled,
+  });
+}
+
+/** Kurumun mesajlaşma anahtarları + öğretmen yetkileri — yalnız Mesajlaşma modülü açıkken istenir. */
+export function useInstitutionMessaging(id: string, enabled = true) {
+  return useQuery({
+    queryKey: institutionKeys.messaging(id),
+    queryFn: ({ signal }) => institutionsApi.messaging(id, signal),
     enabled: !!id && enabled,
   });
 }

@@ -74,6 +74,8 @@ export const API_ERROR_CODES = [
   "EDORAS_LOGIN_NOT_EMAIL",
   "EDORAS_SUPER_ADMIN",
   "EDORAS_LAST_ADMIN",
+  // Mesajlaşma ayarı / öğretmen yetkisi yazılırken kurumda `messaging` panel modülü kapalı (lib/server/edoras.ts).
+  "EDORAS_MODULE_DISABLED",
   // Yönetim (KCA Panel, lib/server/kca.ts): hesap bağı, Edoras kapsamı, KCA Panel yetkileri, Turso erişimi.
   "KCA_NOT_LINKED",
   "KCA_LOGIN_FAILED",

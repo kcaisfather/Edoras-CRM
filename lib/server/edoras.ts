@@ -12,6 +12,18 @@ import {
 } from "@/lib/domain/institutions/panel-modules";
 import type { InstitutionAdmin, InstitutionProgram, InstitutionUsage } from "@/lib/domain/institutions/types";
 import {
+  MESSAGING_SETTING_KEYS,
+  effectiveScope,
+  nextOverrides,
+  presetScopeOf,
+  resolveMessagingSettings,
+  type FeatureSettingRow,
+  type MessagingPermissions,
+  type MessagingScope,
+  type MessagingSettingKey,
+  type TeacherMessagingRow,
+} from "@/lib/domain/institutions/messaging-permissions";
+import {
   ADMIN_ACCOUNT_MESSAGES,
   adminEmailChangeBlock,
   edorasLoginKind,
@@ -25,7 +37,9 @@ import type { Compensator } from "./compensation";
  * (Desktop/YKS → docs/memory/YKS/data-model.md); buradaki kolon adları oradan. Edoras şemasında hiçbir
  * değişiklik yapılmaz — yalnız okuma, demo kurum açma (edoras-admin'in scripts/seed-demo-presentation.mjs
  * ile aynı sıra: kurum → aktif yıl/dönem → auth kullanıcısı → profil → kurum üyeliği), kurumun panel modülü
- * satırı (`institution_panel_modules` upsert — edoras-admin migration 300 sözleşmesi) ve kurum yöneticisi
+ * satırı (`institution_panel_modules` upsert — edoras-admin migration 300 sözleşmesi), mesajlaşma yetkileri (modül
+ * açıkken: `institution_feature_settings` mesajlaşma anahtarları upsert + öğretmenin `permission_overrides` içindeki
+ * yalnız `messaging.parents` anahtarı — lib/domain/institutions/messaging-permissions.ts) ve kurum yöneticisi
  * hesapları (giriş e-postası: Auth + `profiles.email`; şifre: Auth; aktiflik: `institution_users.is_active` +
  * `profiles.is_active` — yalnız role='admin' üyeliği olan kullanıcıda, kurallar lib/domain/institutions/edoras-accounts.ts).
  */
@@ -326,6 +340,140 @@ export async function setEdorasPanelModule(
     );
   if (error) throw dbError(error);
   return getEdorasPanelModules(institutionId);
+}
+
+// ─── Mesajlaşma yetkileri (Kurum ayrıntısı → Mesajlaşma yetkileri; yalnız `messaging` modülü açıkken) ───
+
+const MESSAGING_MODULE_KEY = "messaging";
+
+interface TeacherMembershipRow {
+  id: string;
+  preset_id: string | null;
+  permission_overrides: Record<string, unknown> | null;
+  permission_presets: { name: string | null; permissions: Record<string, unknown> | null } | null;
+  profiles: { full_name: string | null; branch: string | null } | null;
+}
+
+/** PostgREST tekil gömmeyi bazen dizi döndürür (`profiles(...)`); ikisini de tek nesneye indirir. */
+function single<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+async function isMessagingModuleOn(institutionId: string): Promise<boolean> {
+  const modules = await getEdorasPanelModules(institutionId);
+  return modules.some((module) => module.key === MESSAGING_MODULE_KEY && module.enabled);
+}
+
+/** Yazmadan önce: modül kapalıysa 409 (Edoras paneli de modül kapalıyken bu ayarları kaydetmez). */
+async function assertMessagingModuleOn(institutionId: string): Promise<void> {
+  if (!(await isMessagingModuleOn(institutionId))) throw new HttpError(409, "EDORAS_MODULE_DISABLED");
+}
+
+/**
+ * Kurumun mesajlaşma anahtarları + aktif öğretmenlerin `messaging.parents` değeri. Modül kapalıysa boş liste
+ * (`moduleEnabled: false`). Kurum Edoras'ta yoksa 404 (getEdorasPanelModules atar). Pasif / kurumdan çıkarılmış
+ * öğretmen listelenmez (giriş yapamaz; yetkisi yeniden aktifleşince panelden de ayarlanabilir).
+ */
+export async function getEdorasMessagingPermissions(institutionId: string): Promise<MessagingPermissions> {
+  if (!(await isMessagingModuleOn(institutionId))) return { moduleEnabled: false, settings: [], teachers: [] };
+  const db = getEdorasAdminClient();
+  const [settings, members] = await Promise.all([
+    db
+      .from("institution_feature_settings")
+      .select("setting_key, value")
+      .eq("institution_id", institutionId)
+      .in("setting_key", [...MESSAGING_SETTING_KEYS]),
+    db
+      .from("institution_users")
+      .select("id, preset_id, permission_overrides, permission_presets(name, permissions), profiles(full_name, branch)")
+      .eq("institution_id", institutionId)
+      .eq("role", "teacher")
+      // NULL = aktif (eski satırlar); `neq(false)` NULL'u da düşürürdü.
+      .or("is_active.is.null,is_active.eq.true")
+      .is("deleted_at", null),
+  ]);
+  if (settings.error) throw dbError(settings.error);
+  if (members.error) throw dbError(members.error);
+
+  const teachers = ((members.data ?? []) as unknown as TeacherMembershipRow[])
+    .map((row): TeacherMessagingRow => {
+      const preset = single(row.permission_presets);
+      const profile = single(row.profiles);
+      const presetScope = presetScopeOf(preset?.permissions ?? null);
+      const scope = effectiveScope(preset?.permissions ?? null, row.permission_overrides);
+      return {
+        institutionUserId: row.id,
+        fullName: profile?.full_name?.trim() || "İsimsiz öğretmen",
+        branch: profile?.branch?.trim() || null,
+        presetName: preset?.name?.trim() || null,
+        presetScope,
+        scope,
+        overridden: scope !== presetScope,
+      };
+    })
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, "tr", { sensitivity: "base" }));
+
+  return {
+    moduleEnabled: true,
+    settings: resolveMessagingSettings((settings.data ?? []) as FeatureSettingRow[]),
+    teachers,
+  };
+}
+
+/** Tek kurum anahtarını yazar (upsert; değer gerçek boolean — Edoras yalnız boolean'ı sayar). Dönüş: güncel durum. */
+export async function setEdorasMessagingSetting(
+  institutionId: string,
+  key: MessagingSettingKey,
+  enabled: boolean
+): Promise<MessagingPermissions> {
+  await assertMessagingModuleOn(institutionId);
+  const { error } = await getEdorasAdminClient()
+    .from("institution_feature_settings")
+    .upsert(
+      { institution_id: institutionId, setting_key: key, value: enabled, updated_at: new Date().toISOString() },
+      { onConflict: "institution_id,setting_key" }
+    );
+  if (error) throw dbError(error);
+  return getEdorasMessagingPermissions(institutionId);
+}
+
+/**
+ * Tek öğretmenin `messaging.parents` değerini yazar. Yalnız bu kurumdaki öğretmen üyeliği (başka kurumun / rolün
+ * satırı 404). Override kuralı `nextOverrides` (rolden sapmayan değer silinir). Dönüş: önceki / yeni değer + güncel
+ * durum (işlem kaydı için).
+ */
+export async function setEdorasTeacherMessagingScope(
+  institutionId: string,
+  institutionUserId: string,
+  scope: MessagingScope
+): Promise<{ previous: MessagingScope; state: MessagingPermissions }> {
+  await assertMessagingModuleOn(institutionId);
+  const db = getEdorasAdminClient();
+  const { data, error } = await db
+    .from("institution_users")
+    .select("id, permission_overrides, permission_presets(permissions)")
+    .eq("id", institutionUserId)
+    .eq("institution_id", institutionId)
+    .eq("role", "teacher")
+    .maybeSingle();
+  if (error) throw dbError(error);
+  if (!data) throw new HttpError(404, "NOT_FOUND");
+
+  const row = data as unknown as Pick<TeacherMembershipRow, "permission_overrides"> & {
+    permission_presets: { permissions: Record<string, unknown> | null } | null;
+  };
+  const presetPermissions = single(row.permission_presets)?.permissions ?? null;
+  const previous = effectiveScope(presetPermissions, row.permission_overrides);
+  if (previous !== scope) {
+    const { error: updateError } = await db
+      .from("institution_users")
+      .update({ permission_overrides: nextOverrides(row.permission_overrides, presetScopeOf(presetPermissions), scope) })
+      .eq("id", institutionUserId)
+      .eq("institution_id", institutionId);
+    if (updateError) throw dbError(updateError);
+  }
+  return { previous, state: await getEdorasMessagingPermissions(institutionId) };
 }
 
 // ─── Kurum yöneticisi hesapları (Kurum ayrıntısı → Kurum yöneticileri; yalnız ADMIN) ───

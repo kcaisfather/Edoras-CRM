@@ -88,6 +88,7 @@
         "EDORAS_LOGIN_NOT_EMAIL": "Bu yönetici Edoras'a telefon ya da TC ile giriyor; giriş adresi değiştirilirse girişi bozulur. Şifre sıfırlama ve aktif / pasif kullanılabilir.",
         "EDORAS_SUPER_ADMIN": "Edoras süper yönetici hesabı CRM'den değiştirilemez.",
         "EDORAS_LAST_ADMIN": "Kurumda başka aktif yönetici kalmıyor; pasife almak için bunu açıkça onaylayın.",
+        "EDORAS_MODULE_DISABLED": "Bu kurumda Mesajlaşma modülü kapalı; önce Panel modülleri kartından açın.",
         "KCA_NOT_LINKED": "KCA Panel hesabın bağlı değil ya da bağ düştü (şifre değişmiş olabilir). Yönetim sayfasından yeniden bağla.",
         "KCA_LOGIN_FAILED": "KCA Panel e-postası ya da şifresi hatalı.",
         "KCA_LOGIN_LOCKED": "Çok fazla hatalı deneme. KCA Panel girişi 15 dakika kilitli.",
@@ -693,6 +694,58 @@
         "disabledToast": "{name} bu kurumda kapatıldı.",
         "note": "Değişiklik Edoras panelinde ve mobilde bir sonraki sayfa yenilemesinde görünür. Kapatmak veri silmez: kayıtlar durur, yalnız menü, sayfalar ve mobil ekran gizlenir.",
         "adminOnly": "Modülleri yalnız yöneticiler açıp kapatabilir."
+      },
+      "messaging": {
+        "title": "Mesajlaşma yetkileri",
+        "settingsTitle": "Sohbet türleri ve bildirim",
+        "on": "Açık",
+        "off": "Kapalı",
+        "saving": "Kaydediliyor…",
+        "defaultOn": "Varsayılan (açık) — bu kurum için ayrıca ayarlanmadı.",
+        "settingOnToast": "{name} açıldı.",
+        "settingOffToast": "{name} kapatıldı.",
+        "settings": {
+          "messaging_admin_teacher": {
+            "label": "Yönetici ↔ öğretmen",
+            "description": "Yöneticiler ve öğretmenler birbirine yazabilir. Sohbeti yalnız iki taraf görür."
+          },
+          "messaging_teacher_parent": {
+            "label": "Öğretmen ↔ veli",
+            "description": "Öğretmen, \"Velilerle mesajlaşma\" yetkisinin kapsamındaki öğrencilerin velilerine yazar; veli yalnız yanıt verir. Kurum yönetimi bu sohbetleri görebilir."
+          },
+          "messaging_parent_inbox": {
+            "label": "Veli → kurum kutusu",
+            "description": "Veliler kuruma yazar; kutuyu yalnız yöneticiler okur ve yanıtlar."
+          },
+          "notify_message": {
+            "label": "Yeni mesaj bildirimi",
+            "description": "Karşı tarafa içeriksiz uygulama bildirimi (\"Yeni mesajınız var\"); 22:00–08:00 arası gelenler sabah 08:00'de gider. SMS yok."
+          }
+        },
+        "teachersTitle": "Öğretmenler — velilerle mesajlaşma",
+        "scopes": {
+          "none": "Kapalı",
+          "assigned": "Atanan",
+          "institution": "Kurum"
+        },
+        "teacherCount": "{count} aktif öğretmen",
+        "overriddenCount": "{count} öğretmende rolünden farklı",
+        "noTeachers": "Kurumda aktif öğretmen yok.",
+        "teacherParentOff": "Öğretmen ↔ veli kapalı: öğretmen yetkileri şu an etkisiz, kimse veliye yazamaz.",
+        "editTeachers": "Öğretmen yetkilerini düzenle",
+        "viewTeachers": "Öğretmen yetkilerini gör",
+        "dialogTitle": "Velilerle mesajlaşma — öğretmenler",
+        "dialogDescription": "Atanan: sınıflarındaki, rehberi ve sınıf öğretmeni olduğu öğrencilerin velileri. Kurum: bütün veliler. Rolün verdiği değeri seçmek özel ayarı kaldırır; öğretmen yeniden rolünü izler.",
+        "search": "Öğretmen ya da branş ara",
+        "noMatch": "Eşleşen öğretmen yok.",
+        "presetLine": "Rol: {preset} ({scope})",
+        "noPreset": "rol atanmamış",
+        "overridden": "Özel ayar",
+        "followsPreset": "Rol varsayılanı",
+        "scopeAria": "{name} — velilerle mesajlaşma",
+        "scopeToast": "{name}: velilerle mesajlaşma {scope} olarak ayarlandı.",
+        "note": "Edoras panelindeki ayar ekranı ve Yetkiler ile aynı ayarlar; kurum yöneticisi de değiştirebilir. Mobilde birkaç dakika içinde görünür. Kapatılan türdeki eski sohbetler silinmez, salt okunur kalır.",
+        "adminOnly": "Mesajlaşma yetkilerini yalnız yöneticiler değiştirebilir."
       },
       "unregistered": {
         "title": "CRM kaydı yok",

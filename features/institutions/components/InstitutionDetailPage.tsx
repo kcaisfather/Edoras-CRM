@@ -38,6 +38,7 @@ import { InstitutionStatusBadge } from "./InstitutionStatusBadge";
 import { AdminsCard, BillingCard, ContactCard, DemoCard, LicensesCard, PaymentsCard, SectionCard } from "./detail-cards";
 import { ConvertDialog } from "./dialogs";
 import { EnrollDialog } from "./EnrollDialog";
+import { MessagingPermissionsCard } from "./MessagingPermissionsCard";
 import { PanelModulesCard } from "./PanelModulesCard";
 import { STAT_GRID, StatProgress, StatTile, StatTileSkeleton } from "./StatTile";
 
@@ -133,6 +134,7 @@ export function InstitutionDetailPage({
             <div className="min-w-0 space-y-6">
               {overviewAside}
               <PanelModulesCard institution={institution} />
+              <MessagingPermissionsCard institution={institution} />
             </div>
           </div>
         </TabsContent>

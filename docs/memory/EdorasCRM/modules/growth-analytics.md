@@ -37,6 +37,9 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
   `web_sessions`, giriş oturumu × gün; 26.10'dan önce boş). Mobil, web ve onaylanan görev "işlem" toplamına GİRMEZ
   (`NOT_AN_ACTION`). Her sütun başlığı `InfoTip` tetikleyicisi (`trigger` prop'u, noktalı alt çizgi) → `colHints.*`
   açıklaması. Canlı (Bakırköy): Tümü 1,1 sn soğuk / 30 gün 0,7 sn.
+  **Yapışkan başlık (26.10, df972d5):** tablo kendi kabında kayar (`Table` → `containerClassName` = `max-h-[70vh]`);
+  başlık satırı `sticky top-0`, Personel sütunu `sticky left-0` (td'de opak `bg-card`), köşe hücre z-30. Kaydırma
+  sayfaya bırakılırsa `th` yapışmaz — kap yüksekliğini kaldırma.
   ⚠️ "Tümü"de sütunlar AYNI dönemi kapsamaz: mobil `screen_views` 180 gün budanır (238 cron) → en çok son 6 ay; web
   26.10'dan beri. İş sütunları kalıcı tablolardan, kurumun ilk gününden. Uyarı mobil/web `colHints`'te yazılı.
 - Bırakılan: genişleme (koltuk), kanal sekmeleri, AWS / CAC-ROAS, telemetri `/analytics`. → [../reference/decisions.md](../reference/decisions.md)

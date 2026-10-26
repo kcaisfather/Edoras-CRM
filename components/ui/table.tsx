@@ -2,11 +2,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * `containerClassName`: kaydırma kabına eklenir. Yapışkan başlık (`sticky top-0`) en yakın kaydırma kabına yapışır;
+ * yatay kaydırma kabı dikeyde kaymadığı için başlığın sabit kalması için kaba yükseklik sınırı verilir (ör. max-h-[70vh]).
+ */
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  React.HTMLAttributes<HTMLTableElement> & { containerClassName?: string }
+>(({ className, containerClassName, ...props }, ref) => (
+  <div className={cn("relative w-full overflow-auto", containerClassName)}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}

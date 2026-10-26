@@ -102,21 +102,21 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
           </p>
 
           <DesktopTable>
-            <Table className={TABLE}>
+            <Table className={TABLE} containerClassName={SCROLL_BOX}>
               <TableHeader>
                 <TableRow>
-                  <TableHead className={TH}>
+                  <TableHead className={cn(TH, STICKY_CORNER)}>
                     <HeaderHint column="name" align="start" />
                   </TableHead>
                   {STAFF_COLUMNS.map((c) => (
-                    <TableHead key={c} className={cn(TH, "text-right")}>
+                    <TableHead key={c} className={cn(TH, STICKY_HEAD, "text-right")}>
                       <HeaderHint column={c} />
                     </TableHead>
                   ))}
-                  <TableHead className={cn(TH, "text-right")}>
+                  <TableHead className={cn(TH, STICKY_HEAD, "text-right")}>
                     <HeaderHint column="activeDays" />
                   </TableHead>
-                  <TableHead className={TH}>
+                  <TableHead className={cn(TH, STICKY_HEAD)}>
                     <HeaderHint column="lastDay" />
                   </TableHead>
                 </TableRow>
@@ -125,7 +125,7 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
                 {rows.length === 0 ? <EmptyRow colSpan={STAFF_COLUMNS.length + 3} /> : null}
                 {rows.map((r) => (
                   <TableRow key={r.userId} className={r.activeDays === 0 ? "text-muted-foreground" : undefined}>
-                    <TableCell>
+                    <TableCell className={cn(STICKY_NAME, "z-10 bg-card")}>
                       <PersonCell row={r} />
                     </TableCell>
                     {STAFF_COLUMNS.map((c) => (
@@ -171,6 +171,17 @@ function HeaderHint({ column, align = "end" }: { column: StaffColumn | "name" | 
     </InfoTip>
   );
 }
+
+/*
+ * Kaydırırken başlık ve isimler görünür kalsın: yapışkan hücre EN YAKIN kaydırma kabına yapışır. Tablo yatayda kaydığı
+ * için kap dikeyde de kendi içinde kaymalı (yükseklik sınırı) — yoksa sayfa inerken başlık kaçar. Yapışkan hücreler
+ * opak zemin ister (satırın yarı saydam tonu hücrenin altında kalır, arkadan geçen satırlar görünmesin).
+ */
+const SCROLL_BOX = "max-h-[70vh]";
+const STICKY_HEAD = "sticky top-0 z-20 bg-muted shadow-[inset_0_-1px_0_hsl(var(--border))]";
+const STICKY_NAME = "sticky left-0 shadow-[inset_-1px_0_0_hsl(var(--border))]";
+/** Sol üst köşe: hem üste hem sola yapışır, iki kenar çizgisi tek gölgede (iki `shadow-*` sınıfı birbirini ezer). */
+const STICKY_CORNER = "sticky left-0 top-0 z-30 bg-muted shadow-[inset_-1px_-1px_0_hsl(var(--border))]";
 
 function PersonCell({ row }: { row: StaffActivityRow }) {
   const t = useTranslations("growth.staffActivity");

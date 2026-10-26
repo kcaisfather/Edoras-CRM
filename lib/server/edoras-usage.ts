@@ -27,6 +27,8 @@ import {
 } from "@/lib/domain/activity/events";
 import {
   buildStaffActivityRows,
+  STAFF_ALL_SINCE,
+  STAFF_WINDOW_ALL,
   type StaffActivityResponse,
   type StaffActivityRpcRow,
   type StaffMember,
@@ -744,6 +746,7 @@ export async function getSmsRecipientsByInstitution(month: string): Promise<{ by
 /**
  * Kurumun personeli × işlem türü (kurum ayrıntısındaki "Öğretmen kullanımı" kartı). Kaynak: Edoras RPC
  * `staff_activity_summary` (edoras-admin migration 305, ödev dalı 315: event = tekil görev, session = ödev paketi;
+ * 338: web oturumu + onaylanan görev, pencere sınırı yok → "Tümü" ≈ 0,6 sn en büyük kurumda, 26.10;
  * YALNIZ OKUMA, `stable`, indeksli kaynaklar — en büyük kurumda 90 gün ≈ 0,27 sn, 12.10 ölçümü). Edoras'a kart açılışı
  * başına 3 istek: RPC (≤ 1000 satır/sayfa) + `institution_users` +
  * `profiles` (ad, branş — yalnız bu kurumun personeli ve penceredeki aktörler). Öğrenci verisi okunmaz.
@@ -795,9 +798,10 @@ async function collectStaffActivity(db: SupabaseClient, institutionId: string, d
 }
 
 export async function getStaffActivity(institutionId: string, windowDays: number): Promise<StaffActivityResponse> {
-  const days = clampWindow(windowDays);
+  // "Tümü" (338'den beri RPC pencere sınırı koymuyor): sabit başlangıç; diğer pencereler eski sınırla.
+  const days = windowDays === STAFF_WINDOW_ALL ? STAFF_WINDOW_ALL : clampWindow(windowDays);
   const until = todayIso();
-  const since = windowStart(days);
+  const since = days === STAFF_WINDOW_ALL ? STAFF_ALL_SINCE : windowStart(days);
   const key = `${days}:${until}:${institutionId}`;
   const hit = staffCache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;

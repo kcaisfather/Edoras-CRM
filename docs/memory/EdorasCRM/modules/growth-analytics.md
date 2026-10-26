@@ -17,7 +17,7 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
   ilk lisans ayı. Birim ekonomisi ve sızıntı yalnız ADMIN.
 - Kampanya: WhatsApp bağlantıları + CSV (e-posta kampanyası yok — onay / çıkış kaydı yok).
 - **Öğretmen kullanımı kartı (2026-10-09, dal `ogretmen-kullanim-2026-10-09`):** kurum ayrıntısında **"Öğretmen kullanımı" sekmesi**
-  (`InstitutionDetailPage` → `staff` yuvası, 2026-10-12'den beri; önce `footer` idi — sekme açılmadan RPC çağrılmaz), uç `/api/growth/institutions/{id}/staff-activity?window=7|30|90`, sunucu
+  (`InstitutionDetailPage` → `staff` yuvası, 2026-10-12'den beri; önce `footer` idi — sekme açılmadan RPC çağrılmaz), uç `/api/growth/institutions/{id}/staff-activity?window=7|30|90|0` (0 = Tümü, 2026-10-26), sunucu
   `getStaffActivity` (`edoras-usage.ts` sonu), saf mantık `lib/domain/growth/staff-activity.ts` (+ test). Kaynak Edoras RPC
   `staff_activity_summary` (edoras-admin migration 305 — CRM'den önce Edoras canlısına uygulanmalı; yoksa kart "okunamadı").
   Personel × işlem (yoklama, ödev, ödev kontrolü, birebir, deneme, duyuru, elle SMS, konu, mobil oturum); hücre = işlem
@@ -30,4 +30,13 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
   CSV, mobil). Toplam "işlem" (sıralama) paketi BİR kez toplar. Aynı şablon süzgeci kurum kullanım kartında (`SOURCES`
   `notNullColumn`, haftalık seri dahil) ve Kurum etkinliği akışında (`ASSIGNMENT_CREATED`) da var. Bakırköy 30 gün: Enes
   1.057 (eski dakika) → 143 paket / 5.161 tekil. RPC 90 gün sıcak ≈ 265 ms (eşik 500).
+  **26.10 güncellemesi (Edoras migration 338, CRM'den ÖNCE uygulanmalı — eski RPC "Tümü"de 180 gün hatası verir):**
+  "Tümü" penceresi (`STAFF_WINDOW_ALL` = 0 → `since` = `STAFF_ALL_SINCE`; `parseStaffWindow`); sütun sırası Yoklama →
+  **Konu işleme** → Ödev paketi → Tekil görev → **Onaylanan görev** (`review_approved`, adet = görev; "Ödev kontrolü"
+  dakikayı 1 sayar) → Ödev kontrolü → … → Mobil oturum → **Web oturum** (`web`; panel middleware'in yazdığı
+  `web_sessions`, giriş oturumu × gün; 26.10'dan önce boş). Mobil, web ve onaylanan görev "işlem" toplamına GİRMEZ
+  (`NOT_AN_ACTION`). Her sütun başlığı `InfoTip` tetikleyicisi (`trigger` prop'u, noktalı alt çizgi) → `colHints.*`
+  açıklaması. Canlı (Bakırköy): Tümü 1,1 sn soğuk / 30 gün 0,7 sn.
+  ⚠️ "Tümü"de sütunlar AYNI dönemi kapsamaz: mobil `screen_views` 180 gün budanır (238 cron) → en çok son 6 ay; web
+  26.10'dan beri. İş sütunları kalıcı tablolardan, kurumun ilk gününden. Uyarı mobil/web `colHints`'te yazılı.
 - Bırakılan: genişleme (koltuk), kanal sekmeleri, AWS / CAC-ROAS, telemetri `/analytics`. → [../reference/decisions.md](../reference/decisions.md)

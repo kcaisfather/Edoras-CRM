@@ -50,6 +50,19 @@ export const IMPORTANT_EVENT_TYPES = [
   "TIMETABLE_DELETED",
   "ATTENDANCE_OVERRIDDEN",
   "ANNOUNCEMENT_DELETED",
+  // Kurum Belgeleri (Edoras migration 337, 2026-10-26). details yalnız klasör kimliği taşır; dosya/klasör ADI yok.
+  "DOCUMENT_FOLDER_CREATED",
+  "DOCUMENT_FOLDER_RENAMED",
+  "DOCUMENT_FOLDER_SETTINGS_CHANGED",
+  "DOCUMENT_FOLDER_PERMISSIONS_CHANGED",
+  "DOCUMENT_FOLDER_DELETED",
+  "DOCUMENT_UPLOADED",
+  "DOCUMENT_RENAMED",
+  "DOCUMENT_MOVED",
+  "DOCUMENT_TRASHED",
+  "DOCUMENT_RESTORED",
+  "DOCUMENT_DELETED",
+  "DOCUMENT_ACCESSED",
 ] as const;
 export type ImportantEventType = (typeof IMPORTANT_EVENT_TYPES)[number];
 
@@ -106,6 +119,8 @@ export function buildEventDetail(action: string, details: unknown, entityName: s
     const count = num(d.changedCount);
     return count !== null ? { kind: "parents", values: { count } } : null;
   }
+  // Belge / klasör adı kişisel veri olabilir (dilekçe, rapor): details'e ileride ad girse bile gösterilmez.
+  if (action.startsWith("document_")) return null;
   if (action.startsWith("student_")) {
     const no = text(d.studentNo);
     return no ? { kind: "studentNo", values: { no } } : null;

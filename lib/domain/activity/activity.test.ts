@@ -79,6 +79,8 @@ describe("önemli işlemler (activity_logs)", () => {
     expect(buildEventDetail("parent_credentials_sent", { bulk: true, changedCount: 40 }, null)).toEqual({ kind: "parents", values: { count: 40 } });
     expect(buildEventDetail("teacher_removed", {}, "Ali Veli")).toEqual({ kind: "name", values: { name: "Ali Veli" } });
     expect(buildEventDetail("class_deleted", { name: "12-A" }, null)).toEqual({ kind: "name", values: { name: "12-A" } });
+    expect(buildEventDetail("document_uploaded", { folderId: "f1", name: "dilekce.pdf" }, "X")).toBeNull();
+    expect(actionToEventType("document_folder_permissions_changed")).toBe("DOCUMENT_FOLDER_PERMISSIONS_CHANGED");
     expect(buildEventDetail("class_deleted", null, null)).toBeNull();
   });
 });

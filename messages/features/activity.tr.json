@@ -73,7 +73,19 @@
       "TIMETABLE_ACTIVATED": "Ders programı aktifleştirildi",
       "TIMETABLE_DELETED": "Ders programı silindi",
       "ATTENDANCE_OVERRIDDEN": "Geçmiş yoklama değiştirildi",
-      "ANNOUNCEMENT_DELETED": "Duyuru silindi"
+      "ANNOUNCEMENT_DELETED": "Duyuru silindi",
+      "DOCUMENT_FOLDER_CREATED": "Belge klasörü oluşturuldu",
+      "DOCUMENT_FOLDER_RENAMED": "Belge klasörü yeniden adlandırıldı",
+      "DOCUMENT_FOLDER_SETTINGS_CHANGED": "Belge klasörü ayarı değişti",
+      "DOCUMENT_FOLDER_PERMISSIONS_CHANGED": "Belge klasörü erişimi değişti",
+      "DOCUMENT_FOLDER_DELETED": "Belge klasörü silindi",
+      "DOCUMENT_UPLOADED": "Belge yüklendi",
+      "DOCUMENT_RENAMED": "Belge yeniden adlandırıldı",
+      "DOCUMENT_MOVED": "Belge taşındı",
+      "DOCUMENT_TRASHED": "Belge çöpe atıldı",
+      "DOCUMENT_RESTORED": "Belge çöpten geri alındı",
+      "DOCUMENT_DELETED": "Belge kalıcı silindi",
+      "DOCUMENT_ACCESSED": "Hassas belge açıldı"
     },
     "roles": {
       "admin": "Kurum yöneticisi",

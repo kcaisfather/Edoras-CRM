@@ -5,13 +5,22 @@ import { useTranslations } from "next-intl";
 import { UsersRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTip } from "@/components/ui/info-tip";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CsvButton, DesktopTable, EmptyRow, MobileCard, MobileCardList } from "@/components/list";
 import { formatDate } from "@/features/institutions";
 import { cn } from "@/lib/utils";
-import { DEFAULT_WINDOW_DAYS, WINDOW_DAYS_OPTIONS } from "@/lib/domain/growth/usage";
-import { STAFF_COLUMNS, cellValue, idleStaffCount, type StaffActivityRow, type StaffColumn } from "@/lib/domain/growth/staff-activity";
+import { DEFAULT_WINDOW_DAYS } from "@/lib/domain/growth/usage";
+import {
+  STAFF_COLUMNS,
+  STAFF_WINDOW_ALL,
+  STAFF_WINDOW_OPTIONS,
+  cellValue,
+  idleStaffCount,
+  type StaffActivityRow,
+  type StaffColumn,
+} from "@/lib/domain/growth/staff-activity";
 import { useStaffActivity } from "../queries";
 import { TABLE, TH, formatNumber } from "./shared";
 
@@ -20,7 +29,8 @@ import { TABLE, TH, formatNumber } from "./shared";
  * (aynı dakika = 1), ipucunda kayıt + gün. Ödev iki sütun: "Ödev paketi" (öğrenci / sınıf × oluşturma haftası) ve
  * "Tekil görev" (öğrenciye düşen görev); ipuçları birbirini gösterir. Hücre değeri `cellValue`'dan. "Aktif gün" kişinin
  * tüm işlemleri birlikte (toplanmış değil). Veri Edoras RPC'sinden salt okunur (5 dk önbellekli); işlemi olmayan etkin
- * öğretmenler de listelenir.
+ * öğretmenler de listelenir. Her sütun başlığının üzerine gelince ne saydığı açılır (`colHints`); pencere 7/30/90 gün
+ * ya da Tümü.
  */
 export function InstitutionStaffActivityCard({ institutionId }: { institutionId: string }) {
   const t = useTranslations("growth.staffActivity");
@@ -36,6 +46,8 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
     const { events, sessions, days } = r.cells[c];
     if (c === "assignment") return t("cellTitleAssignment", { events, days });
     if (c === "assignmentTasks") return t("cellTitleAssignmentTasks", { sessions, days });
+    if (c === "reviewApproved") return t("cellTitleDays", { days });
+    if (c === "web") return t("cellTitleWeb", { days });
     return t("cellTitle", { events, days });
   };
   const csvRows = () =>
@@ -63,7 +75,10 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
             value={String(windowDays)}
             onValueChange={(v) => setWindowDays(Number(v))}
             aria-label={tw("windowLabel")}
-            options={WINDOW_DAYS_OPTIONS.map((d) => ({ value: String(d), label: tw("windowOption", { days: d }) }))}
+            options={STAFF_WINDOW_OPTIONS.map((d) => ({
+              value: String(d),
+              label: d === STAFF_WINDOW_ALL ? t("windowAll") : tw("windowOption", { days: d }),
+            }))}
           />
           <CsvButton
             filename="ogretmen-kullanimi"
@@ -80,7 +95,9 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            {t("summary", { active: activeStaff - idle, total: activeStaff, days: data.windowDays })}
+            {data.windowDays === STAFF_WINDOW_ALL
+              ? t("summaryAll", { active: activeStaff - idle, total: activeStaff })
+              : t("summary", { active: activeStaff - idle, total: activeStaff, days: data.windowDays })}
             {idle > 0 ? <span className="ml-1 text-warning">{t("idle", { count: idle })}</span> : null}
           </p>
 
@@ -88,14 +105,20 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
             <Table className={TABLE}>
               <TableHeader>
                 <TableRow>
-                  <TableHead className={TH}>{t("cols.name")}</TableHead>
+                  <TableHead className={TH}>
+                    <HeaderHint column="name" align="start" />
+                  </TableHead>
                   {STAFF_COLUMNS.map((c) => (
                     <TableHead key={c} className={cn(TH, "text-right")}>
-                      {t(`cols.${c}`)}
+                      <HeaderHint column={c} />
                     </TableHead>
                   ))}
-                  <TableHead className={cn(TH, "text-right")}>{t("cols.activeDays")}</TableHead>
-                  <TableHead className={TH}>{t("cols.lastDay")}</TableHead>
+                  <TableHead className={cn(TH, "text-right")}>
+                    <HeaderHint column="activeDays" />
+                  </TableHead>
+                  <TableHead className={TH}>
+                    <HeaderHint column="lastDay" />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -135,6 +158,17 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
         </div>
       )}
     </Card>
+  );
+}
+
+/** Sütun başlığı: üzerine gelince (ya da dokununca) sütunun ne saydığı açılır. */
+function HeaderHint({ column, align = "end" }: { column: StaffColumn | "name" | "activeDays" | "lastDay"; align?: "start" | "end" }) {
+  const t = useTranslations("growth.staffActivity");
+  const label = t(`cols.${column}`);
+  return (
+    <InfoTip label={label} align={align} trigger={label}>
+      {t(`colHints.${column}`)}
+    </InfoTip>
   );
 }
 

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildStaffActivityRows, cellValue, idleStaffCount, type StaffActivityRpcRow } from "./staff-activity";
+import {
+  STAFF_COLUMNS,
+  STAFF_WINDOW_ALL,
+  buildStaffActivityRows,
+  cellValue,
+  idleStaffCount,
+  parseStaffWindow,
+  type StaffActivityRpcRow,
+} from "./staff-activity";
 
 const rpc = (user_id: string, action: string, event_count: number, session_count: number, active_days: number, last_day: string | null = "2026-10-08"): StaffActivityRpcRow => ({
   user_id,
@@ -121,5 +129,45 @@ describe("öğretmen kullanımı satırları", () => {
       ]
     );
     expect(rows.map((r) => r.name)).toEqual(["Cem", "Çağrı"]);
+  });
+
+  it("onaylanan görev adet (events) gösterir ve işlem toplamına girmez (kontrolün alt kümesi)", () => {
+    const [row] = buildStaffActivityRows(
+      [rpc("a", "review", 120, 9, 4), rpc("a", "review_approved", 110, 8, 4), rpc("a", "total", 230, 17, 4)],
+      [{ userId: "a", role: "teacher", active: true }],
+      []
+    );
+    expect(cellValue(row, "reviewApproved")).toBe(110);
+    expect(cellValue(row, "review")).toBe(9);
+    expect(row.actions).toBe(9);
+  });
+
+  it("web oturumu oturum sayısını gösterir, işlem toplamına girmez", () => {
+    const [row] = buildStaffActivityRows(
+      [rpc("a", "web", 5, 3, 2), rpc("a", "attendance", 4, 4, 2), rpc("a", "total", 9, 7, 3)],
+      [{ userId: "a", role: "admin", active: true }],
+      []
+    );
+    expect(cellValue(row, "web")).toBe(3);
+    expect(row.actions).toBe(4);
+    expect(row.activeDays).toBe(3);
+  });
+
+  it("sütun sırası: konu işleme yoklamanın, onaylanan tekil görevin, web mobilin yanında", () => {
+    const at = (c: (typeof STAFF_COLUMNS)[number]) => STAFF_COLUMNS.indexOf(c);
+    expect(at("lessonTopic")).toBe(at("attendance") + 1);
+    expect(at("reviewApproved")).toBe(at("assignmentTasks") + 1);
+    expect(at("web")).toBe(at("mobile") + 1);
+  });
+});
+
+describe("öğretmen kullanımı penceresi", () => {
+  it("7/30/90 ve Tümü (0) geçerli; bilinmeyen → 30", () => {
+    expect(parseStaffWindow("0")).toBe(STAFF_WINDOW_ALL);
+    expect(parseStaffWindow("90")).toBe(90);
+    expect(parseStaffWindow("180")).toBe(30);
+    expect(parseStaffWindow("abc")).toBe(30);
+    expect(parseStaffWindow(null)).toBe(30);
+    expect(parseStaffWindow("")).toBe(30);
   });
 });

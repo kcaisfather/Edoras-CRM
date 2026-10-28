@@ -26,8 +26,8 @@ import { TABLE, TH, formatNumber } from "./shared";
 
 /**
  * Kurum ayrıntısının altındaki "Öğretmen kullanımı" kartı (tam genişlik): personel × işlem türü. Hücre = işlem sayısı
- * (aynı dakika = 1), ipucunda kayıt + gün. Ödev iki sütun: "Ödev paketi" (öğrenci / sınıf × oluşturma haftası) ve
- * "Tekil görev" (öğrenciye düşen görev); ipuçları birbirini gösterir. Hücre değeri `cellValue`'dan. "Aktif gün" kişinin
+ * (aynı dakika = 1), ipucunda kayıt + gün. Ödev dört sütun: "Toplu ödev" (öğrenci / sınıf × oluşturma haftası) +
+ * "Toplu ödev onayı" (onaylanan paket) ve "Tekli ödev" (öğrenciye düşen görev) + "Tekli ödev onayı"; ipuçları birbirini gösterir. Hücre değeri `cellValue`'dan. "Aktif gün" kişinin
  * tüm işlemleri birlikte (toplanmış değil). Veri Edoras RPC'sinden salt okunur (5 dk önbellekli); işlemi olmayan etkin
  * öğretmenler de listelenir. Her sütun başlığının üzerine gelince ne saydığı açılır (`colHints`); pencere 7/30/90 gün
  * ya da Tümü.
@@ -46,6 +46,7 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
     const { events, sessions, days } = r.cells[c];
     if (c === "assignment") return t("cellTitleAssignment", { events, days });
     if (c === "assignmentTasks") return t("cellTitleAssignmentTasks", { sessions, days });
+    if (c === "assignmentApproved") return t("cellTitleAssignmentApproved", { events, days });
     if (c === "reviewApproved") return t("cellTitleDays", { days });
     if (c === "web") return t("cellTitleWeb", { days });
     return t("cellTitle", { events, days });

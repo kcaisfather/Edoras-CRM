@@ -40,6 +40,11 @@ Tanımlar: `lib/domain/growth/{usage,renewals,retention,campaign,sort}.ts`. **Mi
   **Yapışkan başlık (26.10, df972d5):** tablo kendi kabında kayar (`Table` → `containerClassName` = `max-h-[70vh]`);
   başlık satırı `sticky top-0`, Personel sütunu `sticky left-0` (td'de opak `bg-card`), köşe hücre z-30. Kaydırma
   sayfaya bırakılırsa `th` yapışmaz — kap yüksekliğini kaldırma.
+  **28.10 — onay sütunları (Edoras migration 343, CRM'den ÖNCE uygulandı):** ödev dört sütun: **Toplu ödev**
+  (eski "Ödev paketi") → **Toplu ödev onayı** (`assignmentApproved` = `review_approved.session_count`: onaylanan görevlerin
+  ait olduğu farklı paket, anahtar ödev dalıyla aynı — hedef + oluşturma haftası) → **Tekli ödev** (eski "Tekil görev") →
+  **Tekli ödev onayı** (eski "Onaylanan görev", `event_count`). Onaylar onay gününe göre sayılır; ikisi de "işlem" toplamına
+  GİRMEZ. 343 öncesi RPC'de `review_approved` session = dakika olduğundan eski RPC'yle "Toplu ödev onayı" yanlış olur.
   ⚠️ "Tümü"de sütunlar AYNI dönemi kapsamaz: mobil `screen_views` 180 gün budanır (238 cron) → en çok son 6 ay; web
   26.10'dan beri. İş sütunları kalıcı tablolardan, kurumun ilk gününden. Uyarı mobil/web `colHints`'te yazılı.
 - Bırakılan: genişleme (koltuk), kanal sekmeleri, AWS / CAC-ROAS, telemetri `/analytics`. → [../reference/decisions.md](../reference/decisions.md)

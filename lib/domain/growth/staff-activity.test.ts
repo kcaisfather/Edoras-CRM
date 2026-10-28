@@ -48,7 +48,7 @@ describe("öğretmen kullanımı satırları", () => {
     expect(row.cells.assignment).toEqual({ events: 300, sessions: 12, days: 6 });
   });
 
-  it("ödev satırı iki sütunu doldurur: Ödev paketi = sessions, Tekil görev = events", () => {
+  it("ödev satırı iki sütunu doldurur: Toplu ödev = sessions, Tekli ödev = events", () => {
     const [row] = buildStaffActivityRows(
       [rpc("a", "assignment", 5161, 143, 9), rpc("a", "total", 5161, 143, 9)],
       [{ userId: "a", role: "teacher", active: true }],
@@ -138,6 +138,7 @@ describe("öğretmen kullanımı satırları", () => {
       []
     );
     expect(cellValue(row, "reviewApproved")).toBe(110);
+    expect(cellValue(row, "assignmentApproved")).toBe(8);
     expect(cellValue(row, "review")).toBe(9);
     expect(row.actions).toBe(9);
   });
@@ -153,9 +154,11 @@ describe("öğretmen kullanımı satırları", () => {
     expect(row.activeDays).toBe(3);
   });
 
-  it("sütun sırası: konu işleme yoklamanın, onaylanan tekil görevin, web mobilin yanında", () => {
+  it("sütun sırası: konu işleme yoklamanın, onaylar ödev sütunlarının, web mobilin yanında", () => {
     const at = (c: (typeof STAFF_COLUMNS)[number]) => STAFF_COLUMNS.indexOf(c);
     expect(at("lessonTopic")).toBe(at("attendance") + 1);
+    expect(at("assignmentApproved")).toBe(at("assignment") + 1);
+    expect(at("assignmentTasks")).toBe(at("assignmentApproved") + 1);
     expect(at("reviewApproved")).toBe(at("assignmentTasks") + 1);
     expect(at("web")).toBe(at("mobile") + 1);
   });

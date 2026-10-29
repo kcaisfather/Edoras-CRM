@@ -6,14 +6,18 @@
 # Depo değişkenleri (Settings → Secrets and variables → Actions → Variables):
 #   TR_NEXT_PUBLIC_SUPABASE_URL          https://tr-crm-api.edorasapp.ai   (CRM yığını)
 #   TR_NEXT_PUBLIC_SUPABASE_ANON_KEY     CRM kopyasının anon anahtarı (istemciye gömülür, herkese açık tasarım)
-#   TR_NEXT_PUBLIC_EDORAS_PANEL_URL      https://tr-panel.edorasapp.ai
+#   TR_NEXT_PUBLIC_EDORAS_PANEL_URL      https://panel.edorasapp.ai
 #   TR_NEXT_PUBLIC_APP_URL               https://tr-crm.edorasapp.ai
 #   TR_NEXT_PUBLIC_EDORAS_STORAGE_URL    https://tr-api.edorasapp.ai       (kurum logoları: panel yığını; next.config)
+#
+# TETİK = main (29.10, kesmeden sonra): canlı CRM bu imaj, main'e giden her push app-1'e dağıtılır. tr-hosting dalı
+# yalnız main'in aynası; push'u derleme TETİKLEMEZ. Etiket `:tr-hosting` bilerek değişmedi (app-1 o etiketi izliyor).
+# Vercel CRM'in Git bağlantısı yok (yalnız tr-crm yönlendirmesi, CLI ile dağıtılır) → main push'u Vercel'i değiştirmez.
 name: TR CRM imajı
 
 on:
   push:
-    branches: [tr-hosting]
+    branches: [main]
     paths-ignore: ['docs/**', 'supabase/**', '**/*.md']
   workflow_dispatch:
 

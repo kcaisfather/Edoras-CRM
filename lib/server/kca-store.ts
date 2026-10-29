@@ -134,11 +134,16 @@ export async function verifyKcaLogin(
 export type LinkedUserResult = { ok: true; user: KcaUser } | { ok: false; reason: "PASSWORD_CHANGED" | "INACTIVE" };
 
 /** Her istekte: bağlı KCA hesabı hâlâ aktif mi, şifresi bağlandığından beri değişmedi mi. */
-export async function loadLinkedUser(db: KcaDb, kcaUserId: number, fingerprint: string): Promise<LinkedUserResult> {
-  const row = await one(db, "SELECT id, name, email, password_hash, is_admin, active, is_agent FROM users WHERE id = ?", [kcaUserId]);
+const LINKED_USER_SQL = "SELECT id, name, email, password_hash, is_admin, active, is_agent FROM users WHERE id = ?";
+
+function linkedUserOf(row: KcaRow | null, fingerprint: string): LinkedUserResult {
   if (!row || !flag(row.active) || flag(row.is_agent)) return { ok: false, reason: "INACTIVE" };
   if (passwordFingerprint(String(row.password_hash ?? "")) !== fingerprint) return { ok: false, reason: "PASSWORD_CHANGED" };
   return { ok: true, user: userOf(row) };
+}
+
+export async function loadLinkedUser(db: KcaDb, kcaUserId: number, fingerprint: string): Promise<LinkedUserResult> {
+  return linkedUserOf(await one(db, LINKED_USER_SQL, [kcaUserId]), fingerprint);
 }
 
 // ---------- Edoras kapsamı ve erişim ----------
@@ -172,23 +177,26 @@ function scopeProjectOf(row: KcaRow): KcaScopeProject {
  * projeleri (KCA Panel projeleri iki katmanlıdır). Kök bulunamazsa ya da adı tutan birden çok ana proje varsa null —
  * yanlış projeyi göstermektense hiçbir şey gösterilmez.
  */
-export async function loadEdorasScope(db: KcaDb, rootIdOverride?: number | null): Promise<EdorasScope | null> {
+/** Tüm projeler tek sorguda (tablo küçük); kök + alt proje süzgeci bellekte, sıra SQL'den (önce ana projeler, sonra ad). */
+const ALL_PROJECTS_SQL = "SELECT id, name, color, parent_id, archived FROM projects ORDER BY parent_id IS NOT NULL, name";
+
+function scopeOf(all: KcaRow[], rootIdOverride?: number | null): EdorasScope | null {
+  const tops = all.filter((p) => numOrNull(p.parent_id) === null);
   let rootId: number | null = null;
   if (rootIdOverride) {
-    const root = await one(db, "SELECT id FROM projects WHERE id = ? AND parent_id IS NULL", [rootIdOverride]);
+    const root = tops.find((p) => num(p.id) === rootIdOverride);
     rootId = root ? num(root.id) : null;
   } else {
-    const tops = (await q(db, "SELECT id, name FROM projects WHERE parent_id IS NULL")).filter((p) => isEdorasRootName(String(p.name)));
-    rootId = tops.length === 1 ? num(tops[0].id) : null;
+    const named = tops.filter((p) => isEdorasRootName(String(p.name)));
+    rootId = named.length === 1 ? num(named[0].id) : null;
   }
   if (!rootId) return null;
-  const projects = (
-    await q(db, "SELECT id, name, color, parent_id, archived FROM projects WHERE id = ? OR parent_id = ? ORDER BY parent_id IS NOT NULL, name", [
-      rootId,
-      rootId,
-    ])
-  ).map(scopeProjectOf);
+  const projects = all.filter((p) => num(p.id) === rootId || numOrNull(p.parent_id) === rootId).map(scopeProjectOf);
   return { rootId, projects, ids: projects.map((p) => p.id) };
+}
+
+export async function loadEdorasScope(db: KcaDb, rootIdOverride?: number | null): Promise<EdorasScope | null> {
+  return scopeOf(await q(db, ALL_PROJECTS_SQL), rootIdOverride);
 }
 
 export interface KcaProjectAccess extends KcaScopeProject {
@@ -206,24 +214,53 @@ export interface KcaAccess {
   today: string;
 }
 
-export async function loadAccess(db: KcaDb, me: KcaUser, scope: EdorasScope, today: string = todayIso()): Promise<KcaAccess> {
+/** Kişinin proje üyelikleri (kapsam süzgeci bellekte — accessOf yalnız kapsamdaki projeleri alır). */
+const MEMBERSHIPS_SQL = "SELECT project_id, can_create_tasks, can_edit_due_dates FROM project_members WHERE user_id = ?";
+
+/** `memberRows`: yöneticide kullanılmaz; diğerlerinde kişinin üyelik satırları (kapsam dışı olanlar elenir). */
+function accessOf(me: KcaUser, scope: EdorasScope, memberRows: KcaRow[], today: string): KcaAccess {
   const projects = new Map<number, KcaProjectAccess>();
   if (me.isAdmin) {
     for (const p of scope.projects) projects.set(p.id, { ...p, canCreateTasks: true, canEditDueDates: true });
   } else {
-    const rows = await q(
-      db,
-      `SELECT project_id, can_create_tasks, can_edit_due_dates FROM project_members WHERE user_id = ? AND project_id IN ${inList(scope.ids)}`,
-      [me.id, ...scope.ids]
-    );
     const byId = new Map(scope.projects.map((p) => [p.id, p]));
-    for (const r of rows) {
+    for (const r of memberRows) {
       const p = byId.get(num(r.project_id));
       if (p) projects.set(p.id, { ...p, canCreateTasks: flag(r.can_create_tasks), canEditDueDates: flag(r.can_edit_due_dates) });
     }
   }
   const visibleIds = scope.projects.filter((p) => projects.has(p.id)).map((p) => p.id);
   return { me, scope, projects, visibleIds, today };
+}
+
+export async function loadAccess(db: KcaDb, me: KcaUser, scope: EdorasScope, today: string = todayIso()): Promise<KcaAccess> {
+  return accessOf(me, scope, me.isAdmin ? [] : await q(db, MEMBERSHIPS_SQL, [me.id]), today);
+}
+
+export interface KcaGate {
+  linked: LinkedUserResult;
+  /** Bağ geçersizse ya da kapsam yoksa null. */
+  scope: EdorasScope | null;
+  /** Yalnız bağ geçerli VE kapsam varsa dolu. */
+  access: KcaAccess | null;
+}
+
+/**
+ * Her uç çağrısının önkoşulu (bağlı kullanıcı + Edoras kapsamı + yetkiler) TEK Turso isteğinde: üç sorgu `batch` ile
+ * gider (önceden 4–5 art arda uzak tur). Kurallar loadLinkedUser / loadEdorasScope / loadAccess ile aynı — kullanıcı
+ * satırı her çağrıda okunur (pasif hesap ve şifre değişimi önbelleğe alınmaz).
+ */
+export async function loadGate(db: KcaDb, kcaUserId: number, fingerprint: string, rootIdOverride?: number | null, today: string = todayIso()): Promise<KcaGate> {
+  const [userRes, projectRes, memberRes] = await db.batch([
+    { sql: LINKED_USER_SQL, args: [kcaUserId] },
+    { sql: ALL_PROJECTS_SQL },
+    { sql: MEMBERSHIPS_SQL, args: [kcaUserId] },
+  ]);
+  const linked = linkedUserOf(userRes.rows[0] ?? null, fingerprint);
+  if (!linked.ok) return { linked, scope: null, access: null };
+  const scope = scopeOf(projectRes.rows, rootIdOverride);
+  if (!scope) return { linked, scope: null, access: null };
+  return { linked, scope, access: accessOf(linked.user, scope, memberRes.rows, today) };
 }
 
 function projectFor(access: KcaAccess, projectId: number): KcaProjectAccess {

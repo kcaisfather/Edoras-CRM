@@ -85,11 +85,10 @@ export async function kcaSession(staff: StaffContext): Promise<KcaSessionDto> {
   if (!link) return { state: "NOT_LINKED", reason: "NONE" };
   return kcaCall(async () => {
     const db = getKcaDb();
-    const linked = await store.loadLinkedUser(db, link.kca_user_id, link.kca_password_fp);
+    // Önkoşullar (kullanıcı + kapsam + yetki) tek Turso isteğinde; ardından yalnız sessionData.
+    const { linked, scope, access } = await store.loadGate(db, link.kca_user_id, link.kca_password_fp, rootOverride());
     if (!linked.ok) return { state: "NOT_LINKED", reason: linked.reason };
-    const scope = await store.loadEdorasScope(db, rootOverride());
-    if (!scope) return { state: "NO_SCOPE", user: linked.user };
-    const access = await store.loadAccess(db, linked.user, scope);
+    if (!scope || !access) return { state: "NO_SCOPE", user: linked.user };
     const { projects, members } = await store.sessionData(db, access);
     return { state: "READY", user: linked.user, projects, members, today: access.today };
   });
@@ -128,11 +127,10 @@ async function withKca<T>(staff: StaffContext, fn: (db: KcaDb, access: store.Kca
   if (!link) throw new HttpError(409, "KCA_NOT_LINKED");
   return kcaCall(async () => {
     const db = getKcaDb();
-    const linked = await store.loadLinkedUser(db, link.kca_user_id, link.kca_password_fp);
+    const { linked, scope, access } = await store.loadGate(db, link.kca_user_id, link.kca_password_fp, rootOverride());
     if (!linked.ok) throw new HttpError(409, "KCA_NOT_LINKED");
-    const scope = await store.loadEdorasScope(db, rootOverride());
-    if (!scope) throw new HttpError(409, "KCA_SCOPE_MISSING");
-    return fn(db, await store.loadAccess(db, linked.user, scope));
+    if (!scope || !access) throw new HttpError(409, "KCA_SCOPE_MISSING");
+    return fn(db, access);
   });
 }
 

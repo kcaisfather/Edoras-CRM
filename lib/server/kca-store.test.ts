@@ -21,6 +21,7 @@ import {
   listTasks,
   loadAccess,
   loadEdorasScope,
+  loadGate,
   loadLinkedUser,
   meetingDetail,
   passwordFingerprint,
@@ -195,6 +196,39 @@ describe("Edoras kapsamı", () => {
     const dup = insert("INSERT INTO projects (name) VALUES ('EDORAS')");
     expect(await loadEdorasScope(db)).toBeNull();
     fake.db.prepare("DELETE FROM projects WHERE id = ?").run(dup);
+  });
+
+  it("loadGate: kullanıcı + kapsam + yetki TEK HTTP isteğinde, tek tek yüklemeyle aynı sonuç", async () => {
+    let calls = 0;
+    const counting = createTursoHttpDb({
+      url: "libsql://kca-test.turso.io",
+      authToken: "tok",
+      fetch: ((...a: Parameters<typeof fetch>) => {
+        calls++;
+        return fake.fetch(...a);
+      }) as typeof fetch,
+    });
+    for (const k of ["kamil", "eren", "ayse"] as const) {
+      const fp = passwordFingerprint(row<{ password_hash: string }>("SELECT password_hash FROM users WHERE id = ?", ids[k]).password_hash);
+      calls = 0;
+      const gate = await loadGate(counting, ids[k], fp, null, TODAY);
+      expect(calls).toBe(1);
+      expect(gate.linked.ok && gate.linked.user).toEqual(users[k]);
+      expect(gate.scope).toEqual(scope);
+      expect(gate.access?.visibleIds).toEqual(access[k].visibleIds);
+      expect([...(gate.access?.projects ?? [])]).toEqual([...access[k].projects]);
+    }
+  });
+
+  it("loadGate: şifre değişmiş → PASSWORD_CHANGED, pasif / AI hesap → INACTIVE, alt proje kök olamaz → kapsam yok", async () => {
+    const fp = passwordFingerprint(row<{ password_hash: string }>("SELECT password_hash FROM users WHERE id = ?", ids.ayse).password_hash);
+    expect((await loadGate(db, ids.ayse, "baska-parmak-izi", null, TODAY)).linked).toEqual({ ok: false, reason: "PASSWORD_CHANGED" });
+    expect((await loadGate(db, ids.passive, "x", null, TODAY)).linked).toEqual({ ok: false, reason: "INACTIVE" });
+    expect((await loadGate(db, ids.agent, "x", null, TODAY)).linked).toEqual({ ok: false, reason: "INACTIVE" });
+    const noScope = await loadGate(db, ids.ayse, fp, ids.mobil, TODAY);
+    expect(noScope.linked.ok).toBe(true);
+    expect(noScope.scope).toBeNull();
+    expect(noScope.access).toBeNull();
   });
 
   it("erişim KCA Panel üyeliğinden: yönetici hepsini, üye yalnız kendi projesini görür", async () => {

@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [{ "path": "/api/cron/reports", "schedule": "0 5 * * *" }]
+  "redirects": [{ "source": "/(.*)", "destination": "https://tr-crm.edorasapp.ai/$1", "permanent": false }]
 }

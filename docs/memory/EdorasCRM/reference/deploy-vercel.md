@@ -1,5 +1,10 @@
 # Vercel dağıtımı ve ortam değişkenleri
 
+> ⚠️ **29.10.2026'dan beri canlı CRM Türkiye'de:** `https://tr-crm.edorasapp.ai` (app-1 Coolify, imaj `tr-hosting` dalından,
+> veri db-1 `supabase-crm`). Vercel `edorascrm` artık YALNIZ yönlendirir: `vercel.json` `redirects` her yolu 307 ile
+> tr-crm'e gönderir, Vercel cron'u kaldırıldı (rapor işi TR'de `edoras-crm-rapor.timer`). Vercel'e yeni özellik
+> dağıtılmaz; aşağısı geçmiş kayıttır. Geri dönüş: `redirects` satırını sil + cron'u geri koy + CLI ile dağıt.
+
 Durum (2026-10-01): **dağıtıldı** — Vercel ekibi `kamil-nissas-projects`, proje `edorascrm`, adres
 `https://edorascrm.vercel.app` (**GitHub push'u üretimi GÜNCELLEMEZ** — dağıtım CLI ile elle, bkz. "Yayın yöntemi";
 yerel klasör `vercel link` ile bağlı, `.vercel/` git dışı). Production env'leri eklendi: Supabase CRM (3), Edoras (2), `NEXT_PUBLIC_EDORAS_PANEL_URL`,

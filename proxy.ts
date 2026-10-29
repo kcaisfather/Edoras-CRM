@@ -49,9 +49,11 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims: oturum anahtarı asimetrik (ES256) olduğu için imza yerelde (önbellekli JWKS ile) doğrulanır; getUser her istekte
+  // Auth sunucusuna ağ turu atardı (menü ön yüklemeleri dahil ~350 ms). Süresi dolmuş jeton yine tazelenir (setAll).
+  // İptal edilmiş oturum jeton süresi dolana dek burada "var" sayılır — veri uçları `requireStaff()` ile getUser'da doğrular.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims ?? null;
 
   const { pathname } = request.nextUrl;
   if (!user && !pathname.startsWith("/api") && !isPublicPath(pathname)) {

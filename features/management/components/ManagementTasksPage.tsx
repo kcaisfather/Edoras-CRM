@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { MessageSquare, Plus } from "lucide-react";
@@ -14,8 +15,9 @@ import { useApiErrorMessage } from "@/lib/hooks/use-api-error-message";
 import { useUrlParam } from "@/lib/hooks/use-url-param";
 import { KCA_TASK_STATUSES, type KcaTaskDto, type KcaTaskStatus } from "@/lib/domain/kca/types";
 import { cn } from "@/lib/utils";
+import { managementApi } from "../api";
 import { usePatchKcaTask } from "../mutations";
-import { useKcaTasks } from "../queries";
+import { managementKeys, useKcaTasks } from "../queries";
 import { ManagementGate } from "./ManagementGate";
 import { NewTaskPanel, TaskDetailPanel } from "./TaskPanels";
 import { ProjectBadge, ProjectTabs, TaskStatusPill, formatDay, formatStamp, matchesQuery, useReadySession } from "./shared";
@@ -244,6 +246,12 @@ function NewTaskButton({ onCreated }: { onCreated: (id: number) => void }) {
 /** Yönetim Görevleri (/management/tasks): KCA Panel'deki Edoras görevleri. Açık görev URL'de (?task=). */
 export function ManagementTasksPage() {
   const t = useTranslations("management.tasks");
+  const qc = useQueryClient();
+  // Görev listesi oturum sorgusunu BEKLEMEDEN istenir (önceden oturum → görevler art arda, ~1 sn + ~1 sn). Bağ yoksa uç hata döner;
+  // prefetchQuery hatayı yutar ve TasksBoard'un useKcaTasks'ı aynı anahtarı kullanır (30 sn taze, çift istek yok).
+  useEffect(() => {
+    void qc.prefetchQuery({ queryKey: managementKeys.tasks(), queryFn: ({ signal }) => managementApi.tasks(signal), staleTime: 30 * 1000 });
+  }, [qc]);
   const [taskParam, setTaskParam] = useUrlParam("task");
   const openTask = /^\d+$/.test(taskParam) ? Number(taskParam) : null;
   const setOpenTask = (id: number | null) => setTaskParam(id ? String(id) : "");

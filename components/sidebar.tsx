@@ -35,6 +35,8 @@ export function SidebarNavLink({
   return (
     <Link
       href={href}
+      // Menüdeki ~12 sayfa açılışta ön yüklenip ana iş parçacığını ve bağlantıyı meşgul ediyordu; tıklayınca yüklenir.
+      prefetch={false}
       onClick={onNavigate}
       title={showBadge ? `${label} · ${badge.label}` : label}
       aria-label={expanded ? undefined : showBadge ? `${label}, ${badge.label}` : label}

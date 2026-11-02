@@ -159,7 +159,10 @@ describe("öğretmen kullanımı satırları", () => {
     expect(at("lessonTopic")).toBe(at("attendance") + 1);
     expect(at("assignmentApproved")).toBe(at("assignment") + 1);
     expect(at("assignmentTasks")).toBe(at("assignmentApproved") + 1);
-    expect(at("reviewApproved")).toBe(at("assignmentTasks") + 1);
+    expect(at("tasksPerPackage")).toBe(at("assignmentTasks") + 1);
+    expect(at("reviewApproved")).toBe(at("tasksPerPackage") + 1);
+    expect(at("review")).toBe(at("guidanceAwaiting") + 1);
+    expect(at("assignment")).toBe(at("assignmentCreated") + 1);
     expect(at("web")).toBe(at("mobile") + 1);
   });
 });
@@ -180,5 +183,16 @@ describe("Onaya yollanan (rehber)", () => {
     const [row] = buildStaffActivityRows([rpc("t1", "guidance_awaiting", 7, 7, 0, null)], [], []);
     expect(cellValue(row, "guidanceAwaiting")).toBe(7);
     expect(row.actions).toBe(0);
+  });
+});
+
+describe("Verilen ödev + paket başı görev", () => {
+  it("paket başı görev = tekli ÷ toplu (yuvarlanır); paket yoksa 0; verilen ödev işlem toplamına girmez", () => {
+    const [row] = buildStaffActivityRows([rpc("t1", "assignment", 80, 2, 3), rpc("t1", "assignment_created", 5, 5, 3)], [], []);
+    expect(cellValue(row, "tasksPerPackage")).toBe(40);
+    expect(cellValue(row, "assignmentCreated")).toBe(5);
+    expect(row.actions).toBe(2);
+    const [none] = buildStaffActivityRows([rpc("t2", "assignment_created", 4, 4, 1)], [], []);
+    expect(cellValue(none, "tasksPerPackage")).toBe(0);
   });
 });

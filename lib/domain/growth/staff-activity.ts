@@ -17,6 +17,8 @@
  * Onaya yollanan (rehber) = rehber öğretmenin (`student_guidance_assignments`) öğrencilerinden ŞU AN onay bekleyen
  *   (`status = submitted`) görev adedi; pencereden bağımsız anlık birikim. RPC satırı değil, CRM sunucusu üretir
  *   (`guidance_awaiting`, events); "işlem" toplamına ve aktif güne girmez.
+ * Verilen ödev (349) = öğretmenin OLUŞTURDUĞU ödev kaydı sayısı (events); sınıfa verilen ödev, öğrenci sayısıyla çarpılmadan 1.
+ *   RPC henüz 349'u içermiyorsa 0 görünür. Paket başı görev = tekli ödev ÷ toplu ödev (türetilmiş, yuvarlanır).
  * Web oturum (338) = web paneli giriş oturumu × gün; sessions = farklı oturum. Panel bunu 26.10'dan beri kaydeder.
  * Hangi sütunun hangi ölçüyü gösterdiği `COLUMN_METRIC`'te; hücre / CSV / mobil hep `cellValue` ile okur.
  * Aktif gün işlemler arasında TOPLANAMAZ (aynı gün yoklama + ödev iki gün sayılır); kişinin genel aktif günü yalnız
@@ -41,6 +43,8 @@ export const STAFF_RPC_ACTIONS = [
   "web",
   /** RPC DEĞİL: CRM sunucusu `student_guidance_assignments` × `student_assignments.status = submitted` ile kendisi üretir. */
   "guidance_awaiting",
+  /** Edoras migration 349: öğretmenin oluşturduğu ödev kaydı (sınıf ödevi 1). */
+  "assignment_created",
 ] as const;
 export type StaffRpcAction = (typeof STAFF_RPC_ACTIONS)[number];
 
@@ -48,9 +52,11 @@ export type StaffRpcAction = (typeof STAFF_RPC_ACTIONS)[number];
 export const STAFF_COLUMNS = [
   "attendance",
   "lessonTopic",
+  "assignmentCreated",
   "assignment",
   "assignmentApproved",
   "assignmentTasks",
+  "tasksPerPackage",
   "reviewApproved",
   "guidanceAwaiting",
   "review",
@@ -71,7 +77,9 @@ export type StaffColumn = (typeof STAFF_COLUMNS)[number];
 const COLUMN_SOURCES: Record<StaffColumn, readonly StaffRpcAction[]> = {
   attendance: ["attendance"],
   lessonTopic: ["lesson_topic"],
+  assignmentCreated: ["assignment_created"],
   assignment: ["assignment"],
+  tasksPerPackage: [],
   assignmentApproved: ["review_approved"],
   assignmentTasks: ["assignment"],
   reviewApproved: ["review_approved"],
@@ -89,7 +97,7 @@ const COLUMN_SOURCES: Record<StaffColumn, readonly StaffRpcAction[]> = {
  * "İşlem" toplamına girmeyen sütunlar: oturumlar (mobil, web) iş değil kullanım; onaylar (paket + tekil) "Ödev
  * kontrolü"nün alt kümesi (iki kez sayılmasın).
  */
-const NOT_AN_ACTION: ReadonlySet<StaffColumn> = new Set(["mobile", "web", "assignmentApproved", "reviewApproved", "guidanceAwaiting"]);
+const NOT_AN_ACTION: ReadonlySet<StaffColumn> = new Set(["mobile", "web", "assignmentApproved", "reviewApproved", "guidanceAwaiting", "assignmentCreated", "tasksPerPackage"]);
 
 export interface StaffActivityRpcRow {
   user_id: string;
@@ -156,7 +164,9 @@ function emptyCells(): Record<StaffColumn, StaffCell> {
 const COLUMN_METRIC: Record<StaffColumn, "sessions" | "events"> = {
   attendance: "sessions",
   lessonTopic: "sessions",
+  assignmentCreated: "events",
   assignment: "sessions",
+  tasksPerPackage: "events",
   assignmentApproved: "sessions",
   assignmentTasks: "events",
   reviewApproved: "events",
@@ -239,6 +249,12 @@ export function buildStaffActivityRows(
     }
     // RPC satırı başına BİR kez: ödev iki sütuna yazılır ama toplam işleme paketi bir kez katar.
     if (!columns.some((c) => NOT_AN_ACTION.has(c))) row.actions += r.session_count;
+  }
+
+  // Paket başı görev (türetilmiş): tekli ödev ÷ toplu ödev. 2 görev veren de 40 görev veren de 1 paket sayılır; oran farkı gösterir.
+  for (const row of rows.values()) {
+    const packages = row.cells.assignment.sessions;
+    row.cells.tasksPerPackage.events = packages > 0 ? Math.round(row.cells.assignment.events / packages) : 0;
   }
 
   return [...rows.values()].sort(

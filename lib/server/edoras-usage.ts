@@ -757,8 +757,36 @@ const staffCache = new Map<string, Cached<StaffActivityResponse>>();
 const staffInflight = new Map<string, Promise<StaffActivityResponse>>();
 const PROFILE_CHUNK = 200;
 
+/**
+ * "Onaya yollanan" sütunu: rehberin (student_guidance_assignments, öğrenci başına tek rehber) öğrencilerinden şu an
+ * `status = 'submitted'` olan görev adedi, rehber başına. Pencereden bağımsız anlık birikim; RPC'ye eklenmedi (şema
+ * değişikliği yok). Öğrenci kimliği yalnız sayım için bellekte tutulur, dışarı çıkmaz.
+ */
+async function collectGuidanceAwaiting(db: SupabaseClient, institutionId: string): Promise<StaffActivityRpcRow[]> {
+  const guides = await fetchAll<{ student_id: string; teacher_id: string }>((a, b) =>
+    db.from("student_guidance_assignments").select("student_id, teacher_id").eq("institution_id", institutionId).order("student_id").range(a, b)
+  );
+  if (guides.length === 0) return [];
+  const teacherByStudent = new Map(guides.map((g) => [g.student_id, g.teacher_id]));
+  const waiting = await fetchAll<{ id: string; student_id: string }>((a, b) =>
+    db
+      .from("student_assignments")
+      .select("id, student_id, assignments!inner(institution_id)")
+      .eq("status", "submitted")
+      .eq("assignments.institution_id", institutionId)
+      .order("id")
+      .range(a, b)
+  );
+  const perTeacher = new Map<string, number>();
+  for (const w of waiting) {
+    const teacher = teacherByStudent.get(w.student_id);
+    if (teacher) perTeacher.set(teacher, (perTeacher.get(teacher) ?? 0) + 1);
+  }
+  return [...perTeacher].map(([user_id, n]) => ({ user_id, action: "guidance_awaiting", event_count: n, session_count: n, active_days: 0, last_day: null }));
+}
+
 async function collectStaffActivity(db: SupabaseClient, institutionId: string, days: number, since: string, until: string): Promise<StaffActivityResponse> {
-  const [summary, members] = await Promise.all([
+  const [rpcSummary, members, awaiting] = await Promise.all([
     limit(() =>
       fetchAll<StaffActivityRpcRow>((a, b) =>
         db
@@ -780,7 +808,9 @@ async function collectStaffActivity(db: SupabaseClient, institutionId: string, d
           .range(a, b)
       )
     ),
+    limit(() => collectGuidanceAwaiting(db, institutionId)),
   ]);
+  const summary: StaffActivityRpcRow[] = [...rpcSummary, ...awaiting];
 
   const staff: StaffMember[] = members.map((m) => ({ userId: m.user_id, role: m.role, active: m.is_active !== false && !m.deactivated_at }));
   const ids = [...new Set([...staff.map((s) => s.userId), ...summary.map((r) => r.user_id)].filter(Boolean))];

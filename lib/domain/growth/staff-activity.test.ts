@@ -174,3 +174,11 @@ describe("öğretmen kullanımı penceresi", () => {
     expect(parseStaffWindow("")).toBe(30);
   });
 });
+
+describe("Onaya yollanan (rehber)", () => {
+  it("guidance_awaiting satırı kendi sütununu doldurur, işlem toplamına girmez", () => {
+    const [row] = buildStaffActivityRows([rpc("t1", "guidance_awaiting", 7, 7, 0, null)], [], []);
+    expect(cellValue(row, "guidanceAwaiting")).toBe(7);
+    expect(row.actions).toBe(0);
+  });
+});

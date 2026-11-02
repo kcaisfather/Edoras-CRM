@@ -48,6 +48,7 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
     if (c === "assignmentTasks") return t("cellTitleAssignmentTasks", { sessions, days });
     if (c === "assignmentApproved") return t("cellTitleAssignmentApproved", { events, days });
     if (c === "reviewApproved") return t("cellTitleDays", { days });
+    if (c === "guidanceAwaiting") return t("cellTitleGuidanceAwaiting", { events });
     if (c === "web") return t("cellTitleWeb", { days });
     return t("cellTitle", { events, days });
   };

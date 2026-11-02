@@ -14,6 +14,9 @@
  * Onaylanan görev (338) = kişinin "Onayla" dediği tekil görev ADEDİ (events; "Ödev kontrolü" dakikayı 1 sayar).
  * Toplu ödev onayı (343) = aynı RPC satırının sessions'ı: onaylanan görevlerin ait olduğu farklı paket (paket anahtarı
  *   ödevdekiyle aynı: hedef + oluşturma haftası). Kart: Toplu ödev | Toplu ödev onayı | Tekli ödev | Tekli ödev onayı.
+ * Onaya yollanan (rehber) = rehber öğretmenin (`student_guidance_assignments`) öğrencilerinden ŞU AN onay bekleyen
+ *   (`status = submitted`) görev adedi; pencereden bağımsız anlık birikim. RPC satırı değil, CRM sunucusu üretir
+ *   (`guidance_awaiting`, events); "işlem" toplamına ve aktif güne girmez.
  * Web oturum (338) = web paneli giriş oturumu × gün; sessions = farklı oturum. Panel bunu 26.10'dan beri kaydeder.
  * Hangi sütunun hangi ölçüyü gösterdiği `COLUMN_METRIC`'te; hücre / CSV / mobil hep `cellValue` ile okur.
  * Aktif gün işlemler arasında TOPLANAMAZ (aynı gün yoklama + ödev iki gün sayılır); kişinin genel aktif günü yalnız
@@ -36,6 +39,8 @@ export const STAFF_RPC_ACTIONS = [
   "mobile",
   "review_approved",
   "web",
+  /** RPC DEĞİL: CRM sunucusu `student_guidance_assignments` × `student_assignments.status = submitted` ile kendisi üretir. */
+  "guidance_awaiting",
 ] as const;
 export type StaffRpcAction = (typeof STAFF_RPC_ACTIONS)[number];
 
@@ -47,6 +52,7 @@ export const STAFF_COLUMNS = [
   "assignmentApproved",
   "assignmentTasks",
   "reviewApproved",
+  "guidanceAwaiting",
   "review",
   "privateLesson",
   "exam",
@@ -69,6 +75,7 @@ const COLUMN_SOURCES: Record<StaffColumn, readonly StaffRpcAction[]> = {
   assignmentApproved: ["review_approved"],
   assignmentTasks: ["assignment"],
   reviewApproved: ["review_approved"],
+  guidanceAwaiting: ["guidance_awaiting"],
   review: ["review"],
   privateLesson: ["private_lesson_series", "private_lesson_attendance"],
   exam: ["exam_created", "exam_published"],
@@ -82,7 +89,7 @@ const COLUMN_SOURCES: Record<StaffColumn, readonly StaffRpcAction[]> = {
  * "İşlem" toplamına girmeyen sütunlar: oturumlar (mobil, web) iş değil kullanım; onaylar (paket + tekil) "Ödev
  * kontrolü"nün alt kümesi (iki kez sayılmasın).
  */
-const NOT_AN_ACTION: ReadonlySet<StaffColumn> = new Set(["mobile", "web", "assignmentApproved", "reviewApproved"]);
+const NOT_AN_ACTION: ReadonlySet<StaffColumn> = new Set(["mobile", "web", "assignmentApproved", "reviewApproved", "guidanceAwaiting"]);
 
 export interface StaffActivityRpcRow {
   user_id: string;
@@ -153,6 +160,7 @@ const COLUMN_METRIC: Record<StaffColumn, "sessions" | "events"> = {
   assignmentApproved: "sessions",
   assignmentTasks: "events",
   reviewApproved: "events",
+  guidanceAwaiting: "events",
   review: "sessions",
   privateLesson: "sessions",
   exam: "sessions",

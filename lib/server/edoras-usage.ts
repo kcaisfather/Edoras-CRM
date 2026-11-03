@@ -874,8 +874,40 @@ async function collectStudentReach(
   ];
 }
 
+/**
+ * Web ekran sayaçları (Edoras migration 354 `staff_screen_events`, 2026-11-03): her açılış / indirme 1 satır, kişi × ekran
+ * sayılır. Tablo henüz uygulanmamışsa (TR'ye migration gelmeden) kart bozulmaz — sütunlar boş kalır.
+ */
+async function collectScreenEvents(db: SupabaseClient, institutionId: string, since: string, until: string): Promise<StaffActivityRpcRow[]> {
+  let rows: { id: number; user_id: string; screen: string }[]
+  try {
+    rows = await fetchAll<{ id: number; user_id: string; screen: string }>((a, b) =>
+      db
+        .from("staff_screen_events")
+        .select("id, user_id, screen")
+        .eq("institution_id", institutionId)
+        .gte("created_at", `${since}T00:00:00+03:00`)
+        .lt("created_at", `${until}T23:59:59.999+03:00`)
+        .order("id")
+        .range(a, b)
+    );
+  } catch (error) {
+    console.error("[edoras-usage] staff_screen_events okunamadı", error);
+    return [];
+  }
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const key = `${row.user_id}|${row.screen}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts].map(([key, n]) => {
+    const [user_id, screen] = key.split("|");
+    return { user_id, action: `screen_${screen}`, event_count: n, session_count: n, active_days: 0, last_day: null };
+  });
+}
+
 async function collectStaffActivity(db: SupabaseClient, institutionId: string, days: number, since: string, until: string): Promise<StaffActivityResponse> {
-  const [rpcSummary, members, awaiting, reach] = await Promise.all([
+  const [rpcSummary, members, awaiting, reach, screens] = await Promise.all([
     limit(() =>
       fetchAll<StaffActivityRpcRow>((a, b) =>
         db
@@ -901,8 +933,9 @@ async function collectStaffActivity(db: SupabaseClient, institutionId: string, d
     limit(() =>
       collectStudentReach(db, institutionId, days === STAFF_WINDOW_ALL ? windowStart(STUDENT_REACH_ALL_DAYS) : since, until)
     ),
+    limit(() => collectScreenEvents(db, institutionId, since, until)),
   ]);
-  const summary: StaffActivityRpcRow[] = [...rpcSummary, ...awaiting.rows, ...reach];
+  const summary: StaffActivityRpcRow[] = [...rpcSummary, ...awaiting.rows, ...reach, ...screens];
 
   const staff: StaffMember[] = members.map((m) => ({ userId: m.user_id, role: m.role, active: m.is_active !== false && !m.deactivated_at }));
   const ids = [...new Set([...staff.map((s) => s.userId), ...summary.map((r) => r.user_id)].filter(Boolean))];

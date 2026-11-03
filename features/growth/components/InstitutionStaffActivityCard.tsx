@@ -51,6 +51,8 @@ export function InstitutionStaffActivityCard({ institutionId }: { institutionId:
     if (c === "reviewApproved") return t("cellTitleDays", { days });
     if (c === "guidanceAwaiting") return t("cellTitleGuidanceAwaiting", { events });
     if (c === "students" || c === "studentsWithHomework") return t("cellTitleStudents", { events });
+    if (c === "analysisViews" || c === "homeworkViews" || c === "examDownloads" || c === "homeworkPdfs")
+      return t("cellTitleScreens", { events });
     if (c === "web") return t("cellTitleWeb", { days });
     return t("cellTitle", { events, days });
   };

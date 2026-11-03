@@ -420,6 +420,7 @@
     "cellTitleDays": "{days} gün",
     "cellTitleGuidanceAwaiting": "{events} ödev onay bekliyor",
     "cellTitleStudents": "{events} öğrenci",
+    "cellTitleScreens": "{events} kez",
     "cellTitleWeb": "{days} günde web paneline girdi",
     "never": "Hiç",
     "neverActiveTag": "Hiç girmedi",
@@ -455,6 +456,10 @@
       "web": "Web",
       "students": "Öğrenci",
       "studentsWithHomework": "Ödevli öğrenci",
+      "analysisViews": "Analiz ekranı",
+      "homeworkViews": "Ödev ekranı",
+      "examDownloads": "Deneme indirme",
+      "homeworkPdfs": "Ödev PDF",
       "activeDays": "Aktif gün",
       "lastDay": "Son aktif gün"
     },
@@ -474,6 +479,10 @@
       "web": "Web paneline girdiği oturum sayısı: giriş oturumu × gün = 1. Kayıt 26.10.2026'da başladı; öncesi boş görünür. \"Tümü\" seçiliyken diğer sütunlardan daha kısa bir dönemi kapsar.",
       "students": "ÖĞRENCİ = öğretmenin öğrencisi: aktif dönemde derse girdiği sınıflardaki öğrenciler + rehberi olduğu öğrenciler + seçili dönemde ödev verdiği öğrenciler (her öğrenci bir kez).",
       "studentsWithHomework": "ÖDEVLİ ÖĞRENCİ = bu öğrencilerden seçili dönemde (ödev tarihine göre) BU öğretmenden en az bir ödev alan öğrenci sayısı. \"Tümü\" seçiliyken son 90 gün sayılır.",
+      "analysisViews": "Web panelinde öğrenci analizi ya da sınıf analizi ekranını KAÇ KEZ açtığı (her açılış 1). Sayaç 03.11.2026'da başladı; öncesi boş görünür.",
+      "homeworkViews": "Web panelinde Ödevlendirme ekranını KAÇ KEZ açtığı (her açılış 1). Sayaç 03.11.2026'da başladı.",
+      "examDownloads": "Deneme karnesi, deneme tablosu ya da deneme kıyas PDF'ini KAÇ KEZ indirdiği (her indirme 1). Sayaç 03.11.2026'da başladı.",
+      "homeworkPdfs": "Haftalık ödev PDF'ini ya da ödev geçmişi PDF'ini KAÇ KEZ indirdiği (her indirme 1). Sayaç 03.11.2026'da başladı.",
       "activeDays": "İşlem, mobil ya da web oturumu olan farklı gün sayısı. Sütunların günleri toplanmaz (aynı gün yoklama + ödev = 1 gün).",
       "lastDay": "Son aktif gün: son işlem ya da oturum (mobil / web) günü."
     }

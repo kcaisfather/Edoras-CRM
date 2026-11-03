@@ -151,7 +151,7 @@ describe("öğretmen kullanımı satırları", () => {
     expect(row.activeDays).toBe(3);
   });
 
-  it("sütun sırası (2026-11-03): Yoklama · Konu işleme · Verilen · Onaylanan · Toplu · Onaya yollanan · Birebir · Deneme · Duyuru · SMS · Mobil · Web · Öğrenci · Ödevli öğrenci", () => {
+  it("sütun sırası (2026-11-03): Yoklama · Konu işleme · Verilen · Onaylanan · Toplu · Onaya yollanan · Birebir · Deneme · Duyuru · SMS · Mobil · Web · Öğrenci · Ödevli öğrenci · ekran sayaçları", () => {
     expect([...STAFF_COLUMNS]).toEqual([
       "attendance",
       "lessonTopic",
@@ -167,6 +167,10 @@ describe("öğretmen kullanımı satırları", () => {
       "web",
       "students",
       "studentsWithHomework",
+      "analysisViews",
+      "homeworkViews",
+      "examDownloads",
+      "homeworkPdfs",
     ]);
   });
 
@@ -180,6 +184,18 @@ describe("öğretmen kullanımı satırları", () => {
     expect(cellValue(row, "studentsWithHomework")).toBe(12);
     expect(row.actions).toBe(0);
     expect(row.activeDays).toBe(2);
+  });
+
+  it("ekran sayaçları her açılışı sayar, işlem toplamına girmez", () => {
+    const [row] = buildStaffActivityRows(
+      [rpc("a", "screen_analysis", 7, 7, 0, null), rpc("a", "screen_homework_pdf", 2, 2, 0, null)],
+      [{ userId: "a", role: "teacher", active: true }],
+      []
+    );
+    expect(cellValue(row, "analysisViews")).toBe(7);
+    expect(cellValue(row, "homeworkPdfs")).toBe(2);
+    expect(cellValue(row, "examDownloads")).toBe(0);
+    expect(row.actions).toBe(0);
   });
 
   it("rehberler en üstte alt alta: rehber ataması ya da rehberlik branşı", () => {

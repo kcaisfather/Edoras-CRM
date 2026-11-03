@@ -59,6 +59,11 @@ export const STAFF_RPC_ACTIONS = [
    */
   "students_total",
   "students_with_homework",
+  /** RPC DEĞİL (Edoras migration 354 `staff_screen_events`): web ekran sayacı, her açılış / indirme 1. */
+  "screen_analysis",
+  "screen_homework",
+  "screen_exam_download",
+  "screen_homework_pdf",
 ] as const;
 export type StaffRpcAction = (typeof STAFF_RPC_ACTIONS)[number];
 
@@ -78,6 +83,10 @@ export const STAFF_COLUMNS = [
   "web",
   "students",
   "studentsWithHomework",
+  "analysisViews",
+  "homeworkViews",
+  "examDownloads",
+  "homeworkPdfs",
 ] as const;
 export type StaffColumn = (typeof STAFF_COLUMNS)[number];
 
@@ -100,6 +109,10 @@ const COLUMN_SOURCES: Record<StaffColumn, readonly StaffRpcAction[]> = {
   web: ["web"],
   students: ["students_total"],
   studentsWithHomework: ["students_with_homework"],
+  analysisViews: ["screen_analysis"],
+  homeworkViews: ["screen_homework"],
+  examDownloads: ["screen_exam_download"],
+  homeworkPdfs: ["screen_homework_pdf"],
 };
 
 /**
@@ -114,6 +127,10 @@ const NOT_AN_ACTION: ReadonlySet<StaffColumn> = new Set([
   "assignmentCreated",
   "students",
   "studentsWithHomework",
+  "analysisViews",
+  "homeworkViews",
+  "examDownloads",
+  "homeworkPdfs",
 ]);
 
 export interface StaffActivityRpcRow {
@@ -195,6 +212,10 @@ const COLUMN_METRIC: Record<StaffColumn, "sessions" | "events"> = {
   web: "sessions",
   students: "events",
   studentsWithHomework: "events",
+  analysisViews: "events",
+  homeworkViews: "events",
+  examDownloads: "events",
+  homeworkPdfs: "events",
 };
 
 /** Kartın, CSV'nin ve mobil kartın gösterdiği sayı. */

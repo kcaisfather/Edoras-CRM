@@ -760,13 +760,18 @@ const PROFILE_CHUNK = 200;
 /**
  * "Onaya yollanan" sütunu: rehberin (student_guidance_assignments, öğrenci başına tek rehber) öğrencilerinden şu an
  * `status = 'submitted'` olan görev adedi, rehber başına. Pencereden bağımsız anlık birikim; RPC'ye eklenmedi (şema
- * değişikliği yok). Öğrenci kimliği yalnız sayım için bellekte tutulur, dışarı çıkmaz.
+ * değişikliği yok). Öğrenci kimliği yalnız sayım için bellekte tutulur, dışarı çıkmaz. Aynı okuma kartın "Rehber" etiketini
+ * de verir (2026-11-03): en az bir öğrenciye rehber atanmış personel (`guidanceTeacherIds`).
  */
-async function collectGuidanceAwaiting(db: SupabaseClient, institutionId: string): Promise<StaffActivityRpcRow[]> {
+async function collectGuidanceAwaiting(
+  db: SupabaseClient,
+  institutionId: string
+): Promise<{ rows: StaffActivityRpcRow[]; guidanceTeacherIds: Set<string> }> {
   const guides = await fetchAll<{ student_id: string; teacher_id: string }>((a, b) =>
     db.from("student_guidance_assignments").select("student_id, teacher_id").eq("institution_id", institutionId).order("student_id").range(a, b)
   );
-  if (guides.length === 0) return [];
+  const guidanceTeacherIds = new Set(guides.map((g) => g.teacher_id));
+  if (guides.length === 0) return { rows: [], guidanceTeacherIds };
   const teacherByStudent = new Map(guides.map((g) => [g.student_id, g.teacher_id]));
   const waiting = await fetchAll<{ id: string; student_id: string }>((a, b) =>
     db
@@ -782,11 +787,95 @@ async function collectGuidanceAwaiting(db: SupabaseClient, institutionId: string
     const teacher = teacherByStudent.get(w.student_id);
     if (teacher) perTeacher.set(teacher, (perTeacher.get(teacher) ?? 0) + 1);
   }
-  return [...perTeacher].map(([user_id, n]) => ({ user_id, action: "guidance_awaiting", event_count: n, session_count: n, active_days: 0, last_day: null }));
+  return {
+    rows: [...perTeacher].map(([user_id, n]) => ({ user_id, action: "guidance_awaiting", event_count: n, session_count: n, active_days: 0, last_day: null })),
+    guidanceTeacherIds,
+  };
+}
+
+/** "Tümü" seçiliyken öğrenci sütunları en çok bu kadar geriye bakar (tüm ödev satırlarını okumamak için). */
+const STUDENT_REACH_ALL_DAYS = 90;
+
+/**
+ * "Öğrenci" / "Ödevli öğrenci" sütunları (2026-11-03, kullanıcı: "kaç öğrencisi var, kaçında ödev var"). Öğretmenin öğrencisi =
+ * aktif dönemde derse girdiği sınıfların öğrencileri (`class_assignments` × `term_student_classes`) ∪ rehber öğrencileri ∪
+ * pencerede ödev verdiği öğrenciler; ödevli = bunlardan pencerede (ödev tarihi `assignments.due_date`) bu öğretmenden ödev alan.
+ * Şema değişikliği yok; öğrenci kimlikleri yalnız sayım için bellekte.
+ */
+async function collectStudentReach(
+  db: SupabaseClient,
+  institutionId: string,
+  since: string,
+  until: string
+): Promise<StaffActivityRpcRow[]> {
+  const termId = await activeTermId(db, institutionId);
+  const [teaching, enrolments, guides, homework] = await Promise.all([
+    fetchAll<{ id: string; teacher_id: string | null; class_id: string | null }>((a, b) =>
+      db.from("class_assignments").select("id, teacher_id, class_id").eq("institution_id", institutionId).order("id").range(a, b)
+    ),
+    termId
+      ? fetchAll<{ id: string; class_id: string | null; student_id: string }>((a, b) =>
+          db.from("term_student_classes").select("id, class_id, student_id").eq("term_id", termId).order("id").range(a, b)
+        )
+      : Promise.resolve([]),
+    fetchAll<{ student_id: string; teacher_id: string }>((a, b) =>
+      db.from("student_guidance_assignments").select("student_id, teacher_id").eq("institution_id", institutionId).order("student_id").range(a, b)
+    ),
+    fetchAll<{ id: string; student_id: string; assignments: { teacher_id: string | null }[] | { teacher_id: string | null } | null }>((a, b) =>
+      db
+        .from("student_assignments")
+        .select("id, student_id, assignments!inner(teacher_id, institution_id, due_date)")
+        .eq("assignments.institution_id", institutionId)
+        .gte("assignments.due_date", since)
+        .lte("assignments.due_date", until)
+        .order("id")
+        .range(a, b)
+    ),
+  ]);
+  const studentsByClass = new Map<string, Set<string>>();
+  for (const row of enrolments) {
+    if (!row.class_id) continue;
+    const set = studentsByClass.get(row.class_id) ?? new Set<string>();
+    set.add(row.student_id);
+    studentsByClass.set(row.class_id, set);
+  }
+  const students = new Map<string, Set<string>>();
+  const add = (teacher: string | null | undefined, student: string) => {
+    if (!teacher) return;
+    const set = students.get(teacher) ?? new Set<string>();
+    set.add(student);
+    students.set(teacher, set);
+  };
+  for (const row of teaching) {
+    for (const student of (row.class_id && studentsByClass.get(row.class_id)) || []) add(row.teacher_id, student);
+  }
+  for (const row of guides) add(row.teacher_id, row.student_id);
+  const withHomework = new Map<string, Set<string>>();
+  for (const row of homework) {
+    const parent = Array.isArray(row.assignments) ? row.assignments[0] : row.assignments;
+    const teacher = parent?.teacher_id;
+    if (!teacher) continue;
+    add(teacher, row.student_id);
+    const set = withHomework.get(teacher) ?? new Set<string>();
+    set.add(row.student_id);
+    withHomework.set(teacher, set);
+  }
+  const row = (user_id: string, action: string, n: number): StaffActivityRpcRow => ({
+    user_id,
+    action,
+    event_count: n,
+    session_count: n,
+    active_days: 0,
+    last_day: null,
+  });
+  return [
+    ...[...students].map(([teacher, set]) => row(teacher, "students_total", set.size)),
+    ...[...withHomework].map(([teacher, set]) => row(teacher, "students_with_homework", set.size)),
+  ];
 }
 
 async function collectStaffActivity(db: SupabaseClient, institutionId: string, days: number, since: string, until: string): Promise<StaffActivityResponse> {
-  const [rpcSummary, members, awaiting] = await Promise.all([
+  const [rpcSummary, members, awaiting, reach] = await Promise.all([
     limit(() =>
       fetchAll<StaffActivityRpcRow>((a, b) =>
         db
@@ -809,8 +898,11 @@ async function collectStaffActivity(db: SupabaseClient, institutionId: string, d
       )
     ),
     limit(() => collectGuidanceAwaiting(db, institutionId)),
+    limit(() =>
+      collectStudentReach(db, institutionId, days === STAFF_WINDOW_ALL ? windowStart(STUDENT_REACH_ALL_DAYS) : since, until)
+    ),
   ]);
-  const summary: StaffActivityRpcRow[] = [...rpcSummary, ...awaiting];
+  const summary: StaffActivityRpcRow[] = [...rpcSummary, ...awaiting.rows, ...reach];
 
   const staff: StaffMember[] = members.map((m) => ({ userId: m.user_id, role: m.role, active: m.is_active !== false && !m.deactivated_at }));
   const ids = [...new Set([...staff.map((s) => s.userId), ...summary.map((r) => r.user_id)].filter(Boolean))];
@@ -824,7 +916,7 @@ async function collectStaffActivity(db: SupabaseClient, institutionId: string, d
     }
   }
 
-  return { windowDays: days, since, until, rows: buildStaffActivityRows(summary, staff, profiles) };
+  return { windowDays: days, since, until, rows: buildStaffActivityRows(summary, staff, profiles, awaiting.guidanceTeacherIds) };
 }
 
 export async function getStaffActivity(institutionId: string, windowDays: number): Promise<StaffActivityResponse> {

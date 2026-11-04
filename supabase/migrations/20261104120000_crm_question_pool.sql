@@ -26,7 +26,6 @@
 -- UYGULANMADI: yalnız dosya ve test. Canlıya uygulama ayrı onayla yapılır.
 -- =============================================================================
 
-begin;
 
 -- -----------------------------------------------------------------------------
 -- 1) Soru havuzu
@@ -98,7 +97,6 @@ create unique index if not exists crm_question_pool_runs_day_source_uidx
 alter table public.crm_question_pool enable row level security;
 alter table public.crm_question_pool_runs enable row level security;
 
-commit;
 
 -- =============================================================================
 -- GERİ ALMA (yalnız gerekirse, elle):

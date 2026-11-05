@@ -233,6 +233,8 @@
     "activityHistoryDescription": "Kurum etkinlikleri ve CRM işlem kaydı",
     "costs": "Maliyet",
     "costsDescription": "Hizmet maliyetleri, bütçeler, uyarılar ve kurum başına maliyet",
+    "questionPool": "Soru Onayı",
+    "questionPoolDescription": "Gece üretilen soruları onayla ya da reddet",
     "costsServices": "Maliyet · Hizmetler",
     "costsEntries": "Maliyet · Kayıtlar",
     "costsInstitutions": "Maliyet · Kurumlar",

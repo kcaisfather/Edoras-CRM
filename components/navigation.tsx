@@ -6,6 +6,7 @@ import {
   Building2,
   ChartNoAxesColumnIncreasing,
   ChartPie,
+  ClipboardCheck,
   ClipboardList,
   CreditCard,
   DollarSign,
@@ -45,6 +46,7 @@ export type NavTranslationKey =
   | "salesInvoices"
   | "activityHistory"
   | "costs"
+  | "questionPool"
   | "managementTasks"
   | "managementNetwork"
   | "managementMeetings";
@@ -148,7 +150,11 @@ export const NAV_GROUPS: NavGroup[] = [
     // Operasyon (DeepSport ile aynı grup): Maliyetler — finansal veri, yalnız ADMIN.
     key: "operations",
     labelKey: "sidebarOperations",
-    items: [{ href: "/costs", icon: DollarSign, translationKey: "costs", adminOnly: true }],
+    items: [
+      { href: "/costs", icon: DollarSign, translationKey: "costs", adminOnly: true },
+      // Gece üretilen soruların onayı (AIG + LLM); yalnız ADMIN (uç ve sayfa da ADMIN ister).
+      { href: "/question-pool", icon: ClipboardCheck, translationKey: "questionPool", adminOnly: true },
+    ],
   },
 ];
 

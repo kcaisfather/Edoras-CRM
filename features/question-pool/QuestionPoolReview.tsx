@@ -9,8 +9,28 @@ type PoolQuestion = {
   objectiveCode: string | null;
   model: string;
   runDate: string;
-  body: { stem: string; options: string[]; key: string; explanation: string | null };
+  body: {
+    stem: string;
+    options: string[];
+    key: string;
+    explanation: string | null;
+    meta?: {
+      reference_question?: string | null;
+      objective_text?: string | null;
+      form?: string | null;
+      course?: string | null;
+      option_origins?: string[];
+      params?: Record<string, string | number | boolean>;
+    };
+  };
   createdAt: string;
+};
+
+const FORM_LABEL: Record<string, string> = {
+  oncullu: "Öncüllü",
+  sayisal: "Sayısal",
+  siralama: "Sıralamalı",
+  girisli: "Girişli",
 };
 
 // rules.ts node:crypto kullandığı için istemciye taşınmaz; harfler burada tekrar edilir.
@@ -93,11 +113,17 @@ export function QuestionPoolReview() {
                   <li key={letter} className={isKey ? "font-semibold text-green-700" : ""}>
                     {letter}) {opt}
                     {isKey ? " ✓" : ""}
+                    {q.body.meta?.option_origins?.[i] && !isKey ? (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        (çeldirici: {q.body.meta.option_origins[i]})
+                      </span>
+                    ) : null}
                   </li>
                 );
               })}
             </ol>
             {q.body.explanation ? <p className="text-xs text-muted-foreground">Açıklama: {q.body.explanation}</p> : null}
+            <Basis q={q} />
             <div className="flex gap-2">
               <button
                 type="button"
@@ -119,6 +145,39 @@ export function QuestionPoolReview() {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** "Bu soru neye dayanıyor": dayandığı çıkmış soru, kazanım, soru biçimi ve üretim değerleri. Eski satırlarda meta yoktur. */
+function Basis({ q }: { q: PoolQuestion }) {
+  const meta = q.body.meta;
+  const rows: [string, string][] = [];
+  if (meta?.reference_question) rows.push(["Dayandığı çıkmış soru", meta.reference_question]);
+  if (q.objectiveCode || meta?.objective_text) {
+    rows.push(["Kazanım", [q.objectiveCode, meta?.objective_text].filter(Boolean).join(" — ")]);
+  }
+  if (meta?.course) rows.push(["Ders", meta.course]);
+  if (meta?.form) rows.push(["Soru biçimi", FORM_LABEL[meta.form] ?? meta.form]);
+  rows.push(["Üretici", q.source === "AIG" ? `Kod ile üretildi (model: ${q.model})` : `Dil modeli (${q.model})`]);
+  const params = Object.entries(meta?.params ?? {});
+  return (
+    <div className="space-y-1 rounded-md bg-muted/50 p-3 text-xs">
+      <p className="font-medium">Dayanak</p>
+      <dl className="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1">
+        {rows.map(([label, value]) => (
+          <div key={label} className="contents">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {params.length ? (
+        <details>
+          <summary className="cursor-pointer text-muted-foreground">Üretimde kullanılan değerler</summary>
+          <p className="mt-1">{params.map(([k, v]) => `${k} = ${String(v)}`).join(" · ")}</p>
+        </details>
+      ) : null}
     </div>
   );
 }

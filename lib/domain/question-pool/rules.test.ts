@@ -52,3 +52,35 @@ describe("gece partisi şeması", () => {
     expect(ingestBatchSchema.safeParse({ run_date: "2026-11-05", source: "HUMAN", requested: 0, items: [] }).success).toBe(false);
   });
 });
+
+describe("dayanak bilgisi (meta)", () => {
+  const withMeta = {
+    ...BODY,
+    meta: {
+      reference_question: "2023-AYT Edebiyat · arşiv 146",
+      objective_text: "Dönem sanatçıları",
+      form: "girisli",
+      option_origins: ["anahtar", "dolgu", "dolgu", "dolgu", "dolgu"],
+      params: { sanatci: "Ziya Paşa", sikVeri: true, n: 3 },
+    },
+  };
+  const batch = (body: unknown) => ({
+    run_date: "2026-11-05",
+    source: "AIG",
+    requested: 1,
+    items: [{ source: "AIG", subject: "ÖSYM", model: "m", body }],
+  });
+
+  it("meta olan ve olmayan gövde kabul edilir, meta korunur", () => {
+    const withIt = ingestBatchSchema.safeParse(batch(withMeta));
+    expect(withIt.success).toBe(true);
+    if (withIt.success) expect(withIt.data.items[0].body.meta?.reference_question).toBe("2023-AYT Edebiyat · arşiv 146");
+    expect(ingestBatchSchema.safeParse(batch(BODY)).success).toBe(true);
+  });
+
+  it("meta özeti değiştirmez ve aşırı uzun değer reddedilir", () => {
+    expect(questionContentHash("AIG", "ÖSYM", withMeta)).toBe(questionContentHash("AIG", "ÖSYM", BODY));
+    const tooLong = { ...withMeta, meta: { ...withMeta.meta, reference_question: "x".repeat(201) } };
+    expect(ingestBatchSchema.safeParse(batch(tooLong)).success).toBe(false);
+  });
+});

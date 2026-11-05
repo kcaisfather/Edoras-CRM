@@ -3,6 +3,18 @@ import { QUESTION_LETTERS, QUESTION_SOURCES } from "./rules";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
+const optionalText = (max: number) => z.string().trim().max(max).nullish();
+
+// Üreticinin "dayanak" bilgisi; hepsi isteğe bağlı (eski satırlarda ve LLM sorularında yok).
+export const questionMetaSchema = z.object({
+  reference_question: optionalText(200),
+  objective_text: optionalText(400),
+  form: optionalText(40),
+  course: optionalText(100),
+  option_origins: z.array(z.string().trim().max(200)).max(5).optional(),
+  params: z.record(z.string().max(60), z.union([z.string().max(200), z.number(), z.boolean()])).optional(),
+});
+
 export const questionBodySchema = z.object({
   stem: text(3000),
   options: z.array(text(600)).length(5),
@@ -13,6 +25,7 @@ export const questionBodySchema = z.object({
     .max(2000)
     .nullish()
     .transform((v) => (v ? v : null)),
+  meta: questionMetaSchema.optional(),
 });
 
 export const ingestItemSchema = z.object({

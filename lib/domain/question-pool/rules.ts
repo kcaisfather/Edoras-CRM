@@ -10,11 +10,22 @@ export type QuestionSource = (typeof QUESTION_SOURCES)[number];
 
 export const QUESTION_LETTERS = ["A", "B", "C", "D", "E"] as const;
 
+/** Onay ekranında "bu soru neye dayanıyor" bilgisi. Soru içeriği değildir: içerik özetine girmez. */
+export type QuestionMeta = {
+  reference_question?: string | null; // dayandığı çıkmış soru
+  objective_text?: string | null; // kazanım metni
+  form?: string | null;
+  course?: string | null;
+  option_origins?: string[]; // şık sırasıyla: "anahtar" ya da çeldiricinin türediği hata
+  params?: Record<string, string | number | boolean>;
+};
+
 export type QuestionBody = {
   stem: string;
   options: string[];
   key: (typeof QUESTION_LETTERS)[number];
   explanation: string | null;
+  meta?: QuestionMeta;
 };
 
 const collapse = (text: string) => text.toLocaleLowerCase("tr-TR").replace(/\s+/g, " ").trim();

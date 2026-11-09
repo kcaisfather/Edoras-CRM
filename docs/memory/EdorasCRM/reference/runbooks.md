@@ -3,9 +3,8 @@
 ## Migration uygula (CRM projesi)
 
 1. `supabase/migrations/<ts>_<ad>.sql` yaz + `supabase/tests/<ad>.test.ts` (PGlite). `npx vitest run supabase/tests/<ad>.test.ts`.
-2. MCP `supabase-crm` → `apply_migration(name: "<ad>", query: <dosya, dış begin;/commit; çıkarılmış>)`.
-   MCP oturumda yoksa: `claude -p` başsız alt oturum, istem stdin'den (PowerShell 5.1 tırnakları bozar) ya da Supabase SQL Editor.
-3. `list_migrations` ile doğrula, `get_advisors(security)` çalıştır (RLS-no-policy INFO beklenen).
+2. YKS deposunda `infra/tr/tr-migration.sh --crm <dosya>` (kuru deneme), sonra kullanıcı kendi terminalinde `--uygula`. Dosyada dış `begin;/commit;` olmamalı (betik sarar). Donmuş Cloud'a UYGULAMA.
+3. `infra/tr/tr-sorgu.sh --crm "select …"` ile tablonun geldiğini doğrula.
 4. `data-model.md` tablosuna satır ekle.
 
 ## Personel ekle

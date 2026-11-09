@@ -88,7 +88,7 @@ TC ve Vergi No kontrol haneleriyle doğrulanır; algoritma SQL (`crm_is_valid_tc
    ve yanıtlar, `20260929200000_crm_invoices.sql` fatura profili sütunları ve faturalar, `20260929220000_crm_costs.sql` maliyet defteri, bütçeler ve ayar, `20260929230000_crm_reports.sql` rapor abonelikleri ve gönderim kaydı, `20261001090000_crm_invoice_provider_refs.sql`
    Paraşüt satış faturası / iş kimlikleri, `20261005100000_crm_loss_actor.sql` kayıp nedeni 12'li küme, kayıp ayrıntısı ve teklifi veren / satışı yapan). **Durum (2026-10-01): hepsi CRM projesine uygulandı**; yeni migration eklenince
    MCP `list_migrations` ile karşılaştırın.
-   Bu repoda Supabase MCP tanımlı (`.mcp.json` → `supabase-crm`, yalnız CRM projesine bağlı). Ya da SQL Editor'dan çalıştırın.
+   Canlı CRM 29.10'dan beri Türkiye'de: YKS deposunda `infra/tr/tr-migration.sh --crm <dosya>` ile uygulayın (Cloud projesi donmuştur).
    Dosyanın sonunda geri alma bloğu var.
 4. İlk yönetici: `npm run staff:add -- ornek@edorasapp.ai "Ad Soyad" ADMIN`. CRM projesinde kullanıcıyı açar
    ve geçici şifreyi bir kez gösterir. Satış temsilcisi eklemek için son değeri `CRM_AGENT` yapın.

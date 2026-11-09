@@ -4,6 +4,12 @@ Edoras'ın şirket içi paneli (kurum / demo / lisans / ödeme). DeepSportAdmin'
 kopyalanıp Supabase'e taşındı (DeepSport'un taşınabilir modüllerinin hepsi taşındı, 2026-10-01). Ayrıntı: `README.md`.
 Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
 
+> ⚠️ **CANLI CRM 29.10'DAN BERİ TÜRKİYE'DE** (`tr-crm.edorasapp.ai`, veri db-1 `supabase-crm-db`). Aşağıda ve belgelerde geçen
+> `orishbqniebbgdanazrp` / `bmjkpxbrmwxuildwakly` donmuş Supabase Cloud'dur: oraya uygulanan migration "başarılı" görünür ama TR'ye
+> ulaşmaz (`supabase-crm` MCP bu yüzden `.mcp.json`'dan kaldırıldı; `.env.local` hâlâ Cloud'u gösterebilir). YKS deposundan:
+> migration `infra/tr/tr-migration.sh --crm <dosya>` (kuru deneme; `--uygula` kullanıcıda), okuma `infra/tr/tr-sorgu.sh --crm "select …"`.
+> Yayın: `git push --atomic origin <sha>:refs/heads/main <sha>:refs/heads/kamil`.
+
 > **Modüler hafıza:** konu başına notlar `docs/memory/EdorasCRM/` altında — önce
 > [docs/memory/EdorasCRM/index.md](docs/memory/EdorasCRM/index.md)'yi oku. Bir modülün davranışı, kuralı ya da ortam
 > değişkeni değişince ilgili hafıza dosyasını aynı commit'te güncelle.
@@ -37,7 +43,7 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
    kuralları CRM projesinde CHECK kısıtları ve tetikleyicilerle zorunlu. Kural değişirse üç yeri birlikte
    güncelleyin: `lib/domain/institutions/{rules,schemas}.ts`, migration, testler.
 4. **SQL değişikliği önce testte.** `supabase/tests/*.test.ts` (PGlite, bellek içi Postgres) ile
-   doğrulanır, sonra CRM projesine uygulanır (MCP `supabase-crm` → yalnız CRM projesi; `.mcp.json`).
+   doğrulanır, sonra TR CRM veritabanına uygulanır (YKS `infra/tr/tr-migration.sh --crm`; yukarıdaki uyarı).
 5. **Veri yalnız `/api` üzerinden.** Her uç `requireStaff()` ile başlar; ADMIN işi `requireStaff({ role: "ADMIN" })`.
    CRM_AGENT'a tutar/TC/VKN/adres sunucuda boşaltılır. `service_role` anahtarları yalnız `lib/supabase/server.ts`.
    Tek istisna müşteriye açık anket yolları (`/s/*`, `/api/public/*`, `lib/permissions.ts` → `CUSTOMER_PUBLIC_PATHS`):

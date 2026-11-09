@@ -47,4 +47,4 @@
 
 ## Supabase MCP
 
-`.mcp.json` → `supabase-crm` (yalnız CRM projesi). Edoras projesine MCP bağlantısı yok (bilinçli).
+Bu repoda Supabase MCP yok: `supabase-crm` donmuş Cloud'a bağlıydı, 09.11'de kaldırıldı. TR CRM'e YKS `infra/tr/tr-sorgu.sh --crm` / `tr-migration.sh --crm` ile gidilir.

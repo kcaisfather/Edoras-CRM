@@ -30,6 +30,7 @@ import {
   leavesNoActiveAdmin,
   normalizeLoginEmail,
 } from "@/lib/domain/institutions/edoras-accounts";
+import type { ObjectiveCandidate } from "@/lib/domain/question-pool/objective-match";
 import type { Compensator } from "./compensation";
 
 /**
@@ -644,4 +645,80 @@ export async function setEdorasAdminActive(
     if (error) throw dbError(error);
   }
   return { changed: true };
+}
+
+/** Bir kazanım koduna sahip `objective_registry` satırları. Kayıtta olmayan (üretilmiş) kazanım aday değildir. */
+export async function findEdorasObjectiveCandidates(code: string): Promise<ObjectiveCandidate[]> {
+  const db = getEdorasAdminClient();
+  const [meb, learning, publisher] = await Promise.all([
+    db.from("objective_registry").select("id, meb_objectives!inner(code, subject_label)").eq("meb_objectives.code", code),
+    db
+      .from("objective_registry")
+      .select("id, learning_objectives!inner(code, topics(subjects(name)))")
+      .eq("learning_objectives.code", code),
+    db
+      .from("objective_registry")
+      .select("id, publisher_objectives!inner(code, subject_label)")
+      .eq("publisher_objectives.code", code),
+  ]);
+  const error = meb.error ?? learning.error ?? publisher.error;
+  if (error) throw dbError(error);
+
+  type Labeled = { id: number; meb_objectives?: { subject_label: string | null }; publisher_objectives?: { subject_label: string | null } };
+  type Learning = { id: number; learning_objectives: { topics: { subjects: { name: string | null } | null } | null } };
+  return [
+    ...((meb.data ?? []) as unknown as Labeled[]).map((r) => ({
+      objectiveId: r.id,
+      source: "meb" as const,
+      subjectLabel: r.meb_objectives?.subject_label ?? null,
+    })),
+    ...((learning.data ?? []) as unknown as Learning[]).map((r) => ({
+      objectiveId: r.id,
+      source: "learning_objective" as const,
+      subjectLabel: r.learning_objectives.topics?.subjects?.name ?? null,
+    })),
+    ...((publisher.data ?? []) as unknown as Labeled[]).map((r) => ({
+      objectiveId: r.id,
+      source: "publisher" as const,
+      subjectLabel: r.publisher_objectives?.subject_label ?? null,
+    })),
+  ];
+}
+
+export type EdorasMiniTestQuestion = {
+  crm_question_id: string;
+  objective_id: number;
+  subject: string;
+  stem: string;
+  options: string[];
+  answer_key: string;
+  explanation: string | null;
+};
+
+/** Onaylanan soru (yeniden onayda aynı satır güncellenir, tekrar açılır). */
+export async function upsertEdorasMiniTestQuestion(question: EdorasMiniTestQuestion): Promise<void> {
+  const { error } = await getEdorasAdminClient()
+    .from("mini_test_questions")
+    .upsert({ ...question, active: true, updated_at: new Date().toISOString() }, { onConflict: "crm_question_id" });
+  if (error) throw dbError(error);
+}
+
+/** Satır yoksa (hiç aktarılmamış soru) etkisizdir. Silinmez: öğrencilerin geçmiş cevapları ona bağlı. */
+export async function deactivateEdorasMiniTestQuestion(crmQuestionId: string): Promise<void> {
+  const { error } = await getEdorasAdminClient()
+    .from("mini_test_questions")
+    .update({ active: false, updated_at: new Date().toISOString() })
+    .eq("crm_question_id", crmQuestionId);
+  if (error) throw dbError(error);
+}
+
+export async function listEdorasActiveMiniTestQuestionIds(crmQuestionIds: string[]): Promise<Set<string>> {
+  if (crmQuestionIds.length === 0) return new Set();
+  const { data, error } = await getEdorasAdminClient()
+    .from("mini_test_questions")
+    .select("crm_question_id")
+    .eq("active", true)
+    .in("crm_question_id", crmQuestionIds);
+  if (error) throw dbError(error);
+  return new Set(((data ?? []) as { crm_question_id: string }[]).map((r) => r.crm_question_id));
 }

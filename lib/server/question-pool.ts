@@ -3,7 +3,16 @@ import "server-only";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
 import { isWellFormedBody, questionContentHash, type QuestionBody } from "@/lib/domain/question-pool/rules";
+import { matchPoolObjective, resolvePoolSubject } from "@/lib/domain/question-pool/objective-match";
 import type { IngestBatchInput, QuestionDecisionInput } from "@/lib/domain/question-pool/schemas";
+import { recordAudit } from "./audit";
+import { createCompensator, type Compensator } from "./compensation";
+import {
+  deactivateEdorasMiniTestQuestion,
+  findEdorasObjectiveCandidates,
+  listEdorasActiveMiniTestQuestionIds,
+  upsertEdorasMiniTestQuestion,
+} from "./edoras";
 
 export type PoolQuestion = {
   id: string;
@@ -126,11 +135,56 @@ export async function listPendingQuestions(limit = 200): Promise<PoolQuestion[]>
   return ((data ?? []) as PoolRow[]).map(toDto);
 }
 
+/** Onaylananlar, son onay önce. `inPanel`: soru Mini Test'te öğrenciye açık. */
+export async function listApprovedQuestions(limit = 200): Promise<(PoolQuestion & { inPanel: boolean })[]> {
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_question_pool")
+    .select(POOL_COLUMNS)
+    .eq("status", "APPROVED")
+    .order("reviewed_at", { ascending: false })
+    .limit(limit);
+  if (error) throw dbError(error);
+  const rows = (data ?? []) as PoolRow[];
+  const active = await listEdorasActiveMiniTestQuestionIds(rows.map((row) => row.id));
+  return rows.map((row) => ({ ...toDto(row), inPanel: active.has(row.id) }));
+}
+
+export type PanelTransfer = "transferred" | "ambiguous" | "not_found";
+
+/** Eşleşmeyen soru onaylı kalır ama panele gitmez. `meta` (dayanak soru, çeldirici kökenleri) panele HİÇ gitmez. */
+async function transferToPanel(row: PoolRow): Promise<PanelTransfer> {
+  const subject = resolvePoolSubject(row.subject, row.objective_code);
+  if (!subject || !row.objective_code) return "not_found";
+  const match = matchPoolObjective(subject, await findEdorasObjectiveCandidates(row.objective_code));
+  if (match.kind !== "matched") return match.kind;
+  await upsertEdorasMiniTestQuestion({
+    crm_question_id: row.id,
+    objective_id: match.objectiveId,
+    subject,
+    stem: row.body.stem,
+    options: row.body.options,
+    answer_key: row.body.key,
+    explanation: row.body.explanation,
+  });
+  return "transferred";
+}
+
+async function rollbackOrLog(compensator: Compensator, context: string): Promise<void> {
+  const failed = await compensator.rollback();
+  if (failed.length) console.error(`[question-pool] ${context}: geri alınamadı: ${failed.join(", ")}`);
+}
+
 /**
  * Onay/red. Yalnız bekleyen satır karar alır: ikinci karar 404 döner (yanlışlıkla çift tıklama ya da eski sekme).
+ * Onayda soru panele de yazılır; panel yazımı düşerse CRM kararı geri alınır, iki veritabanı ayrışmaz.
  */
-export async function decideQuestion(id: string, input: QuestionDecisionInput, staff: StaffContext): Promise<PoolQuestion> {
-  const { data, error } = await getSupabaseAdminClient()
+export async function decideQuestion(
+  id: string,
+  input: QuestionDecisionInput,
+  staff: StaffContext
+): Promise<PoolQuestion & { panelTransfer: PanelTransfer | null }> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
     .from("crm_question_pool")
     .update({
       status: input.decision,
@@ -144,5 +198,72 @@ export async function decideQuestion(id: string, input: QuestionDecisionInput, s
     .maybeSingle();
   if (error) throw dbError(error);
   if (!data) throw new HttpError(404, "NOT_FOUND");
-  return toDto(data as PoolRow);
+  const row = data as PoolRow;
+
+  let panelTransfer: PanelTransfer | null = null;
+  if (input.decision === "APPROVED") {
+    const compensator = createCompensator();
+    compensator.push("onay", async () => {
+      const { error: undoError } = await admin
+        .from("crm_question_pool")
+        .update({ status: "PENDING", reviewed_by: null, reviewed_at: null, review_note: null })
+        .eq("id", id)
+        .eq("status", "APPROVED");
+      if (undoError) throw undoError;
+    });
+    try {
+      panelTransfer = await transferToPanel(row);
+    } catch (transferError) {
+      await rollbackOrLog(compensator, id);
+      throw transferError;
+    }
+  }
+
+  await recordAudit(staff, {
+    action: "QUESTION_DECIDED",
+    entityType: "question",
+    entityId: id,
+    entityLabel: row.objective_code,
+    details: { decision: input.decision, panelTransfer },
+  });
+  return { ...toDto(row), panelTransfer };
+}
+
+/** Onayı geri alır: soru kuyruğa döner, panelde pasifleşir (silinmez). Onaylı olmayan satır 404. */
+export async function revokeQuestionApproval(id: string, staff: StaffContext): Promise<PoolQuestion> {
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("crm_question_pool")
+    .update({ status: "PENDING", reviewed_by: null, reviewed_at: null, review_note: null })
+    .eq("id", id)
+    .eq("status", "APPROVED")
+    .select(POOL_COLUMNS)
+    .maybeSingle();
+  if (error) throw dbError(error);
+  if (!data) throw new HttpError(404, "NOT_FOUND");
+  const row = data as PoolRow;
+
+  const compensator = createCompensator();
+  compensator.push("onay geri alma", async () => {
+    const { error: undoError } = await admin
+      .from("crm_question_pool")
+      .update({ status: "APPROVED", reviewed_by: staff.userId, reviewed_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("status", "PENDING");
+    if (undoError) throw undoError;
+  });
+  try {
+    await deactivateEdorasMiniTestQuestion(id);
+  } catch (panelError) {
+    await rollbackOrLog(compensator, id);
+    throw panelError;
+  }
+
+  await recordAudit(staff, {
+    action: "QUESTION_APPROVAL_REVOKED",
+    entityType: "question",
+    entityId: id,
+    entityLabel: row.objective_code,
+  });
+  return toDto(row);
 }

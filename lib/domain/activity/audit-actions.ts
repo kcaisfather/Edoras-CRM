@@ -19,6 +19,9 @@ export const AUDIT_ACTIONS = [
   "BILLING_UPDATED",
   // Edoras panel modülü (ör. Muhasebe) kurumda açıldı / kapandı: modül anahtarı ve yeni durum yazılır.
   "PANEL_MODULE_CHANGED",
+  // Soru havuzu: onay/red (karar + panele aktarım sonucu) ve onayın geri alınması.
+  "QUESTION_DECIDED",
+  "QUESTION_APPROVAL_REVOKED",
   // Edoras mesajlaşma (modül açıkken): kurum anahtarı (anahtar + yeni durum) / öğretmenin "Velilerle mesajlaşma"
   // kapsamı (Edoras üyelik kimliği + önceki / yeni kapsam; ad yazılmaz).
   "MESSAGING_SETTING_CHANGED",
@@ -149,6 +152,7 @@ export const AUDIT_ENTITY_TYPES = [
   "kca_task",
   "kca_meeting",
   "kca_contact",
+  "question",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

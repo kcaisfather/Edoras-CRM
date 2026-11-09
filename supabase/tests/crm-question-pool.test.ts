@@ -76,6 +76,17 @@ describe("crm_question_pool", () => {
     expect(row.status).toBe("APPROVED");
   });
 
+  it("onay geri alınınca karar bilgisi temizlenmeden kuyruğa dönemez", async () => {
+    await expect(
+      db.query("update crm_question_pool set status = 'PENDING' where content_hash = 'h-aig-1'"),
+    ).rejects.toThrow();
+    await db.query(
+      "update crm_question_pool set status = 'PENDING', reviewed_by = null, reviewed_at = null, review_note = null where content_hash = 'h-aig-1'",
+    );
+    const row = await h().one<{ status: string }>("select status from crm_question_pool where content_hash = 'h-aig-1'");
+    expect(row.status).toBe("PENDING");
+  });
+
   it("gece çalışması kaynak başına bir kez kaydedilir", async () => {
     const RUN = "insert into crm_question_pool_runs (run_date, source, requested) values ($1, $2, 20)";
     await db.query(RUN, ["2026-11-04", "AIG"]);

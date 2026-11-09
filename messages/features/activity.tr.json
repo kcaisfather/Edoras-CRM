@@ -157,7 +157,8 @@
       "kca_account": "KCA Panel hesabı",
       "kca_task": "Yönetim görevi",
       "kca_meeting": "Toplantı notu",
-      "kca_contact": "Network kişisi"
+      "kca_contact": "Network kişisi",
+      "question": "Havuz sorusu"
     },
     "actions": {
       "DEMO_CREATED": "Demo kurum açıldı",
@@ -171,6 +172,8 @@
       "CONTACT_UPDATED": "Yetkili bilgisi güncellendi",
       "BILLING_UPDATED": "Fatura bilgisi güncellendi",
       "PANEL_MODULE_CHANGED": "Panel modülü açıldı / kapandı",
+      "QUESTION_DECIDED": "Havuz sorusu karara bağlandı",
+      "QUESTION_APPROVAL_REVOKED": "Havuz sorusunun onayı geri alındı",
       "MESSAGING_SETTING_CHANGED": "Mesajlaşma ayarı değişti",
       "TEACHER_MESSAGING_SCOPE_CHANGED": "Öğretmenin velilerle mesajlaşma yetkisi değişti",
       "EDORAS_ADMIN_EMAIL_CHANGED": "Kurum yöneticisinin giriş e-postası değişti",

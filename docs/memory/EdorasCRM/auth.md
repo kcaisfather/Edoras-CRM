@@ -45,7 +45,7 @@
   giren hesabın adresi değişmez; yeni adres `@edoras.com` / `@internal.local` olamaz (başkasının telefon / TC kimliğini
   ele geçirme riski).
 - Edoras Auth hesabı tekildir: e-posta / şifre değişikliği kişinin tüm Edoras üyeliklerine işler.
-- ⚠️ Edoras web paneli pasif yöneticiyi engellemiyor (yalnız mobil engelliyor) — kesin kapatma = şifre sıfırla.
+- Pasif yönetici Edoras web paneline de mobile de giremez (web: `/account-inactive`, 2026-10-12).
 
 ## KCA Panel hesabı (Yönetim, 2026-10-14)
 

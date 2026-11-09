@@ -7,6 +7,8 @@ Supabase'e taşındı. Bu klasör ajanlar ve ekip için **modüler hafızadır**
 > Güncelleme kuralı: bir modülde davranış / kural / env değişince ilgili dosyayı aynı commit'te güncelle, tarih yaz
 > (`YYYY-MM-DD`). Yeni modül → `modules/<ad>.md` + bu dizine bir satır.
 
+> ⚠️ Canlı CRM 29.10.2026'dan beri Türkiye'de (`tr-crm.edorasapp.ai`): aşağıdaki Vercel ve Cloud bilgileri geçmiş kayıttır, güncel yol `CLAUDE.md` başındaki uyarıda.
+
 ## Durum (2026-10-01)
 
 - Repo: `C:\Users\erenn\Desktop\Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM`, dal `main`. (Eski `Desktop\EdorasCRM`

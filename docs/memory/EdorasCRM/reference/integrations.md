@@ -13,9 +13,8 @@
   `<10 hane>@edoras.com`, TC ile giren `<11 hane>@internal.local` (YKS `lib/login-identifier.ts`) — bu hesapların adresi
   değiştirilmez (giriş kırılır), yeni adres bu alan adlarında olamaz (başkasının telefon / TC kimliği). Süper yönetici
   (`profiles.is_super_admin`) hiç değiştirilmez. Canlı (2026-10-12): 12 yönetici hesabının 4'ü telefon, 1'i TC.
-- ⚠️ YKS web paneli `institution_users.is_active=false`'u yalnız öğretmende uygular (`resolve_user_role`, `middleware.ts`,
-  `getAdminInstitutionContext` yönetici için bakmıyor) → CRM'den pasife alınan yönetici mobil uygulamaya giremez ama web
-  paneline girebilir. Kesin kapatmak için şifreyi de sıfırla; kalıcı çözüm YKS'de.
+- CRM'den pasife alınan yönetici (`institution_users.is_active=false`) ne mobile ne web paneline girebilir: web'de
+  `/account-inactive`'e düşer (YKS `middleware.ts`, 2026-10-12).
 - Şema değişikliği YKS reposunda (`Desktop/YKS/supabase/migrations`, son: 267 — 2026-10-01). Edoras'ta tablo / sütun
   adı değişirse demo açma, hesap işlemleri ve kullanım okuması kırılır → YKS'de `institutions`, `academic_years`,
   `academic_terms`, `profiles` (`email`, `is_active`, `is_super_admin`), `institution_users`, `auth_user_email_taken`,

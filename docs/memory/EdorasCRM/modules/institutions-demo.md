@@ -165,9 +165,8 @@ kalıyordu. Kullanıcı kararı: giriş e-postası, şifre sıfırlama ve aktif 
   `VALIDATION` (alan mesajı); başka hesapta → 409 `EMAIL_TAKEN`. E-postalar trim + küçük harf.
 - **Kapsam:** Auth hesabı tekildir — değişiklik kişinin başka kurumlardaki üyeliklerine de işler (kart sayıyı gösterir,
   pencere uyarır). Aynı kişi veliyse veli telefon girişi adresi aramayla bulduğu için kırılmaz.
-- ⚠️ **Pasif yönetici web paneline girebilir:** YKS `resolve_user_role` / `middleware.ts` / `getAdminInstitutionContext`
-  `is_active=false`'u yalnız öğretmende uygular; mobil (`institutionUser.js`) yöneticiyi de içeri almaz. Pencere bunu
-  söyler ve şifreyi de sıfırlamayı önerir. Kalıcı çözüm YKS'de (açık iş).
+- **Pasif yönetici girişi kapalı:** web paneli `/account-inactive`'e düşürür (YKS `middleware.ts`, 2026-10-12), mobil
+  (`institutionUser.js`) de içeri almaz. Aynı kişi veliyse mobilde veli olarak girer.
 - **Yetkili ↔ giriş eşlemesi:** Yetkili bilgisi penceresinde e-posta değişirken ESKİ yetkili e-postası e-postayla giren bir
   yöneticinin giriş adresiyse (yalnız ADMIN'e) "Panel giriş e-postasını da güncelle" kutusu çıkar (varsayılan işaretli;
   `ContactLoginSync.tsx`). Yetkili kaydından sonra yönetici e-posta ucu çağrılır; o patlarsa yetkili değişikliği kalır,

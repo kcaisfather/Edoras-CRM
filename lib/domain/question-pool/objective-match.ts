@@ -14,7 +14,15 @@ export type ObjectiveMatch = { kind: "matched"; objectiveId: number } | { kind: 
 
 const SUBJECT_ABBREVIATIONS: Record<string, string> = { FİZ: "Fizik", MAT: "Matematik", COĞ: "Coğrafya" };
 
-const CODE_SUBJECTS: Record<string, string> = { BIY: "Biyoloji", FIZ: "Fizik", KIM: "Kimya", FEL: "Felsefe" };
+const CODE_SUBJECTS: Record<string, string> = {
+  BIY: "Biyoloji",
+  FIZ: "Fizik",
+  KIM: "Kimya",
+  FEL: "Felsefe",
+  MAT: "Matematik",
+  TAR: "Tarih",
+  COG: "Coğrafya",
+};
 
 /** AIG'nin `ÖSYM` / `FİZ` gibi ders alanından gerçek ders adı; çözülemezse null. */
 export function resolvePoolSubject(subject: string, objectiveCode: string | null): string | null {

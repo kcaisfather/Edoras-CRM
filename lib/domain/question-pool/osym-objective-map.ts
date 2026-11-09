@@ -1,0 +1,47 @@
+/**
+ * ÖSYM kodlu AIG sorularının panel kazanımı (`objective_registry.id`). Bu kodlar panelde yalnız üretilmiş kazanım olarak
+ * var, kayıtları yok; aynı konuda denemelerde kullanılan TEK gerçek MEB kazanımı olan ve metni örtüşenler eşlendi.
+ * 09.11 ölçümü: 173 kodun 42'si tek adaylı, 4'ü metin yanlış olduğu için çıkarıldı (AYT.FIZ.07.06, AYT.MAT.10.07,
+ * AYT.MAT.11.03, TYT.MAT.11.03). Eşlenmeyen kod panele gitmez.
+ * shortcut: elle dondurulmuş liste, deneme verisi değişse de güncellenmez; kapsam genişletilecekse yeniden ölçülür.
+ */
+export const OSYM_OBJECTIVE_MAP: ReadonlyMap<string, number> = new Map([
+  ["AYT.BIY.03.03", 945],
+  ["AYT.BIY.06.01", 956],
+  ["AYT.BIY.07.01", 960],
+  ["AYT.BIY.07.02", 960],
+  ["AYT.BIY.12.02", 982],
+  ["AYT.BIY.12.03", 982],
+  ["AYT.BIY.13.01", 985],
+  ["AYT.BIY.13.02", 985],
+  ["AYT.BIY.13.03", 985],
+  ["AYT.BIY.13.04", 985],
+  ["AYT.BIY.13.06", 985],
+  ["AYT.FIZ.01.03", 655],
+  ["AYT.KIM.05.01", 867],
+  ["AYT.KIM.05.02", 867],
+  ["AYT.KIM.06.02", 868],
+  ["AYT.KIM.06.03", 868],
+  ["AYT.KIM.07.05", 873],
+  ["AYT.KIM.08.01", 877],
+  ["AYT.MAT.02.05", 477],
+  ["AYT.MAT.03.05", 483],
+  ["AYT.MAT.08.03", 524],
+  ["TYT.BIY.02.05", 911],
+  ["TYT.BIY.02.07", 911],
+  ["TYT.BIY.02.08", 911],
+  ["TYT.BIY.02.09", 911],
+  ["TYT.BIY.02.11", 911],
+  ["TYT.BIY.05.11", 926],
+  ["TYT.FEL.02.01", 1009],
+  ["TYT.FEL.04.01", 1011],
+  ["TYT.FEL.04.05", 1011],
+  ["TYT.FEL.04.06", 1011],
+  ["TYT.KIM.06.03", 821],
+  ["TYT.MAT.07.05", 436],
+  ["TYT.MAT.08.05", 438],
+  ["TYT.MAT.09.06", 439],
+  ["TYT.MAT.12.05", 440],
+  ["TYT.TAR.03.01", 194],
+  ["TYT.TUR.09.01", 143714],
+]);

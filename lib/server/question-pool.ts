@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
 import { isWellFormedBody, questionContentHash, type QuestionBody } from "@/lib/domain/question-pool/rules";
 import { matchPoolObjective, resolvePoolSubject } from "@/lib/domain/question-pool/objective-match";
+import { OSYM_OBJECTIVE_MAP } from "@/lib/domain/question-pool/osym-objective-map";
 import type { IngestBatchInput, QuestionDecisionInput } from "@/lib/domain/question-pool/schemas";
 import { recordAudit } from "./audit";
 import { createCompensator, type Compensator } from "./compensation";
@@ -155,7 +156,10 @@ export type PanelTransfer = "transferred" | "ambiguous" | "not_found";
 async function transferToPanel(row: PoolRow): Promise<PanelTransfer> {
   const subject = resolvePoolSubject(row.subject, row.objective_code);
   if (!subject || !row.objective_code) return "not_found";
-  const match = matchPoolObjective(subject, await findEdorasObjectiveCandidates(row.objective_code));
+  const mappedId = OSYM_OBJECTIVE_MAP.get(row.objective_code);
+  const match = mappedId
+    ? ({ kind: "matched", objectiveId: mappedId } as const)
+    : matchPoolObjective(subject, await findEdorasObjectiveCandidates(row.objective_code));
   if (match.kind !== "matched") return match.kind;
   await upsertEdorasMiniTestQuestion({
     crm_question_id: row.id,

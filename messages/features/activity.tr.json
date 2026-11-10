@@ -162,7 +162,8 @@
       "kca_task": "Yönetim görevi",
       "kca_meeting": "Toplantı notu",
       "kca_contact": "Network kişisi",
-      "question": "Havuz sorusu"
+      "question": "Havuz sorusu",
+      "flashcard_deck": "Bilgi kartı destesi"
     },
     "actions": {
       "DEMO_CREATED": "Demo kurum açıldı",
@@ -178,6 +179,8 @@
       "PANEL_MODULE_CHANGED": "Panel modülü açıldı / kapandı",
       "QUESTION_DECIDED": "Havuz sorusu karara bağlandı",
       "QUESTION_APPROVAL_REVOKED": "Havuz sorusunun onayı geri alındı",
+      "FLASHCARD_DECK_DECIDED": "Bilgi kartı destesi karara bağlandı",
+      "FLASHCARD_DECK_APPROVAL_REVOKED": "Bilgi kartı destesinin onayı geri alındı",
       "MESSAGING_SETTING_CHANGED": "Mesajlaşma ayarı değişti",
       "TEACHER_MESSAGING_SCOPE_CHANGED": "Öğretmenin velilerle mesajlaşma yetkisi değişti",
       "EDORAS_ADMIN_EMAIL_CHANGED": "Kurum yöneticisinin giriş e-postası değişti",

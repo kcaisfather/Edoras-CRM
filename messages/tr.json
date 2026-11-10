@@ -97,7 +97,8 @@
         "KCA_NOT_OWNER": "Toplantı notunu yalnız sahibi değiştirebilir.",
         "KCA_ASSIGNEE_INVALID": "Sorumlu kişi bu projenin üyesi değil. Önce KCA Panel'de projeye ekleyin.",
         "KCA_TASK_NOT_REVIEW": "Görev onay beklemiyor.",
-        "KCA_UNAVAILABLE": "KCA Panel veritabanına (Turso) ulaşılamadı. Biraz sonra tekrar deneyin."
+        "KCA_UNAVAILABLE": "KCA Panel veritabanına (Turso) ulaşılamadı. Biraz sonra tekrar deneyin.",
+        "TOO_FEW_CARDS": "Onay için destede en az 4 kart kalmalı."
       }
     },
     "cancel": "İptal",
@@ -235,6 +236,8 @@
     "costsDescription": "Hizmet maliyetleri, bütçeler, uyarılar ve kurum başına maliyet",
     "questionPool": "Soru Onayı",
     "questionPoolDescription": "Gece üretilen soruları onayla ya da reddet",
+    "flashcardPool": "Kart Onayı",
+    "flashcardPoolDescription": "Gece üretilen bilgi kartı destelerini onayla ya da reddet",
     "costsServices": "Maliyet · Hizmetler",
     "costsEntries": "Maliyet · Kayıtlar",
     "costsInstitutions": "Maliyet · Kurumlar",

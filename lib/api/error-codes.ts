@@ -86,6 +86,8 @@ export const API_ERROR_CODES = [
   "KCA_ASSIGNEE_INVALID",
   "KCA_TASK_NOT_REVIEW",
   "KCA_UNAVAILABLE",
+  // Bilgi kartı destesi: onayda çıkarılan kartlar sonrası en az 4 kart kalmalı.
+  "TOO_FEW_CARDS",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

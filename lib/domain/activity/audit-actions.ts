@@ -22,6 +22,9 @@ export const AUDIT_ACTIONS = [
   // Soru havuzu: onay/red (karar + panele aktarım sonucu) ve onayın geri alınması.
   "QUESTION_DECIDED",
   "QUESTION_APPROVAL_REVOKED",
+  // Bilgi kartı havuzu: deste onay/red (karar + panele aktarım + çıkarılan kart sayısı) ve onayın geri alınması.
+  "FLASHCARD_DECK_DECIDED",
+  "FLASHCARD_DECK_APPROVAL_REVOKED",
   // Edoras mesajlaşma (modül açıkken): kurum anahtarı (anahtar + yeni durum) / öğretmenin "Velilerle mesajlaşma"
   // kapsamı (Edoras üyelik kimliği + önceki / yeni kapsam; ad yazılmaz).
   "MESSAGING_SETTING_CHANGED",
@@ -153,6 +156,7 @@ export const AUDIT_ENTITY_TYPES = [
   "kca_meeting",
   "kca_contact",
   "question",
+  "flashcard_deck",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

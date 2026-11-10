@@ -47,6 +47,7 @@ export type NavTranslationKey =
   | "activityHistory"
   | "costs"
   | "questionPool"
+  | "flashcardPool"
   | "managementTasks"
   | "managementNetwork"
   | "managementMeetings";
@@ -154,6 +155,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/costs", icon: DollarSign, translationKey: "costs", adminOnly: true },
       // Gece üretilen soruların onayı (AIG + LLM); yalnız ADMIN (uç ve sayfa da ADMIN ister).
       { href: "/question-pool", icon: ClipboardCheck, translationKey: "questionPool", adminOnly: true },
+      // Gece üretilen bilgi kartı destelerinin onayı (MEB ders kitabından); yalnız ADMIN.
+      { href: "/flashcard-pool", icon: ClipboardCheck, translationKey: "flashcardPool", adminOnly: true },
     ],
   },
 ];

@@ -722,3 +722,59 @@ export async function listEdorasActiveMiniTestQuestionIds(crmQuestionIds: string
   if (error) throw dbError(error);
   return new Set(((data ?? []) as { crm_question_id: string }[]).map((r) => r.crm_question_id));
 }
+
+// --- Bilgi kartı (Edoras migration 379 `flashcards`) ---
+
+export type EdorasFlashcard = {
+  crm_card_id: string;
+  objective_id: number;
+  subject: string;
+  front: string;
+  back: string;
+  sort_order: number;
+};
+
+/** Kazanım panelde var mı (`objective_registry`). Yoksa deste onaylı kalır ama panele gitmez. */
+export async function edorasObjectiveExists(objectiveId: number): Promise<boolean> {
+  const { data, error } = await getEdorasAdminClient()
+    .from("objective_registry")
+    .select("id")
+    .eq("id", objectiveId)
+    .maybeSingle();
+  if (error) throw dbError(error);
+  return data !== null;
+}
+
+/** Onaylanan destenin kartları (yeniden onayda aynı satırlar güncellenir, tekrar açılır). */
+export async function upsertEdorasFlashcards(cards: EdorasFlashcard[]): Promise<void> {
+  if (cards.length === 0) return;
+  const now = new Date().toISOString();
+  const { error } = await getEdorasAdminClient()
+    .from("flashcards")
+    .upsert(
+      cards.map((card) => ({ ...card, active: true, updated_at: now })),
+      { onConflict: "crm_card_id" },
+    );
+  if (error) throw dbError(error);
+}
+
+/** Satırı olmayan kart etkisizdir. Silinmez: öğrencilerin desteleri (`flashcard_sessions.card_ids`) ona bağlı. */
+export async function deactivateEdorasFlashcards(crmCardIds: string[]): Promise<void> {
+  if (crmCardIds.length === 0) return;
+  const { error } = await getEdorasAdminClient()
+    .from("flashcards")
+    .update({ active: false, updated_at: new Date().toISOString() })
+    .in("crm_card_id", crmCardIds);
+  if (error) throw dbError(error);
+}
+
+export async function listEdorasActiveFlashcardIds(crmCardIds: string[]): Promise<Set<string>> {
+  if (crmCardIds.length === 0) return new Set();
+  const { data, error } = await getEdorasAdminClient()
+    .from("flashcards")
+    .select("crm_card_id")
+    .eq("active", true)
+    .in("crm_card_id", crmCardIds);
+  if (error) throw dbError(error);
+  return new Set(((data ?? []) as { crm_card_id: string }[]).map((r) => r.crm_card_id));
+}

@@ -70,6 +70,7 @@
       "CLASS_DELETED": "Sınıf silindi",
       "EXAM_DELETED": "Deneme silindi",
       "EXAM_OPTICAL_READS_CLEARED": "Denemenin optikleri silindi",
+      "EXAM_OPTICAL_UNBOUND": "Optik okuma öğrenciden ayrıldı",
       "EXAM_RESULTS_PUBLISHED_BY": "Deneme sonucu yayına alındı",
       "EXAM_RESULTS_UNPUBLISHED": "Deneme sonucu yayından kaldırıldı",
       "TIMETABLE_ACTIVATED": "Ders programı aktifleştirildi",

@@ -48,6 +48,8 @@ export const IMPORTANT_EVENT_TYPES = [
   "EXAM_DELETED",
   // Denemenin tüm optikleri + sonuçları silindi, deneme kaldı (Edoras 2026-10-27). entity = deneme → ad çözülür.
   "EXAM_OPTICAL_READS_CLEARED",
+  // Tek öğrencinin yanlış eşleşen optiği öğrenciden ayrıldı (Edoras S3, 2026-11-10). entity = deneme; details: studentId, opticalReadId.
+  "EXAM_OPTICAL_UNBOUND",
   "EXAM_RESULTS_PUBLISHED_BY",
   "EXAM_RESULTS_UNPUBLISHED",
   "TIMETABLE_ACTIVATED",

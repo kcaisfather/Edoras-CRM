@@ -64,15 +64,18 @@
       "STUDENT_ACTIVATED": "Öğrenci aktifleştirildi",
       "STUDENT_DEACTIVATED": "Öğrenci pasifleştirildi",
       "STUDENT_PASSWORD_RESET": "Öğrenci şifresi sıfırlandı",
+      "STUDENT_LINKED_EXISTING_ACCOUNT": "Öğrenci mevcut hesaba bağlandı",
       "PARENT_PASSWORD_RESET": "Veli şifresi sıfırlandı",
       "PARENT_CREDENTIALS_SENT": "Veli giriş bilgisi gönderildi",
       "CLASS_DELETED": "Sınıf silindi",
       "EXAM_DELETED": "Deneme silindi",
+      "EXAM_OPTICAL_READS_CLEARED": "Denemenin optikleri silindi",
       "EXAM_RESULTS_PUBLISHED_BY": "Deneme sonucu yayına alındı",
       "EXAM_RESULTS_UNPUBLISHED": "Deneme sonucu yayından kaldırıldı",
       "TIMETABLE_ACTIVATED": "Ders programı aktifleştirildi",
       "TIMETABLE_DELETED": "Ders programı silindi",
       "ATTENDANCE_OVERRIDDEN": "Geçmiş yoklama değiştirildi",
+      "PRIVATE_LESSON_DELETED": "Birebir ders silindi",
       "ANNOUNCEMENT_DELETED": "Duyuru silindi",
       "DOCUMENT_FOLDER_CREATED": "Belge klasörü oluşturuldu",
       "DOCUMENT_FOLDER_RENAMED": "Belge klasörü yeniden adlandırıldı",
@@ -111,7 +114,8 @@
       "studentNo": "Öğrenci no {no}",
       "timetable": "\"{label}\" · {count} sınıf",
       "attendance": "{date} · {hour}. ders",
-      "parents": "{count} veli"
+      "parents": "{count} veli",
+      "privateLesson": "{subject} · {date}"
     },
     "groups": {
       "activity": "Etkinlik",

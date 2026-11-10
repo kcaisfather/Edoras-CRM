@@ -40,15 +40,21 @@ export const IMPORTANT_EVENT_TYPES = [
   "STUDENT_ACTIVATED",
   "STUDENT_DEACTIVATED",
   "STUDENT_PASSWORD_RESET",
+  // Öğrenci iki kurumda (Faz 3): yeni kayıt başka kurumdaki mevcut hesaba bağlandı. details.studentNo → "Öğrenci no".
+  "STUDENT_LINKED_EXISTING_ACCOUNT",
   "PARENT_PASSWORD_RESET",
   "PARENT_CREDENTIALS_SENT",
   "CLASS_DELETED",
   "EXAM_DELETED",
+  // Denemenin tüm optikleri + sonuçları silindi, deneme kaldı (Edoras 2026-10-27). entity = deneme → ad çözülür.
+  "EXAM_OPTICAL_READS_CLEARED",
   "EXAM_RESULTS_PUBLISHED_BY",
   "EXAM_RESULTS_UNPUBLISHED",
   "TIMETABLE_ACTIVATED",
   "TIMETABLE_DELETED",
   "ATTENDANCE_OVERRIDDEN",
+  // Birebir ders silindi (Edoras D4, 2026-11-10; yalnız yoklaması alınmamış ders). details: subject, lessonDate — öğrenci adı yok.
+  "PRIVATE_LESSON_DELETED",
   "ANNOUNCEMENT_DELETED",
   // Kurum Belgeleri (Edoras migration 337, 2026-10-26). details yalnız klasör kimliği taşır; dosya/klasör ADI yok.
   "DOCUMENT_FOLDER_CREATED",
@@ -94,7 +100,8 @@ export type EventDetail =
   | { kind: "studentNo"; values: { no: string } }
   | { kind: "timetable"; values: { label: string; count: number } }
   | { kind: "attendance"; values: { date: string; hour: number } }
-  | { kind: "parents"; values: { count: number } };
+  | { kind: "parents"; values: { count: number } }
+  | { kind: "privateLesson"; values: { subject: string; date: string } };
 
 const text = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim().slice(0, 120) : null);
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -118,6 +125,11 @@ export function buildEventDetail(action: string, details: unknown, entityName: s
   if (action === "parent_credentials_sent" && d.bulk === true) {
     const count = num(d.changedCount);
     return count !== null ? { kind: "parents", values: { count } } : null;
+  }
+  if (action === "private_lesson_deleted") {
+    const subject = text(d.subject);
+    const date = text(d.lessonDate);
+    return subject && date ? { kind: "privateLesson", values: { subject, date } } : null;
   }
   // Belge / klasör adı kişisel veri olabilir (dilekçe, rapor): details'e ileride ad girse bile gösterilmez.
   if (action.startsWith("document_")) return null;

@@ -77,6 +77,12 @@ describe("önemli işlemler (activity_logs)", () => {
       values: { date: "2026-10-01", hour: 3 },
     });
     expect(buildEventDetail("parent_credentials_sent", { bulk: true, changedCount: 40 }, null)).toEqual({ kind: "parents", values: { count: 40 } });
+    expect(buildEventDetail("private_lesson_deleted", { subject: "Matematik", lessonDate: "2026-11-03", studentId: "s1" }, null)).toEqual({
+      kind: "privateLesson",
+      values: { subject: "Matematik", date: "2026-11-03" },
+    });
+    expect(buildEventDetail("private_lesson_deleted", { subject: "Matematik" }, null)).toBeNull();
+    expect(buildEventDetail("student_linked_existing_account", { studentNo: "88", via: "form" }, null)).toEqual({ kind: "studentNo", values: { no: "88" } });
     expect(buildEventDetail("teacher_removed", {}, "Ali Veli")).toEqual({ kind: "name", values: { name: "Ali Veli" } });
     expect(buildEventDetail("class_deleted", { name: "12-A" }, null)).toEqual({ kind: "name", values: { name: "12-A" } });
     expect(buildEventDetail("document_uploaded", { folderId: "f1", name: "dilekce.pdf" }, "X")).toBeNull();

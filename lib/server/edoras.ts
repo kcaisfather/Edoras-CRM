@@ -30,7 +30,12 @@ import {
   leavesNoActiveAdmin,
   normalizeLoginEmail,
 } from "@/lib/domain/institutions/edoras-accounts";
-import type { ObjectiveCandidate } from "@/lib/domain/question-pool/objective-match";
+import {
+  programFromPublisher,
+  programFromMebList,
+  type ObjectiveCandidate,
+} from "@/lib/domain/question-pool/objective-match";
+import { QUESTION_PROGRAMS, type QuestionProgram } from "@/lib/domain/question-pool/rules";
 import type { Compensator } from "./compensation";
 
 /**
@@ -651,36 +656,50 @@ export async function setEdorasAdminActive(
 export async function findEdorasObjectiveCandidates(code: string): Promise<ObjectiveCandidate[]> {
   const db = getEdorasAdminClient();
   const [meb, learning, publisher] = await Promise.all([
-    db.from("objective_registry").select("id, meb_objectives!inner(code, subject_label)").eq("meb_objectives.code", code),
     db
       .from("objective_registry")
-      .select("id, learning_objectives!inner(code, topics(subjects(name)))")
+      .select("id, meb_objectives!inner(code, subject_label, program)")
+      .eq("meb_objectives.code", code),
+    db
+      .from("objective_registry")
+      .select("id, learning_objectives!inner(code, topics(subjects(name, education_categories(program))))")
       .eq("learning_objectives.code", code),
     db
       .from("objective_registry")
-      .select("id, publisher_objectives!inner(code, subject_label)")
+      .select("id, publisher_objectives!inner(code, subject_label, grade_label)")
       .eq("publisher_objectives.code", code),
   ]);
   const error = meb.error ?? learning.error ?? publisher.error;
   if (error) throw dbError(error);
 
-  type Labeled = { id: number; meb_objectives?: { subject_label: string | null }; publisher_objectives?: { subject_label: string | null } };
-  type Learning = { id: number; learning_objectives: { topics: { subjects: { name: string | null } | null } | null } };
+  type Meb = { id: number; meb_objectives: { subject_label: string | null; program: string | null } };
+  type Publisher = { id: number; publisher_objectives: { subject_label: string | null; grade_label: string | null } };
+  type Learning = {
+    id: number;
+    learning_objectives: {
+      topics: { subjects: { name: string | null; education_categories: { program: string | null } | null } | null } | null;
+    };
+  };
+  const asProgram = (value: string | null | undefined): QuestionProgram | null =>
+    (QUESTION_PROGRAMS as readonly string[]).includes(value ?? "") ? (value as QuestionProgram) : null;
   return [
-    ...((meb.data ?? []) as unknown as Labeled[]).map((r) => ({
+    ...((meb.data ?? []) as unknown as Meb[]).map((r) => ({
       objectiveId: r.id,
       source: "meb" as const,
-      subjectLabel: r.meb_objectives?.subject_label ?? null,
+      subjectLabel: r.meb_objectives.subject_label ?? null,
+      program: programFromMebList(r.meb_objectives.program),
     })),
     ...((learning.data ?? []) as unknown as Learning[]).map((r) => ({
       objectiveId: r.id,
       source: "learning_objective" as const,
       subjectLabel: r.learning_objectives.topics?.subjects?.name ?? null,
+      program: asProgram(r.learning_objectives.topics?.subjects?.education_categories?.program),
     })),
-    ...((publisher.data ?? []) as unknown as Labeled[]).map((r) => ({
+    ...((publisher.data ?? []) as unknown as Publisher[]).map((r) => ({
       objectiveId: r.id,
       source: "publisher" as const,
-      subjectLabel: r.publisher_objectives?.subject_label ?? null,
+      subjectLabel: r.publisher_objectives.subject_label ?? null,
+      program: programFromPublisher(r.publisher_objectives.grade_label, r.publisher_objectives.subject_label),
     })),
   ];
 }
@@ -688,6 +707,8 @@ export async function findEdorasObjectiveCandidates(code: string): Promise<Objec
 export type EdorasMiniTestQuestion = {
   crm_question_id: string;
   objective_id: number;
+  /** Panel migration 384: NOT NULL. Düello ve Mini Test öğrencinin kurum programıyla süzer. */
+  program: QuestionProgram;
   subject: string;
   stem: string;
   options: string[];

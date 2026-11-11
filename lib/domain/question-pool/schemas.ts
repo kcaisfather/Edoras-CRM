@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QUESTION_LETTERS, QUESTION_SOURCES } from "./rules";
+import { QUESTION_LETTERS, QUESTION_PROGRAMS, QUESTION_SOURCES } from "./rules";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
@@ -30,6 +30,8 @@ export const questionBodySchema = z.object({
 
 export const ingestItemSchema = z.object({
   source: z.enum(QUESTION_SOURCES),
+  // Zorunlu: CRM sınavı tahmin etmez; eksik program gelen soru partiyi 400 ile düşürür.
+  program: z.enum(QUESTION_PROGRAMS),
   subject: text(60),
   objective_code: z
     .string()

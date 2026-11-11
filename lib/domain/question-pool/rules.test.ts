@@ -38,7 +38,7 @@ describe("soru biçimi", () => {
 });
 
 describe("gece partisi şeması", () => {
-  const item = { source: "AIG", subject: "Matematik", model: "m", body: BODY };
+  const item = { source: "AIG", program: "yks", subject: "Matematik", model: "m", body: BODY };
 
   it("en fazla 50 soru kabul eder, 51 reddeder", () => {
     const ok = ingestBatchSchema.safeParse({ run_date: "2026-11-05", source: "AIG", requested: 20, items: Array(50).fill(item) });
@@ -49,6 +49,15 @@ describe("gece partisi şeması", () => {
 
   it("tarih biçimi ve bilinmeyen kaynak reddedilir", () => {
     expect(ingestBatchSchema.safeParse({ run_date: "05.11.2026", source: "AIG", requested: 0, items: [] }).success).toBe(false);
+  });
+
+  it("program zorunlu: eksik ya da yks/lgs dışı ise parti reddedilir (sınav üretimde belirlenir)", () => {
+    const base = { run_date: "2026-11-11", source: "AIG", requested: 1 };
+    const { program: _drop, ...withoutProgram } = item;
+    void _drop;
+    expect(ingestBatchSchema.safeParse({ ...base, items: [withoutProgram] }).success).toBe(false);
+    expect(ingestBatchSchema.safeParse({ ...base, items: [{ ...item, program: "tyt" }] }).success).toBe(false);
+    expect(ingestBatchSchema.safeParse({ ...base, items: [{ ...item, program: "lgs" }] }).success).toBe(true);
     expect(ingestBatchSchema.safeParse({ run_date: "2026-11-05", source: "HUMAN", requested: 0, items: [] }).success).toBe(false);
   });
 });
@@ -68,7 +77,7 @@ describe("dayanak bilgisi (meta)", () => {
     run_date: "2026-11-05",
     source: "AIG",
     requested: 1,
-    items: [{ source: "AIG", subject: "ÖSYM", model: "m", body }],
+    items: [{ source: "AIG", program: "yks", subject: "ÖSYM", model: "m", body }],
   });
 
   it("meta olan ve olmayan gövde kabul edilir, meta korunur", () => {

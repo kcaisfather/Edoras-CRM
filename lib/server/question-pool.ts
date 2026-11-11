@@ -2,7 +2,7 @@ import "server-only";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { HttpError, dbError, type StaffContext } from "@/lib/api/server";
-import { isWellFormedBody, questionContentHash, type QuestionBody } from "@/lib/domain/question-pool/rules";
+import { isWellFormedBody, questionContentHash, type QuestionBody, type QuestionProgram } from "@/lib/domain/question-pool/rules";
 import { matchPoolObjective, resolvePoolSubject } from "@/lib/domain/question-pool/objective-match";
 import { OSYM_OBJECTIVE_MAP } from "@/lib/domain/question-pool/osym-objective-map";
 import type { IngestBatchInput, QuestionDecisionInput } from "@/lib/domain/question-pool/schemas";
@@ -18,6 +18,7 @@ import {
 export type PoolQuestion = {
   id: string;
   source: "AIG" | "LLM";
+  program: QuestionProgram;
   subject: string;
   objectiveCode: string | null;
   model: string;
@@ -33,11 +34,12 @@ export type IngestResult = {
   rejectedByCheck: number;
 };
 
-const POOL_COLUMNS = "id, source, subject, objective_code, model, run_date, body, created_at";
+const POOL_COLUMNS = "id, source, program, subject, objective_code, model, run_date, body, created_at";
 
 type PoolRow = {
   id: string;
   source: "AIG" | "LLM";
+  program: QuestionProgram;
   subject: string;
   objective_code: string | null;
   model: string;
@@ -49,6 +51,7 @@ type PoolRow = {
 const toDto = (row: PoolRow): PoolQuestion => ({
   id: row.id,
   source: row.source,
+  program: row.program,
   subject: row.subject,
   objectiveCode: row.objective_code,
   model: row.model,
@@ -87,6 +90,7 @@ export async function ingestQuestionBatch(input: IngestBatchInput): Promise<Inge
     if (rowsByHash.has(hash)) continue;
     rowsByHash.set(hash, {
       source: item.source,
+      program: item.program,
       subject: item.subject,
       objective_code: item.objective_code,
       model: item.model,
@@ -152,18 +156,23 @@ export async function listApprovedQuestions(limit = 200): Promise<(PoolQuestion 
 
 export type PanelTransfer = "transferred" | "ambiguous" | "not_found";
 
-/** Eşleşmeyen soru onaylı kalır ama panele gitmez. `meta` (dayanak soru, çeldirici kökenleri) panele HİÇ gitmez. */
+/**
+ * Eşleşmeyen soru onaylı kalır ama panele gitmez. `meta` (dayanak soru, çeldirici kökenleri) panele HİÇ gitmez.
+ * Sınav üreticiden gelir (`row.program`): adaylar onunla süzülür ve panele aynen yazılır; CRM sınavı tahmin etmez.
+ */
 async function transferToPanel(row: PoolRow): Promise<PanelTransfer> {
   const subject = resolvePoolSubject(row.subject, row.objective_code);
   if (!subject || !row.objective_code) return "not_found";
-  const mappedId = OSYM_OBJECTIVE_MAP.get(row.objective_code);
+  // ÖSYM eşleme listesi yalnız YKS kodları içerir.
+  const mappedId = row.program === "yks" ? OSYM_OBJECTIVE_MAP.get(row.objective_code) : undefined;
   const match = mappedId
     ? ({ kind: "matched", objectiveId: mappedId } as const)
-    : matchPoolObjective(subject, await findEdorasObjectiveCandidates(row.objective_code));
+    : matchPoolObjective(subject, await findEdorasObjectiveCandidates(row.objective_code), row.program);
   if (match.kind !== "matched") return match.kind;
   await upsertEdorasMiniTestQuestion({
     crm_question_id: row.id,
     objective_id: match.objectiveId,
+    program: row.program,
     subject,
     stem: row.body.stem,
     options: row.body.options,

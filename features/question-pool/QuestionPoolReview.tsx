@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 type PoolQuestion = {
   id: string;
   source: "AIG" | "LLM";
+  program: "yks" | "lgs";
   subject: string;
   objectiveCode: string | null;
   model: string;
@@ -155,6 +156,7 @@ export function QuestionPoolReview() {
           <li key={q.id} className="space-y-3 rounded-lg border p-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="rounded bg-muted px-2 py-0.5">{SOURCE_LABEL[q.source]}</span>
+              <span className="rounded bg-muted px-2 py-0.5 font-medium text-foreground">{q.program === "lgs" ? "LGS" : "YKS"}</span>
               <span className="rounded bg-muted px-2 py-0.5">{q.subject}</span>
               {q.objectiveCode ? <span className="rounded bg-muted px-2 py-0.5">{q.objectiveCode}</span> : null}
               <span className="rounded bg-muted px-2 py-0.5">{q.model}</span>

@@ -21,7 +21,7 @@ afterAll(async () => {
 });
 
 const INSERT =
-  "insert into crm_question_pool (source, subject, objective_code, model, run_date, body, content_hash) values ($1, $2, $3, $4, $5, $6::jsonb, $7)";
+  "insert into crm_question_pool (source, subject, objective_code, model, run_date, body, content_hash, program) values ($1, $2, $3, $4, $5, $6::jsonb, $7, 'yks')";
 
 const BODY = JSON.stringify({ stem: "Örnek soru", options: ["A", "B", "C", "D", "E"], key: "C" });
 
@@ -31,6 +31,19 @@ describe("crm_question_pool", () => {
     await db.query(INSERT, ["LLM", "Fizik", null, "gpt-4o-mini", "2026-11-04", BODY, "h-llm-1"]);
     const row = await h().one<{ n: number }>("select count(*)::int as n from crm_question_pool where status = 'PENDING'");
     expect(row.n).toBe(2);
+  });
+
+  it("program zorunlu ve yalnız yks | lgs (20261111120000)", async () => {
+    const NO_PROGRAM =
+      "insert into crm_question_pool (source, subject, model, run_date, body, content_hash) values ('LLM', 'Fizik', 'm', '2026-11-11', $1::jsonb, 'h-no-program')";
+    await expect(db.query(NO_PROGRAM, [BODY])).rejects.toThrow();
+    const BAD_PROGRAM =
+      "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, program) values ('LLM', 'Fizik', 'm', '2026-11-11', $1::jsonb, 'h-bad-program', 'tyt')";
+    await expect(db.query(BAD_PROGRAM, [BODY])).rejects.toThrow();
+    const LGS =
+      "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, program) values ('LLM', 'Matematik', 'm', '2026-11-11', $1::jsonb, 'h-lgs', 'lgs') returning program";
+    const row = await db.query<{ program: string }>(LGS, [BODY]);
+    expect(row.rows[0].program).toBe("lgs");
   });
 
   it("aynı içerik ikinci kez girilmez", async () => {
@@ -52,7 +65,7 @@ describe("crm_question_pool", () => {
   it("onaylı satır karar veren ve tarih olmadan girilemez", async () => {
     await expect(
       db.query(
-        "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, status) values ('AIG', 'Fizik', 'm', '2026-11-04', $1::jsonb, 'h-appr-noreviewer', 'APPROVED')",
+        "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, status, program) values ('AIG', 'Fizik', 'm', '2026-11-04', $1::jsonb, 'h-appr-noreviewer', 'APPROVED', 'yks')",
         [BODY],
       ),
     ).rejects.toThrow();
@@ -61,7 +74,7 @@ describe("crm_question_pool", () => {
   it("bekleyen satıra karar bilgisi yazılamaz", async () => {
     await expect(
       db.query(
-        "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, status, reviewed_by, reviewed_at) values ('AIG', 'Fizik', 'm', '2026-11-04', $1::jsonb, 'h-pend-reviewed', 'PENDING', $2, now())",
+        "insert into crm_question_pool (source, subject, model, run_date, body, content_hash, status, reviewed_by, reviewed_at, program) values ('AIG', 'Fizik', 'm', '2026-11-04', $1::jsonb, 'h-pend-reviewed', 'PENDING', $2, now(), 'yks')",
         [BODY, admin],
       ),
     ).rejects.toThrow();

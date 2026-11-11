@@ -1,12 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { matchPoolObjective, resolvePoolSubject, type ObjectiveCandidate } from "./objective-match";
+import {
+  matchPoolObjective,
+  programFromPublisher,
+  programFromMebList,
+  resolvePoolSubject,
+  type ObjectiveCandidate,
+} from "./objective-match";
 import { OSYM_OBJECTIVE_MAP } from "./osym-objective-map";
 
-const meb = (objectiveId: number, subjectLabel: string): ObjectiveCandidate => ({ objectiveId, source: "meb", subjectLabel });
-const publisher = (objectiveId: number, subjectLabel: string): ObjectiveCandidate => ({
+const meb = (objectiveId: number, subjectLabel: string, program: ObjectiveCandidate["program"] = "yks"): ObjectiveCandidate => ({
+  objectiveId,
+  source: "meb",
+  subjectLabel,
+  program,
+});
+const publisher = (objectiveId: number, subjectLabel: string, program: ObjectiveCandidate["program"] = null): ObjectiveCandidate => ({
   objectiveId,
   source: "publisher",
   subjectLabel,
+  program,
+});
+const learning = (objectiveId: number, subjectLabel: string, program: ObjectiveCandidate["program"]): ObjectiveCandidate => ({
+  objectiveId,
+  source: "learning_objective",
+  subjectLabel,
+  program,
 });
 
 describe("resolvePoolSubject", () => {
@@ -36,30 +54,69 @@ describe("resolvePoolSubject", () => {
 
 describe("matchPoolObjective", () => {
   it("aynı kod başka derslerde olsa da doğru dersi seçer", () => {
-    expect(matchPoolObjective("Tarih", [meb(1, "Coğrafya"), meb(2, "Tarih"), publisher(3, "TYT Fizik")])).toEqual({
+    expect(matchPoolObjective("Tarih", [meb(1, "Coğrafya"), meb(2, "Tarih"), publisher(3, "TYT Fizik")], "yks")).toEqual({
       kind: "matched",
       objectiveId: 2,
     });
   });
 
   it("sınıf ve sınav önekini yok sayar", () => {
-    expect(matchPoolObjective("Fizik", [{ objectiveId: 9, source: "learning_objective", subjectLabel: "10. Sınıf Fizik" }])).toEqual({
+    expect(matchPoolObjective("Fizik", [learning(9, "10. Sınıf Fizik", "yks")], "yks")).toEqual({
       kind: "matched",
       objectiveId: 9,
     });
   });
 
   it("MEB ve yayıncı aynı dersteyse MEB kazanır", () => {
-    expect(matchPoolObjective("Fizik", [publisher(5, "TYT Fizik"), meb(6, "Fizik")])).toEqual({ kind: "matched", objectiveId: 6 });
+    expect(matchPoolObjective("Fizik", [publisher(5, "TYT Fizik"), meb(6, "Fizik")], "yks")).toEqual({ kind: "matched", objectiveId: 6 });
   });
 
   it("iki MEB ya da iki yayıncı adayı belirsizdir", () => {
-    expect(matchPoolObjective("Fizik", [meb(1, "Fizik"), meb(2, "Fizik")]).kind).toBe("ambiguous");
-    expect(matchPoolObjective("Fizik", [publisher(1, "TYT Fizik"), publisher(2, "AYT Fizik")]).kind).toBe("ambiguous");
+    expect(matchPoolObjective("Fizik", [meb(1, "Fizik"), meb(2, "Fizik")], "yks").kind).toBe("ambiguous");
+    expect(matchPoolObjective("Fizik", [publisher(1, "TYT Fizik"), publisher(2, "AYT Fizik")], "yks").kind).toBe("ambiguous");
   });
 
   it("aynı ders yoksa bulunamadı", () => {
-    expect(matchPoolObjective("Tarih", [meb(1, "Coğrafya")]).kind).toBe("not_found");
-    expect(matchPoolObjective("Tarih", []).kind).toBe("not_found");
+    expect(matchPoolObjective("Tarih", [meb(1, "Coğrafya")], "yks").kind).toBe("not_found");
+    expect(matchPoolObjective("Tarih", [], "yks").kind).toBe("not_found");
+  });
+
+  it("başka sınavın adayı elenir: LGS sorusu YKS kazanımına bağlanmaz", () => {
+    expect(matchPoolObjective("Matematik", [meb(1, "Matematik", "yks")], "lgs").kind).toBe("not_found");
+    expect(matchPoolObjective("Matematik", [meb(1, "Matematik", "yks"), learning(2, "LGS Matematik", "lgs")], "lgs")).toEqual({
+      kind: "matched",
+      objectiveId: 2,
+    });
+  });
+
+  it("aynı ders + kod iki sınavda varsa program belirsizliği çözer", () => {
+    const both = [learning(1, "LGS Türkçe", "lgs"), learning(2, "TYT Türkçe", "yks")];
+    expect(matchPoolObjective("Türkçe", both, "yks")).toEqual({ kind: "matched", objectiveId: 2 });
+    expect(matchPoolObjective("Türkçe", both, "lgs")).toEqual({ kind: "matched", objectiveId: 1 });
+  });
+
+  it("programı bilinmeyen aday her sınavla uyumludur", () => {
+    expect(matchPoolObjective("Fizik", [publisher(4, "Fizik", null)], "lgs")).toEqual({ kind: "matched", objectiveId: 4 });
+  });
+});
+
+describe("aday programı", () => {
+  it("MEB listesinin adından", () => {
+    expect(programFromMebList("ttkb-yks-2026")).toBe("yks");
+    expect(programFromMebList("ttkb-lgs-2026")).toBe("lgs");
+    expect(programFromMebList(null)).toBeNull();
+  });
+
+  it("yayıncı: önce sınıf düzeyi, yoksa ders öneki (canlıdaki biçimler: '9', '12', 'YKS', boş)", () => {
+    expect(programFromPublisher("10. Sınıf", "Fizik")).toBe("yks");
+    expect(programFromPublisher("12", "Matematik")).toBe("yks");
+    expect(programFromPublisher("YKS", "Matematik")).toBe("yks");
+    expect(programFromPublisher("Mezun", null)).toBe("yks");
+    expect(programFromPublisher("8", "Matematik")).toBe("lgs");
+    expect(programFromPublisher(null, "TYT Fizik")).toBe("yks");
+    expect(programFromPublisher(null, "LGS Türkçe")).toBe("lgs");
+    expect(programFromPublisher(null, "4. Sınıf Matematik")).toBe("lgs");
+    expect(programFromPublisher(null, "11. Sınıf Tarih")).toBe("yks");
+    expect(programFromPublisher(null, "Matematik-1")).toBeNull();
   });
 });

@@ -10,6 +10,10 @@ export type QuestionSource = (typeof QUESTION_SOURCES)[number];
 
 export const QUESTION_LETTERS = ["A", "B", "C", "D", "E"] as const;
 
+/** Sorunun sınavı. Üretici belirler (YKS/LGS ayrımı üretimde); onayda panele aynen gider. */
+export const QUESTION_PROGRAMS = ["yks", "lgs"] as const;
+export type QuestionProgram = (typeof QUESTION_PROGRAMS)[number];
+
 /** Onay ekranında "bu soru neye dayanıyor" bilgisi. Soru içeriği değildir: içerik özetine girmez. */
 export type QuestionMeta = {
   reference_question?: string | null; // dayandığı çıkmış soru

@@ -39,6 +39,7 @@ Supabase'e taşındı. Bu klasör ajanlar ve ekip için **modüler hafızadır**
 - Müşteri analizleri (Edoras kullanım sinyalleri) → [modules/growth-analytics.md](modules/growth-analytics.md)
 - Aktivite geçmişi + Maliyetler → [modules/activity-costs.md](modules/activity-costs.md)
 - Zamanlanmış raporlar (cron) → [modules/reports.md](modules/reports.md)
+- Soru havuzu onayı → panel Mini Test/Düello; sorunun sınavı `program` üretimde, eşleştirme önce sınava bakar (2026-11-11) → [modules/question-pool.md](modules/question-pool.md)
 - Ayarlar ve ekip (personel, iç kurumlar, hata kaydı, KVKK) → [modules/settings-team.md](modules/settings-team.md)
 - **Yönetim (KCA Panel ortak verisi, 2026-10-14):** Yönetim Görevleri, Network, Toplantı Notları — KCA Panel'in Turso
   veritabanı, yalnız Edoras etiketli → [modules/management-kca.md](modules/management-kca.md)

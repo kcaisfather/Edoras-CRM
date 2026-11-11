@@ -18,7 +18,7 @@ Repo: `Desktop/Edoras-CRM` → GitHub `kcaisfather/Edoras-CRM` (`main`).
 >   [data-model.md](docs/memory/EdorasCRM/data-model.md) · Yetki → [auth.md](docs/memory/EdorasCRM/auth.md) ·
 >   Kalıplar → [patterns.md](docs/memory/EdorasCRM/patterns.md)
 > - Modüller → `docs/memory/EdorasCRM/modules/` (kurum-demo, crm-leads, tasks-rules, cold-lists-import, surveys,
->   sales-invoices + Paraşüt, growth-analytics, activity-costs, reports, settings-team, management-kca)
+>   sales-invoices + Paraşüt, growth-analytics, activity-costs, reports, settings-team, management-kca, question-pool)
 > - Vercel env listesi → [reference/deploy-vercel.md](docs/memory/EdorasCRM/reference/deploy-vercel.md) · Entegrasyonlar,
 >   kararlar, runbook → `docs/memory/EdorasCRM/reference/`
 

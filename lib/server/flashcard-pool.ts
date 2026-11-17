@@ -14,6 +14,7 @@ import type { FlashcardDecisionInput, FlashcardIngestBatchInput } from "@/lib/do
 import {
   autoAction,
   autoRejectNote,
+  DECK_AUTO_REJECT_ALLOWED,
   deckAutoEligible,
   readAutoDecisionFlags,
   type AiFilter,
@@ -492,7 +493,7 @@ export async function applyDeckAiReviews(
       }
       result.reviewed++;
       // Formül ağırlıklı derslerde (PDF'ten formüller kayıp) otomatik karar yok: yalnız rozet, karar insanda.
-      const action = deckAutoEligible((data as { subject: string }).subject) ? autoAction(item, flags) : "none";
+      const action = deckAutoEligible((data as { subject: string }).subject) ? autoAction(item, flags, DECK_AUTO_REJECT_ALLOWED) : "none";
       if (action === "reject") {
         await decideCore(item.id, { decision: "REJECTED", excluded_card_ids: [], review_note: autoRejectNote(item.reason) }, { kind: "ai", model: batch.model });
         result.autoRejected++;

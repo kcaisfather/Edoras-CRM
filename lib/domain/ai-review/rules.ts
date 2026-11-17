@@ -47,8 +47,12 @@ export function readAutoDecisionFlags(env: Record<string, string | undefined>): 
 }
 
 /** RED her güvende reddedilir; ONAY yalnız eşiğin üstünde onaylanır; BELİRSİZ her zaman insanda kalır. */
-export function autoAction(item: Pick<AiReviewItem, "verdict" | "confidence">, flags: AutoDecisionFlags): AutoAction {
-  if (item.verdict === "RED" && flags.autoReject && item.confidence >= flags.minConfidence) return "reject";
+export function autoAction(
+  item: Pick<AiReviewItem, "verdict" | "confidence">,
+  flags: AutoDecisionFlags,
+  allowReject = true
+): AutoAction {
+  if (allowReject && item.verdict === "RED" && flags.autoReject && item.confidence >= flags.minConfidence) return "reject";
   if (item.verdict === "ONAY" && flags.autoApprove && item.confidence >= flags.minConfidence) return "approve";
   return "none";
 }
@@ -63,6 +67,17 @@ export function autoRejectNote(reason: string | null): string {
  * kayıp formül yüzünden yanlış onaylayabilir. Desteler için bu derslerde otomatik karar verilmez (rozet kalır).
  */
 export const FORMULA_HEAVY_SUBJECTS = ["Matematik", "Geometri", "Fizik", "Kimya"] as const;
+
+/**
+ * 17.11 RED incelemesi: Haiku, dil modeli (LLM) sorularında 6/6 haklı, kodla üretilen (AIG, cevabı hesaplı) sorularda 0/4 haklı
+ * çıktı (örnek küçük). Otomatik RED yalnız LLM kaynaklı sorulara uygulanır; AIG sorular insan kararında kalır.
+ */
+export function questionAutoRejectEligible(source: "AIG" | "LLM"): boolean {
+  return source === "LLM";
+}
+
+/** Desteler için OTOMATİK RED yoktur: tek zayıf kart yüzünden iyi desteyi atıyor (18 REDin ~12'si tek kart sorunu). Onay yolu `deckAutoEligible`'a bağlı. */
+export const DECK_AUTO_REJECT_ALLOWED = false;
 
 export function deckAutoEligible(subject: string): boolean {
   const key = subject.trim().toLocaleLowerCase("tr-TR");

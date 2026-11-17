@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { aiReviewBatchSchema, autoAction, autoRejectNote, deckAutoEligible, parseAiFilter, readAutoDecisionFlags } from "./rules";
+import {
+  aiReviewBatchSchema,
+  autoAction,
+  autoRejectNote,
+  DECK_AUTO_REJECT_ALLOWED,
+  deckAutoEligible,
+  parseAiFilter,
+  questionAutoRejectEligible,
+  readAutoDecisionFlags,
+} from "./rules";
 
 const ON = { autoApprove: true, autoReject: true, minConfidence: 0.9 };
 const OFF = { autoApprove: false, autoReject: false, minConfidence: 0.9 };
@@ -40,6 +49,18 @@ describe("autoAction", () => {
   it("bayraklar bağımsız: yalnız red açıkken onay verilmez", () => {
     expect(autoAction({ verdict: "ONAY", confidence: 1 }, { ...ON, autoApprove: false })).toBe("none");
     expect(autoAction({ verdict: "RED", confidence: 1 }, { ...ON, autoReject: false })).toBe("none");
+  });
+});
+
+describe("autoAction allowReject", () => {
+  it("red izni kapalıyken RED insanda kalır, ONAY etkilenmez", () => {
+    expect(autoAction({ verdict: "RED", confidence: 1 }, ON, false)).toBe("none");
+    expect(autoAction({ verdict: "ONAY", confidence: 1 }, ON, false)).toBe("approve");
+  });
+  it("yalnız LLM sorusu otomatik reddedilebilir; AIG ve desteler reddedilemez", () => {
+    expect(questionAutoRejectEligible("LLM")).toBe(true);
+    expect(questionAutoRejectEligible("AIG")).toBe(false);
+    expect(DECK_AUTO_REJECT_ALLOWED).toBe(false);
   });
 });
 

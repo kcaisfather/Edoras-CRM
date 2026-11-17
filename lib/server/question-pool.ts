@@ -8,6 +8,7 @@ import { OSYM_OBJECTIVE_MAP } from "@/lib/domain/question-pool/osym-objective-ma
 import type { IngestBatchInput, QuestionDecisionInput } from "@/lib/domain/question-pool/schemas";
 import {
   autoAction,
+  questionAutoRejectEligible,
   autoRejectNote,
   readAutoDecisionFlags,
   type AiFilter,
@@ -389,7 +390,7 @@ export async function applyQuestionAiReviews(
         .eq("id", item.id)
         .eq("status", "PENDING")
         .is("ai_reviewed_at", null)
-        .select("id")
+        .select("id, source")
         .maybeSingle();
       if (error) throw error;
       if (!data) {
@@ -397,7 +398,8 @@ export async function applyQuestionAiReviews(
         continue;
       }
       result.reviewed++;
-      const action = autoAction(item, flags);
+      // Otomatik RED yalnız dil modeli (LLM) sorularında; kodla üretilen (AIG) sorular rozet kalır, karar insanda.
+      const action = autoAction(item, flags, questionAutoRejectEligible((data as { source: "AIG" | "LLM" }).source));
       if (action === "reject") {
         await decideCore(item.id, { decision: "REJECTED", review_note: autoRejectNote(item.reason) }, { kind: "ai", model: batch.model });
         result.autoRejected++;

@@ -6,7 +6,15 @@ import { isWellFormedBody, questionContentHash, type QuestionBody, type Question
 import { matchPoolObjective, resolvePoolSubject } from "@/lib/domain/question-pool/objective-match";
 import { OSYM_OBJECTIVE_MAP } from "@/lib/domain/question-pool/osym-objective-map";
 import type { IngestBatchInput, QuestionDecisionInput } from "@/lib/domain/question-pool/schemas";
-import { recordAudit } from "./audit";
+import {
+  autoAction,
+  autoRejectNote,
+  readAutoDecisionFlags,
+  type AiReviewBatch,
+  type AiVerdict,
+  type AutoDecisionFlags,
+} from "@/lib/domain/ai-review/rules";
+import { recordAudit, recordSystemAudit } from "./audit";
 import { createCompensator, type Compensator } from "./compensation";
 import {
   deactivateEdorasMiniTestQuestion,
@@ -25,6 +33,10 @@ export type PoolQuestion = {
   runDate: string;
   body: QuestionBody;
   createdAt: string;
+  aiVerdict: AiVerdict | null;
+  aiConfidence: number | null;
+  aiReason: string | null;
+  autoReviewed: boolean;
 };
 
 export type IngestResult = {
@@ -34,7 +46,8 @@ export type IngestResult = {
   rejectedByCheck: number;
 };
 
-const POOL_COLUMNS = "id, source, program, subject, objective_code, model, run_date, body, created_at";
+const POOL_COLUMNS =
+  "id, source, program, subject, objective_code, model, run_date, body, created_at, ai_verdict, ai_confidence, ai_reason, auto_reviewed";
 
 type PoolRow = {
   id: string;
@@ -46,6 +59,10 @@ type PoolRow = {
   run_date: string;
   body: QuestionBody;
   created_at: string;
+  ai_verdict: AiVerdict | null;
+  ai_confidence: number | null;
+  ai_reason: string | null;
+  auto_reviewed: boolean;
 };
 
 const toDto = (row: PoolRow): PoolQuestion => ({
@@ -58,6 +75,10 @@ const toDto = (row: PoolRow): PoolQuestion => ({
   runDate: row.run_date,
   body: row.body,
   createdAt: row.created_at,
+  aiVerdict: row.ai_verdict,
+  aiConfidence: row.ai_confidence,
+  aiReason: row.ai_reason,
+  autoReviewed: row.auto_reviewed,
 });
 
 /**
@@ -196,12 +217,24 @@ export async function decideQuestion(
   input: QuestionDecisionInput,
   staff: StaffContext
 ): Promise<PoolQuestion & { panelTransfer: PanelTransfer | null }> {
+  return decideCore(id, input, { kind: "staff", staff });
+}
+
+/** Karar veren: insan (CRM yöneticisi) ya da gece ön incelemesi (Haiku; `reviewed_by` boş, `auto_reviewed` true). */
+type Actor = { kind: "staff"; staff: StaffContext } | { kind: "ai"; model: string };
+
+async function decideCore(
+  id: string,
+  input: QuestionDecisionInput,
+  actor: Actor
+): Promise<PoolQuestion & { panelTransfer: PanelTransfer | null }> {
   const admin = getSupabaseAdminClient();
   const { data, error } = await admin
     .from("crm_question_pool")
     .update({
       status: input.decision,
-      reviewed_by: staff.userId,
+      reviewed_by: actor.kind === "staff" ? actor.staff.userId : null,
+      auto_reviewed: actor.kind === "ai",
       reviewed_at: new Date().toISOString(),
       review_note: input.review_note,
     })
@@ -219,7 +252,7 @@ export async function decideQuestion(
     compensator.push("onay", async () => {
       const { error: undoError } = await admin
         .from("crm_question_pool")
-        .update({ status: "PENDING", reviewed_by: null, reviewed_at: null, review_note: null })
+        .update({ status: "PENDING", reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
         .eq("id", id)
         .eq("status", "APPROVED");
       if (undoError) throw undoError;
@@ -232,13 +265,15 @@ export async function decideQuestion(
     }
   }
 
-  await recordAudit(staff, {
+  const entry = {
     action: "QUESTION_DECIDED",
     entityType: "question",
     entityId: id,
     entityLabel: row.objective_code,
     details: { decision: input.decision, panelTransfer },
-  });
+  } as const;
+  if (actor.kind === "staff") await recordAudit(actor.staff, entry);
+  else await recordSystemAudit({ ...entry, details: { ...entry.details, auto: true, model: actor.model } }, "Haiku ön inceleme");
   return { ...toDto(row), panelTransfer };
 }
 
@@ -247,7 +282,7 @@ export async function revokeQuestionApproval(id: string, staff: StaffContext): P
   const admin = getSupabaseAdminClient();
   const { data, error } = await admin
     .from("crm_question_pool")
-    .update({ status: "PENDING", reviewed_by: null, reviewed_at: null, review_note: null })
+    .update({ status: "PENDING", reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
     .eq("id", id)
     .eq("status", "APPROVED")
     .select(POOL_COLUMNS)
@@ -279,4 +314,106 @@ export async function revokeQuestionApproval(id: string, staff: StaffContext): P
     entityLabel: row.objective_code,
   });
   return toDto(row);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Gece ön incelemesi (Haiku). Gece işi denetlenmemiş bekleyenleri çeker, sonucu yazar. Bayraklar kapalıyken yalnız rozet.
+// ---------------------------------------------------------------------------------------------------------------------
+
+export type AiQuestionTodo = {
+  id: string;
+  source: "AIG" | "LLM";
+  program: QuestionProgram;
+  subject: string;
+  objectiveCode: string | null;
+  body: QuestionBody;
+};
+
+type TodoRow = Pick<PoolRow, "id" | "source" | "program" | "subject" | "objective_code" | "body">;
+
+/** Henüz denetlenmemiş bekleyen sorular (en eski önce: kuyruk sırasıyla erir). `meta` kazanım metni için yeter. */
+export async function listQuestionsForAiReview(limit = 100): Promise<AiQuestionTodo[]> {
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_question_pool")
+    .select("id, source, program, subject, objective_code, body")
+    .eq("status", "PENDING")
+    .is("ai_reviewed_at", null)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  if (error) throw dbError(error);
+  return ((data ?? []) as TodoRow[]).map((row) => ({
+    id: row.id,
+    source: row.source,
+    program: row.program,
+    subject: row.subject,
+    objectiveCode: row.objective_code,
+    body: row.body,
+  }));
+}
+
+export type AiReviewResult = {
+  reviewed: number;
+  skipped: number;
+  autoApproved: number;
+  autoRejected: number;
+  approveNotTransferred: number;
+  failed: number;
+};
+
+/** Onaylanan ama panele geçmeyen (eşleşmeyen kazanım) soru insanda kalmalı: otomatik onay geri alınır. */
+async function undoAutoApproval(id: string): Promise<void> {
+  const { error } = await getSupabaseAdminClient()
+    .from("crm_question_pool")
+    .update({ status: "PENDING", reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
+    .eq("id", id)
+    .eq("status", "APPROVED");
+  if (error) throw error;
+}
+
+export async function applyQuestionAiReviews(
+  batch: AiReviewBatch,
+  flags: AutoDecisionFlags = readAutoDecisionFlags(process.env)
+): Promise<AiReviewResult> {
+  const admin = getSupabaseAdminClient();
+  const result: AiReviewResult = { reviewed: 0, skipped: 0, autoApproved: 0, autoRejected: 0, approveNotTransferred: 0, failed: 0 };
+  for (const item of batch.results) {
+    try {
+      const { data, error } = await admin
+        .from("crm_question_pool")
+        .update({
+          ai_verdict: item.verdict,
+          ai_confidence: item.confidence,
+          ai_reason: item.reason,
+          ai_model: batch.model,
+          ai_reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", item.id)
+        .eq("status", "PENDING")
+        .is("ai_reviewed_at", null)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        result.skipped++;
+        continue;
+      }
+      result.reviewed++;
+      const action = autoAction(item, flags);
+      if (action === "reject") {
+        await decideCore(item.id, { decision: "REJECTED", review_note: autoRejectNote(item.reason) }, { kind: "ai", model: batch.model });
+        result.autoRejected++;
+      } else if (action === "approve") {
+        const decided = await decideCore(item.id, { decision: "APPROVED", review_note: null }, { kind: "ai", model: batch.model });
+        if (decided.panelTransfer === "transferred") result.autoApproved++;
+        else {
+          await undoAutoApproval(item.id);
+          result.approveNotTransferred++;
+        }
+      }
+    } catch (itemError) {
+      console.error(`[question-pool] ön inceleme yazılamadı: ${item.id}`, itemError);
+      result.failed++;
+    }
+  }
+  return result;
 }

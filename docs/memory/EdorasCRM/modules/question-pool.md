@@ -25,3 +25,9 @@ Gece üreticisi (`edoras-soru-havuzu`) soru partisini CRM'e gönderir (`crm_ques
 4. CRM push `main` + `kamil`, panel push `main` + `Kamil`.
 
 2–4 arka arkaya: 384'ten sonra eski CRM'in onayı (program göndermeden yazar) panelde NOT NULL'a takılır.
+
+## Haiku ön inceleme (17.11, soru + bilgi kartı destesi ortak)
+- Uçlar: `GET|POST /api/cron/question-pool/review` ve `/api/cron/flashcard-pool/review` (Bearer `CRON_SECRET`). GET = `status=PENDING and ai_reviewed_at is null` (en eski önce, `?limit=`); POST = `{model, results:[{id, verdict ONAY|RED|BELIRSIZ, confidence 0..1, reason}]}` (≤200; gece işi 25'erli yollar: her satır panel aktarımı yapabilir, 60 sn sınırı).
+- Satıra yazılan: `ai_verdict/ai_confidence/ai_reason/ai_model/ai_reviewed_at`; denetlenen satır bir daha çekilmez (POST `ai_reviewed_at is null` ister, idempotent). Arayüzde `features/ai-review` `AiReviewBadge`.
+- Otomatik karar (varsayılan KAPALI, CRM ortam bayrakları): `AI_REVIEW_AUTO_REJECT=1`, `AI_REVIEW_AUTO_APPROVE=1`, eşik `AI_REVIEW_MIN_CONFIDENCE` (0.9). Saf kural `lib/domain/ai-review/rules.ts`. Karar çekirdeği `decideCore(actor)`: insan = `reviewed_by` dolu, Haiku = `reviewed_by` BOŞ + `auto_reviewed=true` (migration `20261117120000` kısıtı gevşetti: ya insan ya otomatik). Audit: `recordSystemAudit(…, "Haiku ön inceleme")`. Otomatik onay panele GEÇMEZ ise (kazanım eşleşmedi) geri alınıp insana bırakılır.
+- Formül ağırlıklı ders desteleri (Matematik/Geometri/Fizik/Kimya) otomatik karar almaz. Onayı geri alma (`revoke`) otomatik onaylar için de çalışır (`auto_reviewed` sıfırlanır).

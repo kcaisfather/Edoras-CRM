@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AiReviewBadge } from "@/features/ai-review";
 
 type PoolQuestion = {
   id: string;
@@ -25,6 +26,10 @@ type PoolQuestion = {
     };
   };
   createdAt: string;
+  aiVerdict: "ONAY" | "RED" | "BELIRSIZ" | null;
+  aiConfidence: number | null;
+  aiReason: string | null;
+  autoReviewed: boolean;
   inPanel?: boolean;
 };
 
@@ -161,6 +166,7 @@ export function QuestionPoolReview() {
               {q.objectiveCode ? <span className="rounded bg-muted px-2 py-0.5">{q.objectiveCode}</span> : null}
               <span className="rounded bg-muted px-2 py-0.5">{q.model}</span>
               <span className="rounded bg-muted px-2 py-0.5">{q.runDate}</span>
+              <AiReviewBadge verdict={q.aiVerdict} confidence={q.aiConfidence} reason={q.aiReason} auto={q.autoReviewed} />
               {view === "approved" ? (
                 <span className="rounded bg-muted px-2 py-0.5 font-medium">{q.inPanel ? "Öğrenciye açık" : "Aktarılamadı"}</span>
               ) : null}

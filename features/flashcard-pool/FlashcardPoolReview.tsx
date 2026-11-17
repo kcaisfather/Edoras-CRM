@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AiReviewBadge } from "@/features/ai-review";
 
 type Card = { id: string; front: string; back: string };
 
@@ -28,6 +29,10 @@ type PoolDeck = {
   excludedCardIds: string[];
   sourceRef: { book?: string | null; pages?: number[]; section_title?: string | null };
   createdAt: string;
+  aiVerdict: "ONAY" | "RED" | "BELIRSIZ" | null;
+  aiConfidence: number | null;
+  aiReason: string | null;
+  autoReviewed: boolean;
   inPanel?: boolean;
 };
 
@@ -171,6 +176,7 @@ export function FlashcardPoolReview() {
                 {deck.objectiveCode ? <span className="rounded bg-muted px-2 py-0.5">{deck.objectiveCode}</span> : null}
                 <span className="rounded bg-muted px-2 py-0.5">{deck.model}</span>
                 <span className="rounded bg-muted px-2 py-0.5">{deck.runDate}</span>
+                <AiReviewBadge verdict={deck.aiVerdict} confidence={deck.aiConfidence} reason={deck.aiReason} auto={deck.autoReviewed} />
                 {view === "approved" ? (
                   <span className="rounded bg-muted px-2 py-0.5 font-medium">{deck.inPanel ? "Öğrenciye açık" : "Aktarılamadı"}</span>
                 ) : null}

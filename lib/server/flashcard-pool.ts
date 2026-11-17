@@ -11,7 +11,16 @@ import {
   type FlashcardCard,
 } from "@/lib/domain/flashcard-pool/rules";
 import type { FlashcardDecisionInput, FlashcardIngestBatchInput } from "@/lib/domain/flashcard-pool/schemas";
-import { recordAudit } from "./audit";
+import {
+  autoAction,
+  autoRejectNote,
+  deckAutoEligible,
+  readAutoDecisionFlags,
+  type AiReviewBatch,
+  type AiVerdict,
+  type AutoDecisionFlags,
+} from "@/lib/domain/ai-review/rules";
+import { recordAudit, recordSystemAudit } from "./audit";
 import { createCompensator, type Compensator } from "./compensation";
 import {
   deactivateEdorasFlashcards,
@@ -39,6 +48,10 @@ export type PoolDeck = {
   excludedCardIds: string[];
   sourceRef: FlashcardSourceRef;
   createdAt: string;
+  aiVerdict: AiVerdict | null;
+  aiConfidence: number | null;
+  aiReason: string | null;
+  autoReviewed: boolean;
 };
 
 export type FlashcardIngestResult = {
@@ -50,7 +63,7 @@ export type FlashcardIngestResult = {
 };
 
 const DECK_COLUMNS =
-  "id, objective_id, objective_code, objective_text, subject, model, run_date, cards, excluded_card_ids, source_ref, created_at";
+  "id, objective_id, objective_code, objective_text, subject, model, run_date, cards, excluded_card_ids, source_ref, created_at, ai_verdict, ai_confidence, ai_reason, auto_reviewed";
 
 type DeckRow = {
   id: string;
@@ -64,6 +77,10 @@ type DeckRow = {
   excluded_card_ids: string[];
   source_ref: FlashcardSourceRef;
   created_at: string;
+  ai_verdict: AiVerdict | null;
+  ai_confidence: number | null;
+  ai_reason: string | null;
+  auto_reviewed: boolean;
 };
 
 const toDto = (row: DeckRow): PoolDeck => ({
@@ -78,6 +95,10 @@ const toDto = (row: DeckRow): PoolDeck => ({
   excludedCardIds: row.excluded_card_ids,
   sourceRef: row.source_ref,
   createdAt: row.created_at,
+  aiVerdict: row.ai_verdict,
+  aiConfidence: row.ai_confidence,
+  aiReason: row.ai_reason,
+  autoReviewed: row.auto_reviewed,
 });
 
 /**
@@ -260,6 +281,17 @@ export async function decideDeck(
   input: FlashcardDecisionInput,
   staff: StaffContext,
 ): Promise<PoolDeck & { panelTransfer: DeckPanelTransfer | null }> {
+  return decideCore(id, input, { kind: "staff", staff });
+}
+
+/** Karar veren: insan (CRM yöneticisi) ya da gece ön incelemesi (Haiku; `reviewed_by` boş, `auto_reviewed` true). */
+type Actor = { kind: "staff"; staff: StaffContext } | { kind: "ai"; model: string };
+
+async function decideCore(
+  id: string,
+  input: FlashcardDecisionInput,
+  actor: Actor,
+): Promise<PoolDeck & { panelTransfer: DeckPanelTransfer | null }> {
   const admin = getSupabaseAdminClient();
 
   if (input.decision === "APPROVED") {
@@ -282,7 +314,8 @@ export async function decideDeck(
     .update({
       status: input.decision,
       excluded_card_ids: input.decision === "APPROVED" ? input.excluded_card_ids : [],
-      reviewed_by: staff.userId,
+      reviewed_by: actor.kind === "staff" ? actor.staff.userId : null,
+      auto_reviewed: actor.kind === "ai",
       reviewed_at: new Date().toISOString(),
       review_note: input.review_note,
     })
@@ -300,7 +333,7 @@ export async function decideDeck(
     compensator.push("onay", async () => {
       const { error: undoError } = await admin
         .from("crm_flashcard_decks")
-        .update({ status: "PENDING", excluded_card_ids: [], reviewed_by: null, reviewed_at: null, review_note: null })
+        .update({ status: "PENDING", excluded_card_ids: [], reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
         .eq("id", id)
         .eq("status", "APPROVED");
       if (undoError) throw undoError;
@@ -313,13 +346,15 @@ export async function decideDeck(
     }
   }
 
-  await recordAudit(staff, {
+  const entry = {
     action: "FLASHCARD_DECK_DECIDED",
     entityType: "flashcard_deck",
     entityId: id,
     entityLabel: row.objective_code,
     details: { decision: input.decision, panelTransfer, excluded: row.excluded_card_ids.length },
-  });
+  } as const;
+  if (actor.kind === "staff") await recordAudit(actor.staff, entry);
+  else await recordSystemAudit({ ...entry, details: { ...entry.details, auto: true, model: actor.model } }, "Haiku ön inceleme");
   return { ...toDto(row), panelTransfer };
 }
 
@@ -338,7 +373,7 @@ export async function revokeDeckApproval(id: string, staff: StaffContext): Promi
 
   const { data, error } = await admin
     .from("crm_flashcard_decks")
-    .update({ status: "PENDING", excluded_card_ids: [], reviewed_by: null, reviewed_at: null, review_note: null })
+    .update({ status: "PENDING", excluded_card_ids: [], reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
     .eq("id", id)
     .eq("status", "APPROVED")
     .select(DECK_COLUMNS)
@@ -376,4 +411,104 @@ export async function revokeDeckApproval(id: string, staff: StaffContext): Promi
     entityLabel: row.objective_code,
   });
   return toDto(row);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Gece ön incelemesi (Haiku): desteyi kitap metnine karşı denetler. Kitap metni CRM'de yok; gece işi kendi paketinden yollar.
+// ---------------------------------------------------------------------------------------------------------------------
+
+export type AiDeckTodo = {
+  id: string;
+  objectiveId: number;
+  objectiveText: string | null;
+  subject: string;
+  cards: FlashcardCard[];
+};
+
+type DeckTodoRow = Pick<DeckRow, "id" | "objective_id" | "objective_text" | "subject" | "cards">;
+
+/** Henüz denetlenmemiş bekleyen desteler (en eski önce). */
+export async function listDecksForAiReview(limit = 60): Promise<AiDeckTodo[]> {
+  const { data, error } = await getSupabaseAdminClient()
+    .from("crm_flashcard_decks")
+    .select("id, objective_id, objective_text, subject, cards")
+    .eq("status", "PENDING")
+    .is("ai_reviewed_at", null)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  if (error) throw dbError(error);
+  return ((data ?? []) as DeckTodoRow[]).map((row) => ({
+    id: row.id,
+    objectiveId: row.objective_id,
+    objectiveText: row.objective_text,
+    subject: row.subject,
+    cards: row.cards,
+  }));
+}
+
+export type AiDeckReviewResult = {
+  reviewed: number;
+  skipped: number;
+  autoApproved: number;
+  autoRejected: number;
+  approveNotTransferred: number;
+  failed: number;
+};
+
+async function undoAutoDeckApproval(id: string): Promise<void> {
+  const { error } = await getSupabaseAdminClient()
+    .from("crm_flashcard_decks")
+    .update({ status: "PENDING", excluded_card_ids: [], reviewed_by: null, auto_reviewed: false, reviewed_at: null, review_note: null })
+    .eq("id", id)
+    .eq("status", "APPROVED");
+  if (error) throw error;
+}
+
+export async function applyDeckAiReviews(
+  batch: AiReviewBatch,
+  flags: AutoDecisionFlags = readAutoDecisionFlags(process.env),
+): Promise<AiDeckReviewResult> {
+  const admin = getSupabaseAdminClient();
+  const result: AiDeckReviewResult = { reviewed: 0, skipped: 0, autoApproved: 0, autoRejected: 0, approveNotTransferred: 0, failed: 0 };
+  for (const item of batch.results) {
+    try {
+      const { data, error } = await admin
+        .from("crm_flashcard_decks")
+        .update({
+          ai_verdict: item.verdict,
+          ai_confidence: item.confidence,
+          ai_reason: item.reason,
+          ai_model: batch.model,
+          ai_reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", item.id)
+        .eq("status", "PENDING")
+        .is("ai_reviewed_at", null)
+        .select("subject")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        result.skipped++;
+        continue;
+      }
+      result.reviewed++;
+      // Formül ağırlıklı derslerde (PDF'ten formüller kayıp) otomatik karar yok: yalnız rozet, karar insanda.
+      const action = deckAutoEligible((data as { subject: string }).subject) ? autoAction(item, flags) : "none";
+      if (action === "reject") {
+        await decideCore(item.id, { decision: "REJECTED", excluded_card_ids: [], review_note: autoRejectNote(item.reason) }, { kind: "ai", model: batch.model });
+        result.autoRejected++;
+      } else if (action === "approve") {
+        const decided = await decideCore(item.id, { decision: "APPROVED", excluded_card_ids: [], review_note: null }, { kind: "ai", model: batch.model });
+        if (decided.panelTransfer === "transferred") result.autoApproved++;
+        else {
+          await undoAutoDeckApproval(item.id);
+          result.approveNotTransferred++;
+        }
+      }
+    } catch (itemError) {
+      console.error(`[flashcard-pool] ön inceleme yazılamadı: ${item.id}`, itemError);
+      result.failed++;
+    }
+  }
+  return result;
 }

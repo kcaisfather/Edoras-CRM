@@ -10,6 +10,7 @@ import {
   autoAction,
   autoRejectNote,
   readAutoDecisionFlags,
+  type AiFilter,
   type AiReviewBatch,
   type AiVerdict,
   type AutoDecisionFlags,
@@ -150,13 +151,11 @@ export async function ingestQuestionBatch(input: IngestBatchInput): Promise<Inge
 }
 
 /** Onay kuyruğu: bekleyen sorular, en yeni önce. */
-export async function listPendingQuestions(limit = 200): Promise<PoolQuestion[]> {
-  const { data, error } = await getSupabaseAdminClient()
-    .from("crm_question_pool")
-    .select(POOL_COLUMNS)
-    .eq("status", "PENDING")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+export async function listPendingQuestions(limit = 200, ai?: AiFilter): Promise<PoolQuestion[]> {
+  let query = getSupabaseAdminClient().from("crm_question_pool").select(POOL_COLUMNS).eq("status", "PENDING");
+  if (ai === "NONE") query = query.is("ai_verdict", null);
+  else if (ai) query = query.eq("ai_verdict", ai);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
   if (error) throw dbError(error);
   return ((data ?? []) as PoolRow[]).map(toDto);
 }

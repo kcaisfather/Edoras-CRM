@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AiReviewBadge } from "@/features/ai-review";
+import { AiReviewBadge, AiReviewFilterBar, AiReviewNote, type AiCounts, type AiFilterValue } from "@/features/ai-review";
 
 type PoolQuestion = {
   id: string;
@@ -60,9 +60,12 @@ export function QuestionPoolReview() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [aiFilter, setAiFilter] = useState<AiFilterValue>("ALL");
+  const [counts, setCounts] = useState<AiCounts | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(view === "approved" ? "/api/question-pool?status=approved" : "/api/question-pool", { cache: "no-store" });
+    const url = view === "approved" ? "/api/question-pool?status=approved" : aiFilter === "ALL" ? "/api/question-pool" : `/api/question-pool?ai=${aiFilter}`;
+    const res = await fetch(url, { cache: "no-store" });
     setError(null);
     if (!res.ok) {
       setError(res.status === 403 ? "Bu ekran yalnız yöneticiler içindir." : "Sorular yüklenemedi.");
@@ -70,11 +73,17 @@ export function QuestionPoolReview() {
       return;
     }
     setItems((await res.json()) as PoolQuestion[]);
-  }, [view]);
+  }, [view, aiFilter]);
+
+  const loadCounts = useCallback(async () => {
+    const res = await fetch("/api/question-pool?summary=1", { cache: "no-store" });
+    if (res.ok) setCounts((await res.json()) as AiCounts);
+  }, []);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    if (view === "pending") void loadCounts();
+  }, [load, loadCounts, view]);
 
   async function decide(id: string, decision: "APPROVED" | "REJECTED") {
     setBusyId(id);
@@ -91,6 +100,7 @@ export function QuestionPoolReview() {
     const { panelTransfer } = (await res.json()) as { panelTransfer: string | null };
     setNotice(panelTransfer ? (TRANSFER_NOTICE[panelTransfer] ?? null) : null);
     setItems((prev) => (prev ?? []).filter((q) => q.id !== id));
+    void loadCounts();
   }
 
   async function revoke(id: string) {
@@ -143,6 +153,18 @@ export function QuestionPoolReview() {
         </div>
       </header>
 
+      {view === "pending" ? (
+        <AiReviewFilterBar
+          value={aiFilter}
+          counts={counts}
+          onChange={(next) => {
+            if (next === aiFilter) return;
+            setItems(null);
+            setAiFilter(next);
+          }}
+        />
+      ) : null}
+
       {error ? <p className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</p> : null}
       {notice ? <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{notice}</p> : null}
       {notInPanel > 0 ? (
@@ -166,11 +188,12 @@ export function QuestionPoolReview() {
               {q.objectiveCode ? <span className="rounded bg-muted px-2 py-0.5">{q.objectiveCode}</span> : null}
               <span className="rounded bg-muted px-2 py-0.5">{q.model}</span>
               <span className="rounded bg-muted px-2 py-0.5">{q.runDate}</span>
-              <AiReviewBadge verdict={q.aiVerdict} confidence={q.aiConfidence} reason={q.aiReason} auto={q.autoReviewed} />
+              <AiReviewBadge verdict={q.aiVerdict} confidence={q.aiConfidence} auto={q.autoReviewed} />
               {view === "approved" ? (
                 <span className="rounded bg-muted px-2 py-0.5 font-medium">{q.inPanel ? "Öğrenciye açık" : "Aktarılamadı"}</span>
               ) : null}
             </div>
+            <AiReviewNote verdict={q.aiVerdict} reason={q.aiReason} />
             <p className="whitespace-pre-line text-sm">{q.body.stem}</p>
             <ol className="space-y-1 text-sm">
               {q.body.options.map((opt, i) => {

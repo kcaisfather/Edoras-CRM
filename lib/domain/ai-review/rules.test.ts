@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aiReviewBatchSchema, autoAction, autoRejectNote, deckAutoEligible, readAutoDecisionFlags } from "./rules";
+import { aiReviewBatchSchema, autoAction, autoRejectNote, deckAutoEligible, parseAiFilter, readAutoDecisionFlags } from "./rules";
 
 const ON = { autoApprove: true, autoReject: true, minConfidence: 0.9 };
 const OFF = { autoApprove: false, autoReject: false, minConfidence: 0.9 };
@@ -72,5 +72,21 @@ describe("deckAutoEligible", () => {
     expect(deckAutoEligible("Biyoloji")).toBe(true);
     expect(deckAutoEligible("Tarih")).toBe(true);
     expect(deckAutoEligible("Coğrafya")).toBe(true);
+  });
+});
+
+describe("parseAiFilter", () => {
+  it("geçerli karar ve NONE'u kabul eder", () => {
+    expect(parseAiFilter("RED")).toBe("RED");
+    expect(parseAiFilter("BELIRSIZ")).toBe("BELIRSIZ");
+    expect(parseAiFilter("ONAY")).toBe("ONAY");
+    expect(parseAiFilter("NONE")).toBe("NONE");
+  });
+  it("boş, küçük harf ve bilinmeyen değerde süzgeç yok", () => {
+    expect(parseAiFilter(null)).toBeUndefined();
+    expect(parseAiFilter("")).toBeUndefined();
+    expect(parseAiFilter("red")).toBeUndefined();
+    expect(parseAiFilter("ALL")).toBeUndefined();
+    expect(parseAiFilter("RED; drop table")).toBeUndefined();
   });
 });

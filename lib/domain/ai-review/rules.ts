@@ -33,6 +33,12 @@ export type AutoAction = "approve" | "reject" | "none";
 
 const DEFAULT_MIN_CONFIDENCE = 0.9;
 
+/** Kuyruk süzgeci: `?ai=RED|BELIRSIZ|ONAY|NONE` (NONE = henüz denetlenmemiş). Geçersiz/boş değer = süzgeç yok. */
+export type AiFilter = AiVerdict | "NONE";
+export function parseAiFilter(value: string | null): AiFilter | undefined {
+  return value === "NONE" || (AI_VERDICTS as readonly string[]).includes(value ?? "") ? (value as AiFilter) : undefined;
+}
+
 /** Bayraklar yalnız `"1"` ile açılır; boş/başka değer = kapalı. Eşik 0..1 dışındaysa varsayılan (0.9). */
 export function readAutoDecisionFlags(env: Record<string, string | undefined>): AutoDecisionFlags {
   const parsed = Number(env.AI_REVIEW_MIN_CONFIDENCE);

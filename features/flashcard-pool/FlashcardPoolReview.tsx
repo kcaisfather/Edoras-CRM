@@ -1,16 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AiReviewBadge } from "@/features/ai-review";
+import { AiReviewBadge, AiReviewFilterBar, AiReviewNote, type AiCounts, type AiFilterValue } from "@/features/ai-review";
 
 type Card = { id: string; front: string; back: string };
 
 type LoadResult = { items: PoolDeck[]; error: string | null };
 
-async function fetchDecks(view: "pending" | "approved"): Promise<LoadResult> {
-  const res = await fetch(view === "approved" ? "/api/flashcard-pool?status=approved" : "/api/flashcard-pool", {
-    cache: "no-store",
-  });
+async function fetchDecks(view: "pending" | "approved", ai: AiFilterValue): Promise<LoadResult> {
+  const url = view === "approved" ? "/api/flashcard-pool?status=approved" : ai === "ALL" ? "/api/flashcard-pool" : `/api/flashcard-pool?ai=${ai}`;
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     return { items: [], error: res.status === 403 ? "Bu ekran yalnız yöneticiler içindir." : "Desteler yüklenemedi." };
   }
@@ -54,24 +53,36 @@ export function FlashcardPoolReview() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [aiFilter, setAiFilter] = useState<AiFilterValue>("ALL");
+  const [counts, setCounts] = useState<AiCounts | null>(null);
 
   const apply = useCallback((result: LoadResult) => {
     setError(result.error);
     setItems(result.items);
   }, []);
 
-  const load = useCallback(async () => apply(await fetchDecks(view)), [apply, view]);
+  const load = useCallback(async () => apply(await fetchDecks(view, aiFilter)), [apply, view, aiFilter]);
+
+  const loadCounts = useCallback(async () => {
+    const res = await fetch("/api/flashcard-pool?summary=1", { cache: "no-store" });
+    if (res.ok) setCounts((await res.json()) as AiCounts);
+  }, []);
 
   useEffect(() => {
     // Sekme hızlı değişirse eski sekmenin geç gelen yanıtı yeni listeyi ezmesin.
     let cancelled = false;
-    void fetchDecks(view).then((result) => {
+    void fetchDecks(view, aiFilter).then((result) => {
       if (!cancelled) apply(result);
     });
+    if (view === "pending") {
+      void fetch("/api/flashcard-pool?summary=1", { cache: "no-store" }).then(async (res) => {
+        if (!cancelled && res.ok) setCounts((await res.json()) as AiCounts);
+      });
+    }
     return () => {
       cancelled = true;
     };
-  }, [apply, view]);
+  }, [apply, view, aiFilter]);
 
   function toggleCard(deckId: string, cardId: string) {
     setExcluded((prev) => {
@@ -104,6 +115,7 @@ export function FlashcardPoolReview() {
     const { panelTransfer } = (await res.json()) as { panelTransfer: string | null };
     setNotice(panelTransfer === "not_found" ? "Deste onaylandı ama panele aktarılamadı: kazanım panelde bulunamadı." : null);
     setItems((prev) => (prev ?? []).filter((d) => d.id !== deck.id));
+    void loadCounts();
   }
 
   async function revoke(id: string) {
@@ -157,6 +169,18 @@ export function FlashcardPoolReview() {
         </div>
       </header>
 
+      {view === "pending" ? (
+        <AiReviewFilterBar
+          value={aiFilter}
+          counts={counts}
+          onChange={(next) => {
+            if (next === aiFilter) return;
+            setItems(null);
+            setAiFilter(next);
+          }}
+        />
+      ) : null}
+
       {error ? <p className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</p> : null}
       {notice ? <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{notice}</p> : null}
 
@@ -176,11 +200,12 @@ export function FlashcardPoolReview() {
                 {deck.objectiveCode ? <span className="rounded bg-muted px-2 py-0.5">{deck.objectiveCode}</span> : null}
                 <span className="rounded bg-muted px-2 py-0.5">{deck.model}</span>
                 <span className="rounded bg-muted px-2 py-0.5">{deck.runDate}</span>
-                <AiReviewBadge verdict={deck.aiVerdict} confidence={deck.aiConfidence} reason={deck.aiReason} auto={deck.autoReviewed} />
+                <AiReviewBadge verdict={deck.aiVerdict} confidence={deck.aiConfidence} auto={deck.autoReviewed} />
                 {view === "approved" ? (
                   <span className="rounded bg-muted px-2 py-0.5 font-medium">{deck.inPanel ? "Öğrenciye açık" : "Aktarılamadı"}</span>
                 ) : null}
               </div>
+              <AiReviewNote verdict={deck.aiVerdict} reason={deck.aiReason} />
               {deck.objectiveText ? <p className="text-sm font-medium">{deck.objectiveText}</p> : null}
               <Source deck={deck} />
               <ol className="space-y-2">

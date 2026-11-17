@@ -16,6 +16,7 @@ import {
   autoRejectNote,
   deckAutoEligible,
   readAutoDecisionFlags,
+  type AiFilter,
   type AiReviewBatch,
   type AiVerdict,
   type AutoDecisionFlags,
@@ -221,13 +222,11 @@ async function fetchAllObjectiveIds(
 }
 
 /** Onay kuyruğu: bekleyen desteler, en yeni önce. */
-export async function listPendingDecks(limit = 100): Promise<PoolDeck[]> {
-  const { data, error } = await getSupabaseAdminClient()
-    .from("crm_flashcard_decks")
-    .select(DECK_COLUMNS)
-    .eq("status", "PENDING")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+export async function listPendingDecks(limit = 100, ai?: AiFilter): Promise<PoolDeck[]> {
+  let query = getSupabaseAdminClient().from("crm_flashcard_decks").select(DECK_COLUMNS).eq("status", "PENDING");
+  if (ai === "NONE") query = query.is("ai_verdict", null);
+  else if (ai) query = query.eq("ai_verdict", ai);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
   if (error) throw dbError(error);
   return ((data ?? []) as DeckRow[]).map(toDto);
 }

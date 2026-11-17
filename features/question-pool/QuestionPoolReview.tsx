@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { QuestionObjections } from "./QuestionObjections";
 import { AiReviewBadge, AiReviewFilterBar, AiReviewNote, type AiCounts, type AiFilterValue } from "@/features/ai-review";
 
 type PoolQuestion = {
@@ -55,7 +56,7 @@ const SOURCE_LABEL = { AIG: "Kod (AIG)", LLM: "Dil modeli" } as const;
  * (Mini Test) aktarılır, reddedilen bir daha gösterilmez. "Onaylananlar"da onay geri alınır: soru kuyruğa döner.
  */
 export function QuestionPoolReview() {
-  const [view, setView] = useState<"pending" | "approved">("pending");
+  const [view, setView] = useState<"pending" | "approved" | "objections">("pending");
   const [items, setItems] = useState<PoolQuestion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export function QuestionPoolReview() {
   }, []);
 
   useEffect(() => {
+    if (view === "objections") return; // itirazlar kendi bileşeninde yüklenir
     void load();
     if (view === "pending") void loadCounts();
   }, [load, loadCounts, view]);
@@ -114,7 +116,7 @@ export function QuestionPoolReview() {
     setItems((prev) => (prev ?? []).filter((q) => q.id !== id));
   }
 
-  function switchView(next: "pending" | "approved") {
+  function switchView(next: "pending" | "approved" | "objections") {
     if (next === view) return;
     setItems(null); // eski listenin satırları yeni sekmenin düğmeleriyle görünmesin
     setNotice(null);
@@ -147,12 +149,24 @@ export function QuestionPoolReview() {
           >
             Onaylananlar
           </button>
+          <button
+            type="button"
+            aria-pressed={view === "objections"}
+            onClick={() => switchView("objections")}
+            className={`rounded-md border px-3 py-1.5 text-sm ${view === "objections" ? "bg-muted font-medium" : ""}`}
+          >
+            İtirazlar
+          </button>
           <button type="button" onClick={() => void load()} className="rounded-md border px-3 py-1.5 text-sm">
             Yenile
           </button>
         </div>
       </header>
 
+      {view === "objections" ? (
+        <QuestionObjections />
+      ) : (
+        <>
       {view === "pending" ? (
         <AiReviewFilterBar
           value={aiFilter}
@@ -246,6 +260,8 @@ export function QuestionPoolReview() {
           </li>
         ))}
       </ul>
+        </>
+      )}
     </div>
   );
 }

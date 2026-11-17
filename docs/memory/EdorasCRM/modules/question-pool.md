@@ -17,6 +17,9 @@ Gece üreticisi (`edoras-soru-havuzu`) soru partisini CRM'e gönderir (`crm_ques
 - Migration `20261111120000_crm_question_pool_program.sql`: 11.11'de canlıdaki 233 satırın hepsi YKS üreticisinden →
   `'yks'` ile doldurulur, sonra NOT NULL + check. Varsayılan YOK.
 
+## İtirazlar sekmesi (17.11, kodlandı, commit'siz)
+Panel migration 398 `mini_test_question_objections` (öğrenci mobilde "İtiraz et"). CRM yalnız okur/kapatır: `listEdorasOpenQuestionObjections` + `closeEdorasQuestionObjections` + `getEdorasQuestionCrmId` (`lib/server/edoras.ts`), saf toplama `lib/domain/question-pool/objections.ts`, uçlar `GET /api/question-pool/objections` ve `POST …/objections/[questionId]` `{action: revoke|resolve|dismiss}`, ekran `features/question-pool/QuestionObjections.tsx` (Soru onayı'nda "İtirazlar" sekmesi). Soru OTOMATİK GİZLENMEZ; `revoke` = mevcut `revokeQuestionApproval` + itirazları ÇÖZÜLDÜ say. Öğrenci kimliği CRM'e gelmez. Panel migration 398 uygulanmadan sekme boş/hata verir (tablo yok).
+
 ## Yayın sırası (program)
 
 1. Üretici push (program gönderen sürüm; eski CRM fazla alanı yok sayar).

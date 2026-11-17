@@ -35,6 +35,12 @@ import {
   programFromMebList,
   type ObjectiveCandidate,
 } from "@/lib/domain/question-pool/objective-match";
+import {
+  groupObjections,
+  type ObjectedQuestion,
+  type ObjectedQuestionRow,
+  type ObjectionRow,
+} from "@/lib/domain/question-pool/objections";
 import { QUESTION_PROGRAMS, type QuestionProgram } from "@/lib/domain/question-pool/rules";
 import type { Compensator } from "./compensation";
 
@@ -798,4 +804,55 @@ export async function listEdorasActiveFlashcardIds(crmCardIds: string[]): Promis
     .in("crm_card_id", crmCardIds);
   if (error) throw dbError(error);
   return new Set(((data ?? []) as { crm_card_id: string }[]).map((r) => r.crm_card_id));
+}
+
+// --- Soru itirazları (Edoras migration 398 `mini_test_question_objections`) ---
+
+/**
+ * Öğrencinin mobilde bıraktığı AÇIK itirazlar, soruya göre toplu (çok itiraz alan üstte). Öğrenci kimliği CRM'e hiç
+ * gelmez (yalnız neden + serbest not). Soru gizlenmez; karar insanda: `revokeQuestionApproval` ya da itirazı kapat.
+ */
+export async function listEdorasOpenQuestionObjections(): Promise<ObjectedQuestion[]> {
+  const admin = getEdorasAdminClient();
+  const rows = await fetchAll<ObjectionRow>((from, to) =>
+    admin
+      .from("mini_test_question_objections")
+      .select("question_id, reason, note, source, created_at")
+      .eq("status", "OPEN")
+      .order("created_at", { ascending: false })
+      .range(from, to)
+  );
+  if (rows.length === 0) return [];
+  const ids = [...new Set(rows.map((r) => r.question_id))];
+  const questions: ObjectedQuestionRow[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await admin
+      .from("mini_test_questions")
+      .select("id, crm_question_id, subject, stem, options, answer_key, explanation, active")
+      .in("id", ids.slice(i, i + 200));
+    if (error) throw dbError(error);
+    questions.push(...((data ?? []) as ObjectedQuestionRow[]));
+  }
+  return groupObjections(rows, questions);
+}
+
+/** Sorunun açık itirazlarını kapatır (çözüldü / yok sayıldı). Açık itiraz yoksa etkisizdir. */
+export async function closeEdorasQuestionObjections(questionId: string, status: "RESOLVED" | "DISMISSED"): Promise<void> {
+  const { error } = await getEdorasAdminClient()
+    .from("mini_test_question_objections")
+    .update({ status, resolved_at: new Date().toISOString() })
+    .eq("question_id", questionId)
+    .eq("status", "OPEN");
+  if (error) throw dbError(error);
+}
+
+/** Panel soru kimliği → CRM havuz kimliği (itirazdan "Onayı geri al" için). Yoksa null. */
+export async function getEdorasQuestionCrmId(questionId: string): Promise<string | null> {
+  const { data, error } = await getEdorasAdminClient()
+    .from("mini_test_questions")
+    .select("crm_question_id")
+    .eq("id", questionId)
+    .maybeSingle();
+  if (error) throw dbError(error);
+  return (data as { crm_question_id: string } | null)?.crm_question_id ?? null;
 }
